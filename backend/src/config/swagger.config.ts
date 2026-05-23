@@ -3,6 +3,14 @@ import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 
 const AUTH_TAG = 'Auth (Better Auth)';
 
+function getApiBaseUrl(): string {
+  if (process.env.BETTER_AUTH_URL) {
+    return process.env.BETTER_AUTH_URL.replace(/\/$/, '');
+  }
+  const port = process.env.PORT ?? '8000';
+  return `http://localhost:${port}`;
+}
+
 function addBetterAuthPaths(document: OpenAPIObject): void {
   const authPaths = {
     '/api/v1/auth/sign-up/email': {
@@ -86,8 +94,11 @@ function addBetterAuthPaths(document: OpenAPIObject): void {
 }
 
 export function setupSwagger(app: INestApplication): void {
+  const apiBaseUrl = getApiBaseUrl();
+
   const config = new DocumentBuilder()
     .setTitle('Daleel API')
+    .addServer(apiBaseUrl, 'Local API')
     .setDescription(
       'Humanitarian crisis-management platform API for Lebanon.\n\n' +
         '**Auth:** Better Auth routes are mounted at `/api/v1/auth/*`. ' +
