@@ -1,0 +1,11 @@
+---
+alwaysApply: true
+---
+
+React Query usage must always go through custom API service hooks.
+
+Rules:
+
+- query keys must be structured and reusable
+- mutations must invalidate relevant queries
+- no raw useMutation or useQuery in components unless exceptional

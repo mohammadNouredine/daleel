@@ -1,0 +1,12 @@
+---
+alwaysApply: true
+---
+
+The API service layer (e.g. usePostData) is the ONLY place where:
+
+- HTTP method logic exists
+- toast notifications are triggered
+- error handling is centralized
+- query invalidation is handled
+
+Feature hooks must NOT duplicate this logic.

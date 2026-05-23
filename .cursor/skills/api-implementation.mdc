@@ -1,0 +1,10 @@
+---
+alwaysApply: true
+---
+
+When implementing APIs:
+
+- prefer using existing API service layer
+- avoid direct fetch/axios usage
+- prefer feature-based structure if not existing yet
+- keep hooks thin and reusable

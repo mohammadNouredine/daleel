@@ -1,0 +1,13 @@
+---
+alwaysApply: true
+---
+
+All API hooks must be built using the internal API service layer (usePostData, useGetData, usePutData, useDeleteData).
+
+Never call fetch/axios directly inside feature hooks.
+
+All API hooks must:
+
+- be thin wrappers
+- define only domain-specific logic
+- not handle UI logic

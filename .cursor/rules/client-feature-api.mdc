@@ -1,0 +1,15 @@
+---
+alwaysApply: true
+---
+
+All API logic must follow a feature-based architecture.
+
+Each domain (example: attendance, users, dashboard) must have its own folder containing:
+
+- types (request/response DTOs)
+- endpoints constants
+- React Query hooks (API hooks only)
+- optional validation schemas
+
+Do NOT mix API logic across features.
+Do NOT place API hooks in global/shared folders unless truly reusable.

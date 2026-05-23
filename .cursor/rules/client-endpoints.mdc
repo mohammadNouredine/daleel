@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+
+All endpoint strings must be centralized in endpoint files.
+
+No hardcoded URLs in hooks or components.

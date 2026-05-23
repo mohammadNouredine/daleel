@@ -1,0 +1,11 @@
+---
+alwaysApply: true
+---
+
+Each API feature hook must follow this structure:
+
+- single responsibility (one API action per hook)
+- strongly typed input/output
+- uses endpoint constants
+- uses shared API service hooks
+- optionally accepts callbacks (onSuccess only when needed)
