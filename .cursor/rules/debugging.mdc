@@ -1,0 +1,9 @@
+---
+alwaysApply: true
+---
+
+When debugging:
+- identify root cause first
+- do not apply random fixes
+- explain why the issue happened
+- propose the smallest reliable fix

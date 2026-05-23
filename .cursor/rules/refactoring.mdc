@@ -1,0 +1,12 @@
+---
+alwaysApply: true
+---
+
+Refactor only when it improves:
+- readability
+- maintainability
+- duplication
+- performance
+- developer experience
+
+Do not refactor unrelated code.

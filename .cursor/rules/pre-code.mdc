@@ -1,0 +1,9 @@
+---
+alwaysApply: true
+---
+
+Before generating code:
+1. analyze existing project structure
+2. identify existing reusable patterns
+3. follow current architecture
+4. generate only the minimal necessary changes

@@ -1,0 +1,25 @@
+---
+alwaysApply: true
+---
+
+Next.js frontend rules:
+
+- prefer server components unless client behavior is needed
+- minimize client-side state
+- avoid unnecessary useEffect usage
+- fetch data efficiently
+- keep components small and focused
+- separate UI from business logic
+- avoid prop drilling when possible
+- reuse shared UI patterns
+
+Performance:
+- optimize images
+- avoid unnecessary rerenders
+- lazy load heavy components
+- avoid large client bundles
+
+UI:
+- maintain consistent spacing and design patterns
+- make components reusable only when justified
+- avoid overly generic components

@@ -1,0 +1,7 @@
+export enum HelpType {
+  MATERIAL = 'MATERIAL',
+  FINANCIAL = 'FINANCIAL',
+  MEDICAL = 'MEDICAL',
+  SHELTER = 'SHELTER',
+  TRANSPORT = 'TRANSPORT',
+}

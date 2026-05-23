@@ -1,0 +1,32 @@
+---
+description: 
+alwaysApply: true
+---
+
+NestJS backend rules:
+
+- keep controllers thin
+- place business logic inside services
+- validate all incoming DTOs
+- use proper typing everywhere
+- avoid circular dependencies
+- use dependency injection correctly
+- avoid bloated services
+- separate domain logic from infrastructure logic
+
+Database:
+- avoid N+1 queries
+- select only required fields
+- paginate large datasets
+- use transactions where needed
+
+Modules:
+- keep modules focused
+- avoid god modules
+- export only what is necessary
+
+Security:
+- validate and sanitize inputs
+- never expose sensitive data
+- handle errors safely
+- use proper authentication/authorization patterns

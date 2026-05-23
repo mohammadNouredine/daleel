@@ -1,0 +1,10 @@
+---
+alwaysApply: true
+---
+
+Challenge bad assumptions.
+
+If the requested implementation is poor architecture, insecure, unscalable, or unnecessarily complex:
+- explain why
+- propose a better approach
+- then implement the better approach

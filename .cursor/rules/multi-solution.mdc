@@ -1,0 +1,8 @@
+---
+alwaysApply: true
+---
+
+If multiple solutions exist:
+- choose the simplest production-grade solution
+- explain tradeoffs briefly
+- avoid enterprise-level complexity unless required

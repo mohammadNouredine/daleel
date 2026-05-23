@@ -1,0 +1,15 @@
+---
+alwaysApply: true
+---
+
+Do not create wrapper functions unless they add real value.
+
+Do not split files/components prematurely.
+
+Avoid overengineering.
+
+If a function is only used once, keep it local unless reuse is expected.
+
+Avoid creating custom hooks/helpers for trivial logic.
+
+Prefer fewer moving parts.
