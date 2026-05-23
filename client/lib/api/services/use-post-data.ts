@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
 import {
   type QueryKey,
   useMutation,
   useQueryClient,
   type UseMutationOptions,
-} from "@tanstack/react-query"
-import toast from "react-hot-toast"
-import { type ApiSuccessResult, sendToApi } from "./api-methods"
+} from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { type ApiSuccessResult, sendToApi } from "../api-methods";
 
 export type UsePostDataConfig = {
-  endpoint: string
-  showSuccessToast?: boolean
-  showErrorToast?: boolean
-  queryKeysToInvalidate?: QueryKey[]
-  skipAuth?: boolean
-  successMessage?: string
-}
+  endpoint: string;
+  showSuccessToast?: boolean;
+  showErrorToast?: boolean;
+  queryKeysToInvalidate?: QueryKey[];
+  skipAuth?: boolean;
+  successMessage?: string;
+};
 
 export function usePostData<BodyParams, ResponseData = unknown>(
   {
@@ -30,10 +30,10 @@ export function usePostData<BodyParams, ResponseData = unknown>(
   mutationOptions?: Omit<
     UseMutationOptions<ApiSuccessResult<ResponseData>, Error, BodyParams>,
     "mutationFn"
-  >
+  >,
 ) {
-  const queryClient = useQueryClient()
-  const { onSuccess, onError, ...restMutationOptions } = mutationOptions ?? {}
+  const queryClient = useQueryClient();
+  const { onSuccess, onError, ...restMutationOptions } = mutationOptions ?? {};
 
   return useMutation({
     mutationFn: (data: BodyParams) =>
@@ -43,22 +43,22 @@ export function usePostData<BodyParams, ResponseData = unknown>(
       }),
     onSuccess: (result, variables, onMutateResult, context) => {
       queryKeysToInvalidate?.forEach((key) =>
-        queryClient.invalidateQueries({ queryKey: key })
-      )
+        queryClient.invalidateQueries({ queryKey: key }),
+      );
 
       if (showSuccessToast && result.message) {
-        toast.success(result.message)
+        toast.success(result.message);
       }
 
-      onSuccess?.(result, variables, onMutateResult, context)
+      onSuccess?.(result, variables, onMutateResult, context);
     },
     onError: (err, variables, onMutateResult, context) => {
       if (showErrorToast) {
-        toast.error(err.message)
+        toast.error(err.message);
       }
 
-      onError?.(err, variables, onMutateResult, context)
+      onError?.(err, variables, onMutateResult, context);
     },
     ...restMutationOptions,
-  })
+  });
 }

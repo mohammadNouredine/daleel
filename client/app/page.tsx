@@ -1,11 +1,12 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function HomePage() {
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background px-6 py-16">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-linear-to-br from-background via-muted/30 to-background px-6 py-16">
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent"
         aria-hidden
       />
 
@@ -22,19 +23,23 @@ export default function HomePage() {
         </p>
 
         <div className="mt-10 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
-          <Button render={<Link href="/auth" />} size="lg" className="min-w-44">
+          <Link
+            href="/auth"
+            className={cn(buttonVariants({ size: "lg" }), "min-w-44")}
+          >
             Sign in / Sign up
-          </Button>
-          <Button
-            render={<Link href="/help-requests" />}
-            variant="outline"
-            size="lg"
-            className="min-w-44"
+          </Link>
+          <Link
+            href="/help-requests"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "min-w-44",
+            )}
           >
             Help requests
-          </Button>
+          </Link>
         </div>
       </div>
     </div>
-  )
+  );
 }
