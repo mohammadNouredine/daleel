@@ -14,42 +14,20 @@ import {
   SUB_CATEGORY_LABELS,
 } from "../constants"
 import type { HelpRequest } from "../types"
-import { HelpRequestStatus, PriorityLevel } from "../types"
+import {
+  getHelpTypeTagClass,
+  getPriorityBadgeClass,
+  getProgressFillClass,
+  getProgressLabelClass,
+  getProgressTrackClass,
+  getStatusBadgeClass,
+  getSubCategoryTagClass,
+  getVerifiedBadgeClass,
+} from "../utils/request-visuals"
 import { MapPin, Users } from "lucide-react"
 
 type HelpRequestCardProps = {
   request: HelpRequest
-}
-
-function statusBadgeVariant(
-  status: HelpRequest["status"]
-): "default" | "secondary" | "outline" | "destructive" {
-  switch (status) {
-    case HelpRequestStatus.FULFILLED:
-      return "outline"
-    case HelpRequestStatus.CANCELLED:
-    case HelpRequestStatus.EXPIRED:
-      return "secondary"
-    case HelpRequestStatus.PARTIALLY_FULFILLED:
-      return "default"
-    default:
-      return "default"
-  }
-}
-
-function priorityBadgeVariant(
-  priority: HelpRequest["priorityLevel"]
-): "default" | "secondary" | "destructive" | "outline" {
-  switch (priority) {
-    case PriorityLevel.CRITICAL:
-      return "destructive"
-    case PriorityLevel.HIGH:
-      return "default"
-    case PriorityLevel.LOW:
-      return "outline"
-    default:
-      return "secondary"
-  }
 }
 
 export function HelpRequestCard({ request }: HelpRequestCardProps) {
@@ -77,14 +55,22 @@ export function HelpRequestCard({ request }: HelpRequestCardProps) {
         <div className="flex flex-wrap items-start justify-between gap-2">
           <CardTitle className="text-base leading-snug">{request.title}</CardTitle>
           <div className="flex flex-wrap gap-1.5">
-            <Badge variant={statusBadgeVariant(request.status)}>
+            <Badge
+              variant="outline"
+              className={getStatusBadgeClass(request.status)}
+            >
               {STATUS_LABELS[request.status]}
             </Badge>
-            <Badge variant={priorityBadgeVariant(request.priorityLevel)}>
+            <Badge
+              variant="outline"
+              className={getPriorityBadgeClass(request.priorityLevel)}
+            >
               {PRIORITY_LABELS[request.priorityLevel]}
             </Badge>
             {request.isVerified ? (
-              <Badge variant="outline">Verified</Badge>
+              <Badge variant="outline" className={getVerifiedBadgeClass()}>
+                Verified
+              </Badge>
             ) : null}
           </div>
         </div>
@@ -93,32 +79,48 @@ export function HelpRequestCard({ request }: HelpRequestCardProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-          <span className="rounded-md bg-muted px-2 py-1">
+        <div className="flex flex-wrap gap-2 text-xs font-medium">
+          <span
+            className={cn(
+              "rounded-md px-2 py-1",
+              getHelpTypeTagClass(request.helpType)
+            )}
+          >
             {HELP_TYPE_LABELS[request.helpType]}
           </span>
-          <span className="rounded-md bg-muted px-2 py-1">
+          <span
+            className={cn(
+              "rounded-md px-2 py-1",
+              getSubCategoryTagClass()
+            )}
+          >
             {SUB_CATEGORY_LABELS[request.subCategory]}
           </span>
         </div>
 
         <div className="space-y-1.5">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>
+          <div className="flex justify-between text-xs">
+            <span className="text-muted-foreground">
               Fulfilled {request.quantity.fulfilled} / {request.quantity.required}
               {request.quantity.unit ? ` ${request.quantity.unit}` : ""}
             </span>
-            <span>{progress}%</span>
+            <span className={getProgressLabelClass(progress)}>{progress}%</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn(
+              "h-2.5 overflow-hidden rounded-full",
+              getProgressTrackClass()
+            )}
+            role="progressbar"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${progress}% fulfilled`}
+          >
             <div
               className={cn(
-                "h-full rounded-full transition-all",
-                progress >= 100
-                  ? "bg-primary"
-                  : progress > 0
-                    ? "bg-primary/70"
-                    : "bg-muted-foreground/30"
+                "h-full rounded-full transition-all duration-500 ease-out",
+                getProgressFillClass(progress)
               )}
               style={{ width: `${progress}%` }}
             />
