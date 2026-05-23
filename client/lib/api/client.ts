@@ -19,7 +19,7 @@ export type ApiFetchOptions = RequestInit & {
   skipAuth?: boolean
 }
 
-function resolveUrl(path: string): string {
+export function resolveUrl(path: string): string {
   return path.startsWith("http") ? path : `${API_BASE}${path}`
 }
 
@@ -76,51 +76,4 @@ export async function apiFetch<T>(
   }
 
   return response.json() as Promise<T>
-}
-
-export async function apiPost<TResponse, TBody = unknown>(
-  path: string,
-  body: TBody,
-  options: { skipAuth?: boolean } = {}
-): Promise<{ data: TResponse; token: string | null }> {
-  const { skipAuth } = options
-  const headers = new Headers({ "Content-Type": "application/json" })
-
-  if (!skipAuth) {
-    const token = getAuthToken()
-    if (token) headers.set("Authorization", `Bearer ${token}`)
-  }
-
-  const response = await fetch(resolveUrl(path), {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-    credentials: "include",
-  })
-
-  let data: unknown
-  try {
-    data = await response.json()
-  } catch {
-    data = undefined
-  }
-
-  if (!response.ok) {
-    throw new ApiError(
-      parseErrorMessage(data, response.statusText),
-      response.status,
-      data
-    )
-  }
-
-  const headerToken = response.headers.get("set-auth-token")
-  const bodyToken =
-    data && typeof data === "object" && "token" in data
-      ? (data as { token?: string | null }).token ?? null
-      : null
-
-  return {
-    data: data as TResponse,
-    token: headerToken ?? bodyToken,
-  }
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Geist } from "next/font/google"
 import { QueryProvider } from "@/components/providers/query-provider"
+import { ToastProvider } from "@/components/providers/toast-provider"
 import { cn } from "@/lib/utils"
 import "./globals.css"
 
@@ -20,7 +21,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
       <body className="min-h-screen antialiased">
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          {children}
+          <ToastProvider />
+        </QueryProvider>
       </body>
     </html>
   )

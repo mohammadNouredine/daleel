@@ -1,31 +1,53 @@
 "use client"
 
 import {
+  type QueryKey,
   useMutation,
-  type UseMutationOptions,
+  useQueryClient,
 } from "@tanstack/react-query"
-import { apiFetch } from "./client"
+import toast from "react-hot-toast"
+import { sendToApi } from "./api-methods"
 
-type UsePostDataOptions<TBody, TResponse> = Omit<
-  UseMutationOptions<TResponse, Error, TBody>,
-  "mutationFn"
-> & {
+export function usePostData<BodyParams, ResponseData = unknown>({
+  endpoint,
+  showSuccessToast = true,
+  showErrorToast = true,
+  callBackOnSuccess,
+  queryKeysToInvalidate,
+  skipAuth = false,
+  successMessage,
+}: {
+  endpoint: string
+  showSuccessToast?: boolean
+  showErrorToast?: boolean
+  callBackOnSuccess?: (data: ResponseData) => void
+  queryKeysToInvalidate?: QueryKey[]
   skipAuth?: boolean
-}
-
-export function usePostData<TBody, TResponse>(
-  endpoint: string,
-  options?: UsePostDataOptions<TBody, TResponse>
-) {
-  const { skipAuth, ...mutationOptions } = options ?? {}
+  successMessage?: string
+}) {
+  const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (body: TBody) =>
-      apiFetch<TResponse>(endpoint, {
-        method: "POST",
-        body: JSON.stringify(body),
+    mutationFn: (data: BodyParams) =>
+      sendToApi<BodyParams, ResponseData>(endpoint, data, "POST", {
         skipAuth,
+        successMessage,
       }),
-    ...mutationOptions,
+    onSuccess: ({ data, message }) => {
+      queryKeysToInvalidate?.forEach((key) =>
+        queryClient.invalidateQueries({ queryKey: key })
+      )
+
+      if (showSuccessToast && message) {
+        toast.success(message)
+      }
+
+      callBackOnSuccess?.(data)
+    },
+    onError: (err: Error) => {
+      if (showErrorToast) {
+        toast.error(err.message)
+      }
+    },
   })
 }
