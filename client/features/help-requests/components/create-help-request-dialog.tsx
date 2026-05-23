@@ -12,8 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { FormRoot } from "@/components/forms/form-root"
+import { Form } from "@/components/ui/form"
 import { SelectInput } from "@/components/forms/select-input"
 import { TextInput } from "@/components/forms/text-input"
 import { TextareaInput } from "@/components/forms/textarea-input"
@@ -60,93 +59,104 @@ export function CreateHelpRequestDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(90vh,720px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
-        <DialogHeader className="px-4 pt-4">
+      <DialogContent className="flex max-h-[min(90vh,720px)] w-[calc(100%-2rem)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+        <DialogHeader className="shrink-0 space-y-1 px-6 pt-6 pb-2">
           <DialogTitle>New help request</DialogTitle>
           <DialogDescription>
             Describe what is needed. Fields match the platform request schema.
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[min(60vh,480px)] px-4">
-          <FormRoot
-            form={form}
-            onSubmit={handleSubmit}
-            className="space-y-4 py-2"
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="flex min-h-0 flex-1 flex-col"
           >
-            <TextInput name="title" label="Title" placeholder="Short summary" />
-            <TextareaInput
-              name="description"
-              label="Description"
-              placeholder="What is needed, for whom, and any urgency details"
-              rows={4}
-            />
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SelectInput
-                name="helpType"
-                label="Help type"
-                options={HELP_TYPE_OPTIONS}
-              />
-              <SelectInput
-                name="subCategory"
-                label="Sub-category"
-                options={SUB_CATEGORY_OPTIONS}
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SelectInput
-                name="priorityLevel"
-                label="Priority"
-                options={PRIORITY_OPTIONS}
-              />
-              <SelectInput
-                name="visibility"
-                label="Visibility"
-                options={VISIBILITY_OPTIONS}
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <TextInput
-                name="quantityRequired"
-                label="Quantity required"
-                type="number"
-                placeholder="1"
-              />
-              <TextInput
-                name="quantityUnit"
-                label="Unit (optional)"
-                placeholder="e.g. packs, trips"
-              />
-            </div>
-
-            <TextInput
-              name="beneficiariesCount"
-              label="Beneficiaries (optional)"
-              type="number"
-              placeholder="Number of people helped"
-            />
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Location</p>
-              <div className="grid gap-4 sm:grid-cols-2">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-2">
+              <div className="space-y-4 pb-4">
                 <TextInput
-                  name="governorate"
-                  label="Governorate"
-                  placeholder="e.g. Beirut"
+                  name="title"
+                  label="Title"
+                  placeholder="Short summary"
                 />
+                <TextareaInput
+                  name="description"
+                  label="Description"
+                  placeholder="What is needed, for whom, and any urgency details"
+                  rows={4}
+                />
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <SelectInput
+                    name="helpType"
+                    label="Help type"
+                    options={HELP_TYPE_OPTIONS}
+                  />
+                  <SelectInput
+                    name="subCategory"
+                    label="Sub-category"
+                    options={SUB_CATEGORY_OPTIONS}
+                  />
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <SelectInput
+                    name="priorityLevel"
+                    label="Priority"
+                    options={PRIORITY_OPTIONS}
+                  />
+                  <SelectInput
+                    name="visibility"
+                    label="Visibility"
+                    options={VISIBILITY_OPTIONS}
+                  />
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextInput
+                    name="quantityRequired"
+                    label="Quantity required"
+                    type="number"
+                    placeholder="1"
+                  />
+                  <TextInput
+                    name="quantityUnit"
+                    label="Unit (optional)"
+                    placeholder="e.g. packs, trips"
+                  />
+                </div>
+
                 <TextInput
-                  name="district"
-                  label="District"
-                  placeholder="e.g. Baabda"
+                  name="beneficiariesCount"
+                  label="Beneficiaries (optional)"
+                  type="number"
+                  placeholder="Number of people helped"
                 />
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Location</p>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <TextInput
+                      name="governorate"
+                      label="Governorate"
+                      placeholder="e.g. Beirut"
+                    />
+                    <TextInput
+                      name="district"
+                      label="District"
+                      placeholder="e.g. Baabda"
+                    />
+                  </div>
+                  <TextInput
+                    name="city"
+                    label="City"
+                    placeholder="e.g. Hazmieh"
+                  />
+                </div>
               </div>
-              <TextInput name="city" label="City" placeholder="e.g. Hazmieh" />
             </div>
 
-            <DialogFooter className="sticky bottom-0 -mx-4 border-t bg-popover px-4 py-4 sm:justify-end">
+            <DialogFooter className="mx-0 mb-0 shrink-0 gap-2 border-t bg-popover px-6 py-4 sm:justify-end">
               <Button
                 type="button"
                 variant="outline"
@@ -156,8 +166,8 @@ export function CreateHelpRequestDialog({
               </Button>
               <Button type="submit">Create request</Button>
             </DialogFooter>
-          </FormRoot>
-        </ScrollArea>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )
