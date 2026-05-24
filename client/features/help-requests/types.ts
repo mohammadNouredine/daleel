@@ -64,6 +64,16 @@ export type HelpRequestLocation = {
   district: string
   city: string
   street?: string
+  coordinates?: {
+    lat: number
+    lng: number
+  }
+}
+
+export type HelpRequestFinancialDetails = {
+  requiredAmount: number
+  collectedAmount?: number
+  currency: string
 }
 
 export type HelpRequest = {
@@ -80,6 +90,8 @@ export type HelpRequest = {
   status: HelpRequestStatusValue
   visibility: VisibilityValue
   isVerified: boolean
+  media?: string[]
+  financialDetails?: HelpRequestFinancialDetails
   createdAt: string
   updatedAt: string
 }
@@ -97,4 +109,6 @@ export type CreateHelpRequestInput = {
   beneficiariesCount?: number
   location: HelpRequestLocation
   visibility: VisibilityValue
+  media?: string[]
+  financialDetails?: HelpRequestFinancialDetails
 }

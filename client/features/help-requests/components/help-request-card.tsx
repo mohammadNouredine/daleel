@@ -14,6 +14,7 @@ import {
   SUB_CATEGORY_LABELS,
 } from "../constants"
 import type { HelpRequest } from "../types"
+import { HelpType } from "../types"
 import {
   getHelpTypeTagClass,
   getPriorityBadgeClass,
@@ -54,6 +55,10 @@ export function HelpRequestCard({
   ]
     .filter(Boolean)
     .join(", ")
+
+  const isFinancial = request.helpType === HelpType.FINANCIAL
+  const amountUnit =
+    request.financialDetails?.currency ?? request.quantity.unit ?? ""
 
   return (
     <Card
@@ -116,9 +121,9 @@ export function HelpRequestCard({
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">
-                Fulfilled {request.quantity.fulfilled} /{" "}
-                {request.quantity.required}
-                {request.quantity.unit ? ` ${request.quantity.unit}` : ""}
+                {isFinancial ? "Raised" : "Fulfilled"}{" "}
+                {request.quantity.fulfilled} / {request.quantity.required}
+                {amountUnit ? ` ${amountUnit}` : ""}
               </span>
               <span className={getProgressLabelClass(progress)}>
                 {progress}%

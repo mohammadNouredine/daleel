@@ -14,13 +14,12 @@ import {
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
 import { SelectInput } from "@/components/forms/select-input"
+import { PriorityPicker } from "@/components/forms/priority-picker"
 import { TextInput } from "@/components/forms/text-input"
 import { TextareaInput } from "@/components/forms/textarea-input"
 import {
   HELP_TYPE_OPTIONS,
-  PRIORITY_OPTIONS,
   SUB_CATEGORY_OPTIONS,
-  VISIBILITY_OPTIONS,
 } from "../constants"
 import {
   createHelpRequestDefaultValues,
@@ -28,7 +27,11 @@ import {
   type CreateHelpRequestFormValues,
 } from "../schemas/create-help-request.schema"
 import type { CreateHelpRequestInput } from "../types"
+import { HelpType } from "../types"
 import { mapFormToCreateInput } from "../utils/map-form-to-request"
+import { LocationMapPicker } from "./location-map-picker-lazy"
+import { ProofImagesUpload } from "./proof-images-upload"
+import { QuantityOrFinancialFields } from "./quantity-or-financial-fields"
 
 type CreateHelpRequestDialogProps = {
   open: boolean
@@ -46,15 +49,54 @@ export function CreateHelpRequestDialog({
     defaultValues: createHelpRequestDefaultValues,
   })
 
+  const helpType = form.watch("helpType")
+  const latitude = form.watch("latitude")
+  const longitude = form.watch("longitude")
+
   useEffect(() => {
     if (!open) {
+      const urls = form.getValues("proofImageUrls") ?? []
+      for (const url of urls) {
+        if (url.startsWith("blob:")) URL.revokeObjectURL(url)
+      }
       form.reset(createHelpRequestDefaultValues)
     }
   }, [open, form])
 
+  useEffect(() => {
+    if (helpType === HelpType.FINANCIAL) {
+      const current = form.getValues("quantityUnit")
+      if (!current) {
+        form.setValue("quantityUnit", "USD")
+      }
+    }
+  }, [helpType, form])
+
   const handleSubmit = (values: CreateHelpRequestFormValues) => {
     onSubmit(mapFormToCreateInput(values))
+    const urls = values.proofImageUrls ?? []
+    for (const url of urls) {
+      if (url.startsWith("blob:")) URL.revokeObjectURL(url)
+    }
     form.reset(createHelpRequestDefaultValues)
+  }
+
+  const handleLocationResolved = (payload: {
+    latitude: string
+    longitude: string
+    governorate: string
+    district: string
+    city: string
+    street?: string
+  }) => {
+    form.setValue("latitude", payload.latitude, { shouldValidate: true })
+    form.setValue("longitude", payload.longitude, { shouldValidate: true })
+    form.setValue("governorate", payload.governorate, { shouldValidate: true })
+    form.setValue("district", payload.district, { shouldValidate: true })
+    form.setValue("city", payload.city, { shouldValidate: true })
+    if (payload.street) {
+      form.setValue("street", payload.street, { shouldValidate: true })
+    }
   }
 
   return (
@@ -63,7 +105,7 @@ export function CreateHelpRequestDialog({
         <DialogHeader className="shrink-0 space-y-1 px-6 pt-6 pb-2">
           <DialogTitle>New help request</DialogTitle>
           <DialogDescription>
-            Describe what is needed. Fields match the platform request schema.
+            Describe what is needed. All requests are public while we launch.
           </DialogDescription>
         </DialogHeader>
 
@@ -99,32 +141,7 @@ export function CreateHelpRequestDialog({
                   />
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <SelectInput
-                    name="priorityLevel"
-                    label="Priority"
-                    options={PRIORITY_OPTIONS}
-                  />
-                  <SelectInput
-                    name="visibility"
-                    label="Visibility"
-                    options={VISIBILITY_OPTIONS}
-                  />
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <TextInput
-                    name="quantityRequired"
-                    label="Quantity required"
-                    type="number"
-                    placeholder="1"
-                  />
-                  <TextInput
-                    name="quantityUnit"
-                    label="Unit (optional)"
-                    placeholder="e.g. packs, trips"
-                  />
-                </div>
+                <QuantityOrFinancialFields />
 
                 <TextInput
                   name="beneficiariesCount"
@@ -133,8 +150,17 @@ export function CreateHelpRequestDialog({
                   placeholder="Number of people helped"
                 />
 
-                <div className="space-y-2">
+                <ProofImagesUpload />
+
+                <div className="space-y-3">
                   <p className="text-sm font-medium">Location</p>
+                  {open ? (
+                    <LocationMapPicker
+                      latitude={latitude}
+                      longitude={longitude}
+                      onLocationResolved={handleLocationResolved}
+                    />
+                  ) : null}
                   <div className="grid gap-4 sm:grid-cols-2">
                     <TextInput
                       name="governorate"
@@ -152,7 +178,17 @@ export function CreateHelpRequestDialog({
                     label="City"
                     placeholder="e.g. Hazmieh"
                   />
+                  <TextInput
+                    name="street"
+                    label="Street (optional)"
+                    placeholder="Filled from map when available"
+                  />
                 </div>
+
+                <PriorityPicker
+                  name="priorityLevel"
+                  description="Tap a color on the bar — from less urgent (left) to critical (right)."
+                />
               </div>
             </div>
 

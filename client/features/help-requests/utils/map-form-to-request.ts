@@ -1,21 +1,32 @@
 import {
   HelpRequestStatus,
+  HelpType,
+  Visibility,
   type CreateHelpRequestInput,
   type HelpRequest,
   type HelpTypeValue,
   type PriorityLevelValue,
   type SubCategoryValue,
-  type VisibilityValue,
 } from "../types"
 import type { CreateHelpRequestFormValues } from "../schemas/create-help-request.schema"
 
 export function mapFormToCreateInput(
   values: CreateHelpRequestFormValues
 ): CreateHelpRequestInput {
-  const beneficiaries =
-    !values.beneficiariesCount?.trim()
-      ? undefined
-      : Number(values.beneficiariesCount)
+  const beneficiaries = !values.beneficiariesCount?.trim()
+    ? undefined
+    : Number(values.beneficiariesCount)
+
+  const isFinancial = values.helpType === HelpType.FINANCIAL
+  const amount = Number(values.quantityRequired)
+  const currency = values.quantityUnit?.trim()
+
+  const lat = values.latitude?.trim()
+    ? Number(values.latitude)
+    : undefined
+  const lng = values.longitude?.trim()
+    ? Number(values.longitude)
+    : undefined
 
   return {
     title: values.title.trim(),
@@ -24,16 +35,32 @@ export function mapFormToCreateInput(
     subCategory: values.subCategory as SubCategoryValue,
     priorityLevel: values.priorityLevel as PriorityLevelValue,
     quantity: {
-      required: Number(values.quantityRequired),
-      unit: values.quantityUnit?.trim() || undefined,
+      required: amount,
+      unit: isFinancial ? currency : values.quantityUnit?.trim() || undefined,
     },
+    financialDetails: isFinancial
+      ? {
+          requiredAmount: amount,
+          collectedAmount: 0,
+          currency: currency ?? "USD",
+        }
+      : undefined,
     beneficiariesCount: beneficiaries,
     location: {
       governorate: values.governorate.trim(),
       district: values.district.trim(),
       city: values.city.trim(),
+      street: values.street?.trim() || undefined,
+      coordinates:
+        lat !== undefined &&
+        lng !== undefined &&
+        !Number.isNaN(lat) &&
+        !Number.isNaN(lng)
+          ? { lat, lng }
+          : undefined,
     },
-    visibility: values.visibility as VisibilityValue,
+    visibility: Visibility.PUBLIC,
+    media: values.proofImageUrls?.length ? values.proofImageUrls : undefined,
   }
 }
 
@@ -58,10 +85,12 @@ export function mapCreateInputToHelpRequest(
       remaining: required,
       unit: input.quantity.unit,
     },
+    financialDetails: input.financialDetails,
     beneficiariesCount: input.beneficiariesCount,
     location: input.location,
     status: HelpRequestStatus.ACTIVE,
     visibility: input.visibility,
+    media: input.media,
     isVerified: false,
     createdAt: now,
     updatedAt: now,

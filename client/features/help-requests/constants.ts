@@ -11,6 +11,28 @@ import {
   type VisibilityValue,
 } from "./types"
 
+export const FINANCIAL_CURRENCY_OPTIONS = [
+  { value: "USD", label: "US Dollar (USD)" },
+  { value: "LBP", label: "Lebanese Lira (LBP)" },
+] as const
+
+export type FinancialCurrency = (typeof FINANCIAL_CURRENCY_OPTIONS)[number]["value"]
+
+export const LEBANON_MAP_CENTER = {
+  lat: 33.8938,
+  lng: 35.5018,
+} as const
+
+export const MAX_PROOF_IMAGES = 8
+
+export const ACCEPTED_PROOF_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+] as const
+
 export const HELP_TYPE_OPTIONS: { value: HelpTypeValue; label: string }[] = [
   { value: HelpType.MATERIAL, label: "Material" },
   { value: HelpType.FINANCIAL, label: "Financial" },
