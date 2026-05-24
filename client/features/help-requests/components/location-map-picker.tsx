@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import {
   MapContainer,
   Marker,
@@ -10,7 +10,8 @@ import {
 } from "react-leaflet"
 import type { LatLng } from "leaflet"
 import L from "leaflet"
-import { Loader2, MapPin } from "lucide-react"
+import { Loader2, LocateFixed, MapPin } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { LEBANON_MAP_CENTER } from "../constants"
 import { reverseGeocode } from "../utils/geocoding"
@@ -27,17 +28,19 @@ const markerIcon = L.icon({
   shadowSize: [41, 41],
 })
 
+export type ResolvedLocationPayload = {
+  latitude: string
+  longitude: string
+  governorate: string
+  district: string
+  city: string
+  street?: string
+}
+
 type LocationMapPickerProps = {
   latitude?: string
   longitude?: string
-  onLocationResolved: (payload: {
-    latitude: string
-    longitude: string
-    governorate: string
-    district: string
-    city: string
-    street?: string
-  }) => void
+  onLocationResolved: (payload: ResolvedLocationPayload) => void
   className?: string
 }
 
@@ -50,12 +53,25 @@ function MapClickHandler({ onPick }: { onPick: (coords: LatLng) => void }) {
   return null
 }
 
-function RecenterMap({ center }: { center: [number, number] }) {
+function RecenterMap({ center, zoom }: { center: [number, number]; zoom: number }) {
   const map = useMap()
   useEffect(() => {
-    map.setView(center, map.getZoom())
-  }, [center, map])
+    map.setView(center, zoom)
+  }, [center, zoom, map])
   return null
+}
+
+function getGeolocationErrorMessage(code: number): string {
+  switch (code) {
+    case 1:
+      return "Location permission denied. Allow access or pick a point on the map."
+    case 2:
+      return "Current location unavailable. Try again or pick on the map."
+    case 3:
+      return "Location request timed out. Try again."
+    default:
+      return "Could not get your current location."
+  }
 }
 
 export function LocationMapPicker({
@@ -71,52 +87,115 @@ export function LocationMapPicker({
     return null
   })
   const [isResolving, setIsResolving] = useState(false)
+  const [isLocating, setIsLocating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const lat = latitude ? Number(latitude) : NaN
+    const lng = longitude ? Number(longitude) : NaN
+    if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+      setPin([lat, lng])
+    }
+  }, [latitude, longitude])
+
+  const resolveCoordinates = useCallback(
+    async (lat: number, lng: number) => {
+      setPin([lat, lng])
+      setIsResolving(true)
+      setError(null)
+
+      try {
+        const address = await reverseGeocode(lat, lng)
+        onLocationResolved({
+          latitude: lat.toFixed(6),
+          longitude: lng.toFixed(6),
+          governorate: address.governorate,
+          district: address.district,
+          city: address.city,
+          street: address.street,
+        })
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to resolve location"
+        )
+        onLocationResolved({
+          latitude: lat.toFixed(6),
+          longitude: lng.toFixed(6),
+          governorate: "",
+          district: "",
+          city: "",
+        })
+      } finally {
+        setIsResolving(false)
+      }
+    },
+    [onLocationResolved]
+  )
+
+  const handlePick = (coords: LatLng) => {
+    void resolveCoordinates(coords.lat, coords.lng)
+  }
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported in this browser.")
+      return
+    }
+
+    setIsLocating(true)
+    setError(null)
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setIsLocating(false)
+        void resolveCoordinates(
+          position.coords.latitude,
+          position.coords.longitude
+        )
+      },
+      (positionError) => {
+        setIsLocating(false)
+        setError(getGeolocationErrorMessage(positionError.code))
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15_000,
+        maximumAge: 0,
+      }
+    )
+  }
 
   const center: [number, number] = pin ?? [
     LEBANON_MAP_CENTER.lat,
     LEBANON_MAP_CENTER.lng,
   ]
-
-  const handlePick = async (coords: LatLng) => {
-    const lat = coords.lat
-    const lng = coords.lng
-    setPin([lat, lng])
-    setIsResolving(true)
-    setError(null)
-
-    try {
-      const address = await reverseGeocode(lat, lng)
-      onLocationResolved({
-        latitude: lat.toFixed(6),
-        longitude: lng.toFixed(6),
-        governorate: address.governorate,
-        district: address.district,
-        city: address.city,
-        street: address.street,
-      })
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to resolve location"
-      )
-      onLocationResolved({
-        latitude: lat.toFixed(6),
-        longitude: lng.toFixed(6),
-        governorate: "",
-        district: "",
-        city: "",
-      })
-    } finally {
-      setIsResolving(false)
-    }
-  }
+  const mapZoom = pin ? 14 : 8
+  const isBusy = isResolving || isLocating
 
   return (
-    <div className={cn("space-y-2", className)}>
-      <p className="flex items-center gap-2 text-xs text-muted-foreground">
-        <MapPin className="size-3.5 shrink-0" />
-        Tap the map to drop a pin and auto-fill location fields
-      </p>
+    <div className={cn("space-y-3", className)}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="flex items-center gap-2 text-xs text-muted-foreground">
+          <MapPin className="size-3.5 shrink-0" />
+          Tap the map or use your current location
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full shrink-0 sm:w-auto"
+          disabled={isBusy}
+          onClick={handleUseCurrentLocation}
+        >
+          {isLocating ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <LocateFixed className="size-4" />
+          )}
+          Use current location
+        </Button>
+      </div>
+
       <div
         className={cn(
           "relative overflow-hidden rounded-xl border border-input",
@@ -125,7 +204,7 @@ export function LocationMapPicker({
       >
         <MapContainer
           center={center}
-          zoom={pin ? 13 : 8}
+          zoom={mapZoom}
           scrollWheelZoom
           className="h-full w-full"
         >
@@ -134,17 +213,18 @@ export function LocationMapPicker({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapClickHandler onPick={handlePick} />
-          {pin ? <RecenterMap center={pin} /> : null}
+          {pin ? <RecenterMap center={pin} zoom={mapZoom} /> : null}
           {pin ? <Marker position={pin} icon={markerIcon} /> : null}
         </MapContainer>
-        {isResolving ? (
+        {isBusy ? (
           <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[1px]">
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
         ) : null}
       </div>
+
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
-      {pin && !isResolving ? (
+      {pin && !isBusy ? (
         <p className="text-xs text-muted-foreground tabular-nums">
           Pin: {pin[0].toFixed(5)}, {pin[1].toFixed(5)}
         </p>

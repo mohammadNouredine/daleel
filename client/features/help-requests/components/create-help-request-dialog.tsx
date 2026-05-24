@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Form } from "@/components/ui/form"
+import { FormSection } from "@/components/forms/form-section"
 import { SelectInput } from "@/components/forms/select-input"
 import { PriorityPicker } from "@/components/forms/priority-picker"
 import { TextInput } from "@/components/forms/text-input"
@@ -115,45 +116,54 @@ export function CreateHelpRequestDialog({
             className="flex min-h-0 flex-1 flex-col"
           >
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-2">
-              <div className="space-y-4 pb-4">
-                <TextInput
-                  name="title"
-                  label="Title"
-                  placeholder="Short summary"
-                />
-                <TextareaInput
-                  name="description"
-                  label="Description"
-                  placeholder="What is needed, for whom, and any urgency details"
-                  rows={4}
-                />
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <SelectInput
-                    name="helpType"
-                    label="Help type"
-                    options={HELP_TYPE_OPTIONS}
+              <div className="space-y-5 pb-4">
+                <FormSection
+                  title="Request details"
+                  description="What is needed and who it helps."
+                >
+                  <TextInput
+                    name="title"
+                    label="Title"
+                    placeholder="Short summary"
                   />
-                  <SelectInput
-                    name="subCategory"
-                    label="Sub-category"
-                    options={SUB_CATEGORY_OPTIONS}
+                  <TextareaInput
+                    name="description"
+                    label="Description"
+                    placeholder="What is needed, for whom, and any urgency details"
+                    rows={4}
                   />
-                </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <SelectInput
+                      name="helpType"
+                      label="Help type"
+                      options={HELP_TYPE_OPTIONS}
+                    />
+                    <SelectInput
+                      name="subCategory"
+                      label="Sub-category"
+                      options={SUB_CATEGORY_OPTIONS}
+                    />
+                  </div>
+                  <QuantityOrFinancialFields />
+                  <TextInput
+                    name="beneficiariesCount"
+                    label="Beneficiaries (optional)"
+                    type="number"
+                    placeholder="Number of people helped"
+                  />
+                </FormSection>
 
-                <QuantityOrFinancialFields />
+                <FormSection
+                  title="Supporting proof"
+                  description="Invoices, medical letters, or other documents that show this need is real."
+                >
+                  <ProofImagesUpload />
+                </FormSection>
 
-                <TextInput
-                  name="beneficiariesCount"
-                  label="Beneficiaries (optional)"
-                  type="number"
-                  placeholder="Number of people helped"
-                />
-
-                <ProofImagesUpload />
-
-                <div className="space-y-3">
-                  <p className="text-sm font-medium">Location</p>
+                <FormSection
+                  title="Location"
+                  description="Where help should be delivered or coordinated."
+                >
                   {open ? (
                     <LocationMapPicker
                       latitude={latitude}
@@ -183,12 +193,18 @@ export function CreateHelpRequestDialog({
                     label="Street (optional)"
                     placeholder="Filled from map when available"
                   />
-                </div>
+                </FormSection>
 
-                <PriorityPicker
-                  name="priorityLevel"
-                  description="Tap a color on the bar — from less urgent (left) to critical (right)."
-                />
+                <FormSection
+                  title="Urgency"
+                  description="How quickly this request needs attention."
+                >
+                  <PriorityPicker
+                    name="priorityLevel"
+                    label=""
+                    description="Tap a color on the bar — from less urgent (left) to critical (right)."
+                  />
+                </FormSection>
               </div>
             </div>
 
