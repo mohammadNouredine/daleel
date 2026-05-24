@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Button } from "@/components/ui/button"
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,94 +11,88 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Form } from "@/components/ui/form"
-import { FormSection } from "@/components/forms/form-section"
-import { SelectInput } from "@/components/forms/select-input"
-import { PriorityPicker } from "@/components/forms/priority-picker"
-import { TextInput } from "@/components/forms/text-input"
-import { TextareaInput } from "@/components/forms/textarea-input"
-import {
-  HELP_TYPE_OPTIONS,
-  SUB_CATEGORY_OPTIONS,
-} from "../constants"
+} from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
+import { FormSection } from "@/components/forms/form-section";
+import { SelectInput } from "@/components/forms/select-input";
+import { PriorityPicker } from "@/components/forms/priority-picker";
+import { TextInput } from "@/components/forms/text-input";
+import { TextareaInput } from "@/components/forms/textarea-input";
+import { HELP_TYPE_OPTIONS, SUB_CATEGORY_OPTIONS } from "../constants";
 import {
   createHelpRequestDefaultValues,
   createHelpRequestSchema,
   type CreateHelpRequestFormValues,
-} from "../schemas/create-help-request.schema"
-import type { CreateHelpRequestInput } from "../types"
-import { HelpType } from "../types"
-import { mapFormToCreateInput } from "../utils/map-form-to-request"
-import { LocationMapPicker } from "./location-map-picker-lazy"
-import { ProofImagesUpload } from "./proof-images-upload"
-import { QuantityOrFinancialFields } from "./quantity-or-financial-fields"
+} from "../schemas/create-help-request.schema";
+import { HelpType } from "../types";
+import { mapFormToCreateInput } from "../utils/map-form-to-request";
+import { LocationMapPicker } from "./location-map-picker-lazy";
+import { ProofImagesUpload } from "./proof-images-upload";
+import { QuantityOrFinancialFields } from "./quantity-or-financial-fields";
+import { useCreateHelpRequestDialogHandlers } from "./create-help-request-dialog-context";
 
 type CreateHelpRequestDialogProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSubmit: (input: CreateHelpRequestInput) => void
-}
+  open: boolean;
+};
 
 export function CreateHelpRequestDialog({
   open,
-  onOpenChange,
-  onSubmit,
 }: CreateHelpRequestDialogProps) {
+  const { onOpenChange, onSubmit } = useCreateHelpRequestDialogHandlers();
   const form = useForm<CreateHelpRequestFormValues>({
     resolver: zodResolver(createHelpRequestSchema),
     defaultValues: createHelpRequestDefaultValues,
-  })
+  });
 
-  const helpType = form.watch("helpType")
-  const latitude = form.watch("latitude")
-  const longitude = form.watch("longitude")
+  const helpType = form.watch("helpType");
+  const latitude = form.watch("latitude");
+  const longitude = form.watch("longitude");
 
   useEffect(() => {
     if (!open) {
-      const urls = form.getValues("proofImageUrls") ?? []
+      const urls = form.getValues("proofImageUrls") ?? [];
       for (const url of urls) {
-        if (url.startsWith("blob:")) URL.revokeObjectURL(url)
+        if (url.startsWith("blob:")) URL.revokeObjectURL(url);
       }
-      form.reset(createHelpRequestDefaultValues)
+      form.reset(createHelpRequestDefaultValues);
     }
-  }, [open, form])
+  }, [open, form]);
 
   useEffect(() => {
     if (helpType === HelpType.FINANCIAL) {
-      const current = form.getValues("quantityUnit")
+      const current = form.getValues("quantityUnit");
       if (!current) {
-        form.setValue("quantityUnit", "USD")
+        form.setValue("quantityUnit", "USD");
       }
     }
-  }, [helpType, form])
+  }, [helpType, form]);
 
   const handleSubmit = (values: CreateHelpRequestFormValues) => {
-    onSubmit(mapFormToCreateInput(values))
-    const urls = values.proofImageUrls ?? []
+    onSubmit(mapFormToCreateInput(values));
+    const urls = values.proofImageUrls ?? [];
     for (const url of urls) {
-      if (url.startsWith("blob:")) URL.revokeObjectURL(url)
+      if (url.startsWith("blob:")) URL.revokeObjectURL(url);
     }
-    form.reset(createHelpRequestDefaultValues)
-  }
+    form.reset(createHelpRequestDefaultValues);
+  };
 
   const handleLocationResolved = (payload: {
-    latitude: string
-    longitude: string
-    governorate: string
-    district: string
-    city: string
-    street?: string
+    latitude: string;
+    longitude: string;
+    governorate: string;
+    district: string;
+    city: string;
+    street?: string;
   }) => {
-    form.setValue("latitude", payload.latitude, { shouldValidate: true })
-    form.setValue("longitude", payload.longitude, { shouldValidate: true })
-    form.setValue("governorate", payload.governorate, { shouldValidate: true })
-    form.setValue("district", payload.district, { shouldValidate: true })
-    form.setValue("city", payload.city, { shouldValidate: true })
+    form.setValue("latitude", payload.latitude, { shouldValidate: true });
+    form.setValue("longitude", payload.longitude, { shouldValidate: true });
+    form.setValue("governorate", payload.governorate, { shouldValidate: true });
+    form.setValue("district", payload.district, { shouldValidate: true });
+    form.setValue("city", payload.city, { shouldValidate: true });
     if (payload.street) {
-      form.setValue("street", payload.street, { shouldValidate: true })
+      form.setValue("street", payload.street, { shouldValidate: true });
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -222,5 +216,5 @@ export function CreateHelpRequestDialog({
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -18,6 +18,7 @@ import {
   type HelpRequestFilters,
 } from "../utils/request-filters"
 import { CreateHelpRequestDialog } from "./create-help-request-dialog"
+import { CreateHelpRequestDialogProvider } from "./create-help-request-dialog-context"
 import { HelpRequestCard } from "./help-request-card"
 import { HelpRequestFiltersBar } from "./help-request-filters"
 import {
@@ -145,11 +146,12 @@ export function HelpRequestsView() {
       </div>
 
       {canWrite ? (
-        <CreateHelpRequestDialog
-          open={dialogOpen}
+        <CreateHelpRequestDialogProvider
           onOpenChange={setDialogOpen}
           onSubmit={handleCreate}
-        />
+        >
+          <CreateHelpRequestDialog open={dialogOpen} />
+        </CreateHelpRequestDialogProvider>
       ) : null}
     </PageShell>
   )

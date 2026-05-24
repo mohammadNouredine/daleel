@@ -89,7 +89,7 @@ export function ProofImagesUpload() {
                     {urls.map((url, index) => (
                       <li
                         key={`${url}-${index}`}
-                        className="group relative aspect-[4/3] overflow-hidden rounded-lg border border-border bg-muted"
+                        className="group relative aspect-4/3 overflow-hidden rounded-lg border border-border bg-muted"
                       >
                         <img
                           src={url}
