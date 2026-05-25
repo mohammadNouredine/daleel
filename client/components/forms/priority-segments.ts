@@ -62,5 +62,7 @@ export function getPriorityFromPointer(
   segmentCount = PRIORITY_SEGMENTS.length
 ): number {
   const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width))
-  return Math.round(ratio * (segmentCount - 1))
+  // Floor buckets: each segment owns [i/n, (i+1)/n) so clicks don't jump ahead at dividers
+  const index = Math.floor(ratio * segmentCount)
+  return Math.min(segmentCount - 1, Math.max(0, index))
 }
