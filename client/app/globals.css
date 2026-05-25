@@ -127,3 +127,19 @@
     @apply font-sans;
     }
 }
+
+@keyframes priority-shimmer {
+  0%,
+  100% {
+    background-position: 200% 0;
+  }
+  50% {
+    background-position: -200% 0;
+  }
+}
+
+@layer utilities {
+  .animate-priority-shimmer {
+    animation: priority-shimmer 2.5s ease-in-out infinite;
+  }
+}
