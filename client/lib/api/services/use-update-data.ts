@@ -13,11 +13,11 @@ type ApiMutationResponse<TData> = {
   message: string
 }
 
-export function usePostData<BodyParams, ResponseData = unknown>({
+export function useUpdateData<BodyParams, ResponseData = unknown>({
+  queryKeysToInvalidate,
   endpoint,
   showSuccessToast = true,
   callBackOnSuccess,
-  queryKeysToInvalidate,
 }: {
   queryKeysToInvalidate?: QueryKey[]
   endpoint: string
@@ -28,7 +28,7 @@ export function usePostData<BodyParams, ResponseData = unknown>({
 
   return useMutation({
     mutationFn: (data: BodyParams) =>
-      sendToApi<ApiMutationResponse<ResponseData>>(endpoint, data, "POST"),
+      sendToApi<ApiMutationResponse<ResponseData>>(endpoint, data, "PATCH"),
     onSuccess: ({ data, message }) => {
       queryKeysToInvalidate?.forEach((key) =>
         queryClient.invalidateQueries({ queryKey: key })

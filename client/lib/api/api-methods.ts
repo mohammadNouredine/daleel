@@ -1,99 +1,57 @@
-import { ApiError, apiFetch, resolveUrl } from "./client"
-import { getAuthToken } from "./auth-token"
+import axiosClient from "@/lib/axios-client"
 
-export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
-
-export type ApiSuccessResult<TData> = {
-  data: TData
-  message: string
-  token: string | null
-}
-
-type SendToApiOptions = {
-  skipAuth?: boolean
-  successMessage?: string
-}
-
-function extractToken(
-  response: Response,
-  body: Record<string, unknown> | undefined
-): string | null {
-  const headerToken = response.headers.get("set-auth-token")
-  const bodyToken =
-    body && typeof body.token === "string" ? body.token : null
-  return headerToken ?? bodyToken ?? null
-}
-
-function extractSuccessMessage(
-  body: Record<string, unknown> | undefined,
-  fallback: string
-): string {
-  if (!body) return fallback
-  if (typeof body.message === "string") return body.message
-  return fallback
-}
-
-export async function sendToApi<TBody, TData>(
+export const getFromApi = async <TData = unknown>(
   endpoint: string,
-  data: TBody,
-  method: HttpMethod = "POST",
-  options: SendToApiOptions = {}
-): Promise<ApiSuccessResult<TData>> {
-  const { skipAuth = false, successMessage = "" } = options
-
-  if (method === "GET") {
-    const result = await apiFetch<TData>(endpoint, { skipAuth })
-    return {
-      data: result,
-      message: successMessage,
-      token: null,
-    }
-  }
-
-  const headers = new Headers({ "Content-Type": "application/json" })
-
-  if (!skipAuth) {
-    const token = getAuthToken()
-    if (token) headers.set("Authorization", `Bearer ${token}`)
-  }
-
-  const response = await fetch(resolveUrl(endpoint), {
-    method,
-    headers,
-    body: JSON.stringify(data),
-    credentials: "include",
-  })
-
-  let parsed: Record<string, unknown> | undefined
+  withoutPrefix = true,
+  params?: Record<string, unknown>
+): Promise<TData> => {
   try {
-    parsed = (await response.json()) as Record<string, unknown>
-  } catch {
-    parsed = undefined
-  }
-
-  if (!response.ok) {
-    const record = parsed
-    let message = response.statusText
-    if (record) {
-      const msg = record.message
-      if (typeof msg === "string") message = msg
-      else if (Array.isArray(msg)) message = msg.join(", ")
+    const result = await axiosClient.get<TData>(
+      withoutPrefix ? endpoint : endpoint,
+      { params }
+    )
+    const body = result.data as { error?: string }
+    if (body && typeof body === "object" && "error" in body && body.error) {
+      throw new Error(body.error)
     }
-    throw new ApiError(message, response.status, parsed)
+    return result.data
+  } catch (error: unknown) {
+    const axiosError = error as {
+      response?: { data?: { message?: string } }
+    }
+    throw new Error(
+      axiosError.response?.data?.message ?? "Cannot load data"
+    )
   }
+}
 
-  const token = extractToken(response, parsed)
-  const message = extractSuccessMessage(parsed, successMessage)
+export const sendToApi = async <TData = unknown>(
+  endpoint: string,
+  data: unknown,
+  method: "POST" | "PATCH" | "DELETE",
+  withoutPrefix = true
+): Promise<TData> => {
+  try {
+    const url = withoutPrefix ? endpoint : endpoint
+    let result
 
-  const responseData = (
-    parsed
-      ? { ...parsed, ...(token ? { token } : {}) }
-      : {}
-  ) as TData
+    if (method === "POST") {
+      result = await axiosClient.post<TData>(url, data)
+    } else if (method === "PATCH") {
+      result = await axiosClient.patch<TData>(url, data)
+    } else {
+      result = await axiosClient.delete<TData>(url, { params: data })
+    }
 
-  return {
-    data: responseData,
-    message,
-    token,
+    return result.data
+  } catch (error: unknown) {
+    const axiosError = error as {
+      response?: { data?: { error?: string; message?: string } }
+    }
+    throw new Error(
+      axiosError.response?.data?.error ??
+        axiosError.response?.data?.message ??
+        "Cannot send request"
+    )
   }
 }

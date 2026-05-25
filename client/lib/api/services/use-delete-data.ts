@@ -8,28 +8,35 @@ import {
 import toast from "react-hot-toast"
 import { sendToApi } from "../api-methods"
 
-type ApiMutationResponse<TData> = {
-  data: TData
+export interface DeleteDataParams {
+  additionalEndpoint?: string
+}
+
+type ApiMutationResponse = {
   message: string
 }
 
-export function usePostData<BodyParams, ResponseData = unknown>({
+export function useDeleteData<BodyParams, ResponseData = unknown>({
+  queryKeysToInvalidate,
   endpoint,
   showSuccessToast = true,
   callBackOnSuccess,
-  queryKeysToInvalidate,
 }: {
   queryKeysToInvalidate?: QueryKey[]
   endpoint: string
   showSuccessToast?: boolean
-  callBackOnSuccess?: (data: ResponseData) => void
+  callBackOnSuccess?: () => void
 }) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: BodyParams) =>
-      sendToApi<ApiMutationResponse<ResponseData>>(endpoint, data, "POST"),
-    onSuccess: ({ data, message }) => {
+    mutationFn: async (data?: BodyParams & DeleteDataParams) => {
+      const additionalEndpoint = data?.additionalEndpoint ?? ""
+      void (0 as unknown as ResponseData)
+      const fullEndpoint = `${endpoint}${additionalEndpoint}`
+      return sendToApi<ApiMutationResponse>(fullEndpoint, data, "DELETE")
+    },
+    onSuccess: ({ message }) => {
       queryKeysToInvalidate?.forEach((key) =>
         queryClient.invalidateQueries({ queryKey: key })
       )
@@ -38,7 +45,7 @@ export function usePostData<BodyParams, ResponseData = unknown>({
         toast.success(message)
       }
 
-      callBackOnSuccess?.(data)
+      callBackOnSuccess?.()
     },
     onError: (err: Error) => {
       toast.error(err.message)
