@@ -1,46 +1,47 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
   HELP_TYPE_LABELS,
   PRIORITY_LABELS,
   STATUS_LABELS,
   SUB_CATEGORY_LABELS,
-} from "../constants"
-import type { HelpRequest } from "../types"
+} from "../constants";
+import type { HelpRequest } from "../types";
 import {
-  getHelpTypeTagClass,
   getPriorityBadgeClass,
   getStatusBadgeClass,
-  getSubCategoryTagClass,
-} from "../utils/request-visuals"
-import { getNeedsCardSummary } from "../utils/request-needs"
-import { HandHelping, MapPin, Pencil, Settings2, Trash2, Users, BadgeCheck } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { RequestNeedsProgress } from "./request-needs-progress"
-import { HelpRequestDetailDialog } from "./help-request-detail-dialog"
+} from "../utils/request-visuals";
+import { getNeedsCardSummary } from "../utils/request-needs";
+import {
+  HandHelping,
+  MapPin,
+  Pencil,
+  Settings2,
+  Trash2,
+  Users,
+  BadgeCheck,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { RequestNeedsProgress } from "./request-needs-progress";
+import { HelpRequestDetailDialog } from "./help-request-detail-dialog";
 
 type HelpRequestCardProps = {
-  request: HelpRequest
-  variant?: "active" | "archive"
-  canEdit?: boolean
-  canManage?: boolean
-  canDelete?: boolean
-  onEdit?: () => void
-  onManage?: () => void
-  onDelete?: () => void
-}
+  request: HelpRequest;
+  variant?: "active" | "archive";
+  canEdit?: boolean;
+  canManage?: boolean;
+  canDelete?: boolean;
+  onEdit?: () => void;
+  onManage?: () => void;
+  onDelete?: () => void;
+};
 
 function stopCardNavigation(event: React.MouseEvent) {
-  event.stopPropagation()
+  event.stopPropagation();
 }
 
 export function HelpRequestCard({
@@ -53,9 +54,9 @@ export function HelpRequestCard({
   onManage,
   onDelete,
 }: HelpRequestCardProps) {
-  const [detailOpen, setDetailOpen] = useState(false)
-  const isArchive = variant === "archive"
-  const summary = getNeedsCardSummary(request.needs)
+  const [detailOpen, setDetailOpen] = useState(false);
+  const isArchive = variant === "archive";
+  const summary = getNeedsCardSummary(request.needs);
 
   const locationLabel = [
     request.location.city,
@@ -63,18 +64,18 @@ export function HelpRequestCard({
     request.location.governorate,
   ]
     .filter(Boolean)
-    .join(", ")
+    .join(", ");
 
-  const showOwnerActions = canEdit || canManage || canDelete
+  const showOwnerActions = canEdit || canManage || canDelete;
 
-  const openDetails = () => setDetailOpen(true)
+  const openDetails = () => setDetailOpen(true);
 
   return (
     <>
       <Card
         className={cn(
           "transition-shadow hover:shadow-md",
-          isArchive && "border-dashed bg-muted/30 opacity-90"
+          isArchive && "border-dashed bg-muted/30 opacity-90",
         )}
       >
         <div
@@ -84,8 +85,8 @@ export function HelpRequestCard({
           onClick={openDetails}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault()
-              openDetails()
+              event.preventDefault();
+              openDetails();
             }
           }}
           aria-label={`View details for ${request.title}`}
@@ -127,25 +128,6 @@ export function HelpRequestCard({
           </CardHeader>
 
           <CardContent className="space-y-3 pt-0">
-            <div className="flex flex-wrap gap-2 text-xs font-medium">
-              <span
-                className={cn(
-                  "rounded-md px-2 py-1",
-                  getHelpTypeTagClass(request.helpType)
-                )}
-              >
-                {HELP_TYPE_LABELS[request.helpType]}
-              </span>
-              <span
-                className={cn(
-                  "rounded-md px-2 py-1",
-                  getSubCategoryTagClass()
-                )}
-              >
-                {SUB_CATEGORY_LABELS[request.subCategory]}
-              </span>
-            </div>
-
             <RequestNeedsProgress
               needs={request.needs}
               variant={variant}
@@ -164,6 +146,11 @@ export function HelpRequestCard({
                 </span>
               ) : null}
             </div>
+
+            <p className="text-xs text-muted-foreground">
+              {HELP_TYPE_LABELS[request.helpType]} ·{" "}
+              {SUB_CATEGORY_LABELS[request.subCategory]}
+            </p>
           </CardContent>
         </div>
 
@@ -231,5 +218,5 @@ export function HelpRequestCard({
         onOpenChange={setDetailOpen}
       />
     </>
-  )
+  );
 }

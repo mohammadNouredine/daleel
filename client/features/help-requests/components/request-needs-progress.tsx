@@ -102,6 +102,25 @@ export function RequestNeedsProgress({
     (line) => line.fulfilled >= line.required
   )
 
+  if (needs.length === 0) {
+    if (variant === "archive") {
+      return (
+        <p className="text-xs text-muted-foreground">
+          No itemized needs — see description
+        </p>
+      )
+    }
+    if (compact) {
+      return null
+    }
+    return (
+      <p className="text-sm text-muted-foreground">
+        No itemized needs on this request. Read the description for what help
+        is required.
+      </p>
+    )
+  }
+
   if (variant === "archive") {
     return (
       <p className="text-xs text-muted-foreground">

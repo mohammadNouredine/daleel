@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Dialog,
@@ -6,28 +6,23 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { cn } from "@/lib/utils"
-import { formatWhatsAppUrl } from "@/components/forms/Phone/phone-utils"
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
+import { formatWhatsAppUrl } from "@/components/forms/Phone/phone-utils";
+import { HELP_TYPE_LABELS, SUB_CATEGORY_LABELS } from "../constants";
+import type { HelpRequest } from "../types";
 import {
-  HELP_TYPE_LABELS,
-  SUB_CATEGORY_LABELS,
-} from "../constants"
-import type { HelpRequest } from "../types"
-import {
-  getHelpTypeTagClass,
   getPriorityDialogAccentClass,
   getPriorityDialogHeaderTintClass,
-  getSubCategoryTagClass,
-} from "../utils/request-visuals"
-import { BadgeCheck, MapPin, MessageCircle, Phone, Users } from "lucide-react"
-import { RequestNeedsProgress } from "./request-needs-progress"
+} from "../utils/request-visuals";
+import { BadgeCheck, MapPin, MessageCircle, Phone, Users } from "lucide-react";
+import { RequestNeedsProgress } from "./request-needs-progress";
 
 type HelpRequestDetailDialogProps = {
-  request: HelpRequest
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}
+  request: HelpRequest;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
 export function HelpRequestDetailDialog({
   request,
@@ -41,24 +36,24 @@ export function HelpRequestDetailDialog({
     request.location.street,
   ]
     .filter(Boolean)
-    .join(", ")
+    .join(", ");
 
-  const accentClass = getPriorityDialogAccentClass(request.priorityLevel)
-  const headerTint = getPriorityDialogHeaderTintClass(request.priorityLevel)
+  const accentClass = getPriorityDialogAccentClass(request.priorityLevel);
+  const headerTint = getPriorityDialogHeaderTintClass(request.priorityLevel);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
           "flex max-h-[min(90vh,720px)] max-w-lg flex-col gap-0 overflow-hidden border-l-4 p-0 sm:max-w-lg",
-          accentClass
+          accentClass,
         )}
       >
         <DialogHeader
           className={cn("shrink-0 space-y-2 px-6 pt-6 pb-3", headerTint)}
         >
           <div className="flex items-start gap-2">
-            <DialogTitle className="flex-1 text-left leading-snug">
+            <DialogTitle className=" text-left leading-snug">
               {request.title}
             </DialogTitle>
             {request.isVerified ? (
@@ -76,27 +71,8 @@ export function HelpRequestDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6 pt-4">
           <div className="space-y-5">
-            <div className="flex flex-wrap gap-2 text-xs font-medium">
-              <span
-                className={cn(
-                  "rounded-md px-2 py-1",
-                  getHelpTypeTagClass(request.helpType)
-                )}
-              >
-                {HELP_TYPE_LABELS[request.helpType]}
-              </span>
-              <span
-                className={cn(
-                  "rounded-md px-2 py-1",
-                  getSubCategoryTagClass()
-                )}
-              >
-                {SUB_CATEGORY_LABELS[request.subCategory]}
-              </span>
-            </div>
-
             <RequestNeedsProgress needs={request.needs} />
 
             <div className="space-y-2 text-sm text-muted-foreground">
@@ -111,7 +87,7 @@ export function HelpRequestDetailDialog({
                 </p>
               ) : null}
               {request.contactPhone ? (
-                <div className="space-y-1.5">
+                <div className="flex flex-col gap-2">
                   <p className="inline-flex items-center gap-2">
                     <Phone className="size-4 shrink-0" />
                     <a
@@ -122,6 +98,7 @@ export function HelpRequestDetailDialog({
                       {request.contactPhone}
                     </a>
                   </p>
+
                   <p className="inline-flex items-center gap-2">
                     <MessageCircle className="size-4 shrink-0" />
                     <a
@@ -137,9 +114,14 @@ export function HelpRequestDetailDialog({
                 </div>
               ) : null}
             </div>
+
+            <p className="text-xs text-muted-foreground">
+              {HELP_TYPE_LABELS[request.helpType]} ·{" "}
+              {SUB_CATEGORY_LABELS[request.subCategory]}
+            </p>
           </div>
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

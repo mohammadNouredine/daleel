@@ -12,6 +12,7 @@ import {
 } from "../types"
 import type { CreateHelpRequestFormValues } from "../schemas/create-help-request.schema"
 import type { NeedLineFormValue } from "../schemas/need-line.schema"
+import { isFilledNeedLine } from "../schemas/need-line.schema"
 import {
   splitContactPhone,
   formatContactPhone,
@@ -27,7 +28,7 @@ import {
 function mapFormNeedLines(
   lines: NeedLineFormValue[]
 ): CreateHelpRequestNeedInput[] {
-  return lines.map((line) => ({
+  return lines.filter(isFilledNeedLine).map((line) => ({
     id: line.id,
     label: line.label.trim(),
     required: Number(line.required),

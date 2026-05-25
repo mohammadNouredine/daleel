@@ -19,9 +19,7 @@ export const createHelpRequestSchema = z.object({
   helpType: z.enum(helpTypeValues, "Select a help type"),
   subCategory: z.enum(subCategoryValues, "Select a sub-category"),
   priorityLevel: z.enum(priorityValues),
-  needLines: z
-    .array(needLineFormSchema)
-    .min(1, "Add at least one item or goal"),
+  needLines: z.array(needLineFormSchema),
   governorate: z.string().min(1, "Governorate is required"),
   district: z.string().min(1, "District is required"),
   city: z.string().min(1, "City is required"),
@@ -62,7 +60,7 @@ export const createHelpRequestDefaultValues: CreateHelpRequestFormValues = {
   helpType: HelpType.MATERIAL,
   subCategory: SubCategory.FOOD,
   priorityLevel: PriorityLevel.HIGH,
-  needLines: [createEmptyNeedLine(HelpType.MATERIAL)],
+  needLines: [],
   governorate: "",
   district: "",
   city: "",

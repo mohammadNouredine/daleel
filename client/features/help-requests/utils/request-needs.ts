@@ -80,7 +80,7 @@ export function getNeedsCardSummary(needs: HelpRequestNeedLine[]): string {
   const remaining = needs.filter((line) => getNeedRemaining(line) > 0)
 
   if (needs.length === 0) {
-    return "No needs listed"
+    return "Described in request details"
   }
 
   if (progress.isFullyFulfilled) {
