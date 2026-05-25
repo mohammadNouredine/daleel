@@ -10,7 +10,7 @@ import {
 export const MOCK_HELP_REQUESTS: HelpRequest[] = [
   {
     _id: "hr_001",
-    createdBy: "user_1",
+    createdBy: "mock_user_1",
     title: "Baby formula and diapers",
     description:
       "Family displaced from the south needs infant formula (stage 1) and diapers size 3 for two children under 2 years old.",

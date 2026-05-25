@@ -25,17 +25,30 @@ import {
   getSubCategoryTagClass,
   getVerifiedBadgeClass,
 } from "../utils/request-visuals"
-import { MapPin, Users } from "lucide-react"
+import { MapPin, Pencil, Settings2, Trash2, Users } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 type HelpRequestCardProps = {
   request: HelpRequest
   /** Active list: focus on what still needs help. Archive: show closure status. */
   variant?: "active" | "archive"
+  canEdit?: boolean
+  canManage?: boolean
+  canDelete?: boolean
+  onEdit?: () => void
+  onManage?: () => void
+  onDelete?: () => void
 }
 
 export function HelpRequestCard({
   request,
   variant = "active",
+  canEdit = false,
+  canManage = false,
+  canDelete = false,
+  onEdit,
+  onManage,
+  onDelete,
 }: HelpRequestCardProps) {
   const isArchive = variant === "archive"
   const progress =
@@ -59,6 +72,8 @@ export function HelpRequestCard({
   const isFinancial = request.helpType === HelpType.FINANCIAL
   const amountUnit =
     request.financialDetails?.currency ?? request.quantity.unit ?? ""
+
+  const showActions = canEdit || canManage || canDelete
 
   return (
     <Card
@@ -169,6 +184,47 @@ export function HelpRequestCard({
             </span>
           ) : null}
         </div>
+
+        {showActions ? (
+          <div className="flex flex-wrap gap-2 border-t border-border/60 pt-3">
+            {canEdit ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8"
+                onClick={onEdit}
+              >
+                <Pencil className="size-3.5" />
+                Edit
+              </Button>
+            ) : null}
+            {canManage ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8"
+                onClick={onManage}
+              >
+                <Settings2 className="size-3.5" />
+                Manage
+              </Button>
+            ) : null}
+            {canDelete ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={onDelete}
+              >
+                <Trash2 className="size-3.5" />
+                Delete
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   )

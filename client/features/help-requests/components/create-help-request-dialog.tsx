@@ -25,7 +25,10 @@ import {
   type CreateHelpRequestFormValues,
 } from "../schemas/create-help-request.schema";
 import { HelpType } from "../types";
-import { mapFormToCreateInput } from "../utils/map-form-to-request";
+import {
+  mapFormToCreateInput,
+  mapHelpRequestToFormValues,
+} from "../utils/map-form-to-request";
 import { LocationMapPicker } from "./location-map-picker-lazy";
 import { ProofImagesUpload } from "./proof-images-upload";
 import { QuantityOrFinancialFields } from "./quantity-or-financial-fields";
@@ -38,7 +41,9 @@ type CreateHelpRequestDialogProps = {
 export function CreateHelpRequestDialog({
   open,
 }: CreateHelpRequestDialogProps) {
-  const { onOpenChange, onSubmit } = useCreateHelpRequestDialogHandlers();
+  const { mode, editingRequest, onOpenChange, onSubmit } =
+    useCreateHelpRequestDialogHandlers();
+  const isEdit = mode === "edit";
   const form = useForm<CreateHelpRequestFormValues>({
     resolver: zodResolver(createHelpRequestSchema),
     defaultValues: createHelpRequestDefaultValues,
@@ -54,9 +59,16 @@ export function CreateHelpRequestDialog({
       for (const url of urls) {
         if (url.startsWith("blob:")) URL.revokeObjectURL(url);
       }
-      form.reset(createHelpRequestDefaultValues);
+      return;
     }
-  }, [open, form]);
+
+    if (isEdit && editingRequest) {
+      form.reset(mapHelpRequestToFormValues(editingRequest));
+      return;
+    }
+
+    form.reset(createHelpRequestDefaultValues);
+  }, [open, isEdit, editingRequest, form]);
 
   useEffect(() => {
     if (helpType === HelpType.FINANCIAL) {
@@ -73,7 +85,9 @@ export function CreateHelpRequestDialog({
     for (const url of urls) {
       if (url.startsWith("blob:")) URL.revokeObjectURL(url);
     }
-    form.reset(createHelpRequestDefaultValues);
+    if (!isEdit) {
+      form.reset(createHelpRequestDefaultValues);
+    }
   };
 
   const handleLocationResolved = (payload: {
@@ -98,9 +112,13 @@ export function CreateHelpRequestDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[min(90vh,720px)] w-[calc(100%-2rem)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
         <DialogHeader className="shrink-0 space-y-1 px-6 pt-6 pb-2">
-          <DialogTitle>New help request</DialogTitle>
+          <DialogTitle>
+            {isEdit ? "Edit help request" : "New help request"}
+          </DialogTitle>
           <DialogDescription>
-            Describe what is needed. All requests are public while we launch.
+            {isEdit
+              ? "Update the request details. Progress (fulfilled amount) is managed separately."
+              : "Describe what is needed. All requests are public while we launch."}
           </DialogDescription>
         </DialogHeader>
 
@@ -210,7 +228,9 @@ export function CreateHelpRequestDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit">Create request</Button>
+              <Button type="submit">
+                {isEdit ? "Save changes" : "Create request"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
