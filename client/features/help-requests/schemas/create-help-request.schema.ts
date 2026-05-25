@@ -34,6 +34,14 @@ export const createHelpRequestSchema = z
     longitude: z.string().optional(),
     beneficiariesCount: z.string().optional(),
     proofImageUrls: z.array(z.string()).max(8).optional(),
+    phoneCode: z.string().min(1, "Select a country code"),
+    phoneNumber: z
+      .string()
+      .min(1, "Phone number is required")
+      .refine((v) => {
+        const digits = v.replace(/\D/g, "")
+        return digits.length >= 6 && digits.length <= 15
+      }, "Enter a valid phone number (6–15 digits)"),
   })
   .superRefine((data, ctx) => {
     if (data.helpType === HelpType.FINANCIAL) {
@@ -68,4 +76,6 @@ export const createHelpRequestDefaultValues: CreateHelpRequestFormValues = {
   longitude: "",
   beneficiariesCount: "",
   proofImageUrls: [],
+  phoneCode: "+961",
+  phoneNumber: "",
 }

@@ -17,6 +17,7 @@ import { FormSection } from "@/components/forms/form-section";
 import { SelectInput } from "@/components/forms/select-input";
 import { PriorityPicker } from "@/components/forms/priority-picker";
 import { TextInput } from "@/components/forms/text-input";
+import { PhoneInput } from "@/components/forms/Phone/phone-input";
 import { TextareaInput } from "@/components/forms/textarea-input";
 import { HELP_TYPE_OPTIONS, SUB_CATEGORY_OPTIONS } from "../constants";
 import {
@@ -162,6 +163,11 @@ export function CreateHelpRequestDialog({
                     label="Beneficiaries (optional)"
                     type="number"
                     placeholder="Number of people helped"
+                  />
+                  <PhoneInput
+                    label="Contact phone"
+                    description="Reachable number for coordinators or donors."
+                    phonePlaceholder="71 123 456"
                   />
                 </FormSection>
 

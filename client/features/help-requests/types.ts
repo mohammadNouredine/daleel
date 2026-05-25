@@ -92,6 +92,7 @@ export type HelpRequest = {
   isVerified: boolean
   media?: string[]
   financialDetails?: HelpRequestFinancialDetails
+  contactPhone?: string
   createdAt: string
   updatedAt: string
 }
@@ -111,4 +112,5 @@ export type CreateHelpRequestInput = {
   visibility: VisibilityValue
   media?: string[]
   financialDetails?: HelpRequestFinancialDetails
+  contactPhone?: string
 }

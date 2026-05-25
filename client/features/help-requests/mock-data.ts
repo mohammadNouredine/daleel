@@ -27,6 +27,7 @@ export const MOCK_HELP_REQUESTS: HelpRequest[] = [
     status: HelpRequestStatus.PARTIALLY_FULFILLED,
     visibility: Visibility.PUBLIC,
     isVerified: true,
+    contactPhone: "+96170123456",
     createdAt: "2026-05-20T10:00:00.000Z",
     updatedAt: "2026-05-22T14:30:00.000Z",
   },

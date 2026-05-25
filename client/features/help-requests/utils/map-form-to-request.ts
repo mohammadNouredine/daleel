@@ -7,16 +7,20 @@ import {
   type HelpTypeValue,
   type PriorityLevelValue,
   type SubCategoryValue,
-} from "../types"
-import type { CreateHelpRequestFormValues } from "../schemas/create-help-request.schema"
+} from "../types";
+import type { CreateHelpRequestFormValues } from "../schemas/create-help-request.schema";
+import {
+  splitContactPhone,
+  formatContactPhone,
+} from "@/components/forms/Phone/phone-utils";
 
 export function mapHelpRequestToFormValues(
-  request: HelpRequest
+  request: HelpRequest,
 ): CreateHelpRequestFormValues {
-  const isFinancial = request.helpType === HelpType.FINANCIAL
+  const isFinancial = request.helpType === HelpType.FINANCIAL;
   const amount = isFinancial
     ? (request.financialDetails?.requiredAmount ?? request.quantity.required)
-    : request.quantity.required
+    : request.quantity.required;
 
   return {
     title: request.title,
@@ -42,30 +46,31 @@ export function mapHelpRequestToFormValues(
       ? String(request.beneficiariesCount)
       : "",
     proofImageUrls: request.media ?? [],
-  }
+    ...splitContactPhone(request.contactPhone),
+  };
 }
 
 export function applyEditInputToHelpRequest(
   existing: HelpRequest,
-  input: CreateHelpRequestInput
+  input: CreateHelpRequestInput,
 ): HelpRequest {
-  const now = new Date().toISOString()
-  const required = input.quantity.required
-  const fulfilled = Math.min(existing.quantity.fulfilled, required)
-  const remaining = Math.max(0, required - fulfilled)
+  const now = new Date().toISOString();
+  const required = input.quantity.required;
+  const fulfilled = Math.min(existing.quantity.fulfilled, required);
+  const remaining = Math.max(0, required - fulfilled);
 
-  let status = existing.status
+  let status = existing.status;
   if (
     existing.status === HelpRequestStatus.ACTIVE ||
     existing.status === HelpRequestStatus.PARTIALLY_FULFILLED ||
     existing.status === HelpRequestStatus.FULFILLED
   ) {
     if (fulfilled >= required) {
-      status = HelpRequestStatus.FULFILLED
+      status = HelpRequestStatus.FULFILLED;
     } else if (fulfilled > 0) {
-      status = HelpRequestStatus.PARTIALLY_FULFILLED
+      status = HelpRequestStatus.PARTIALLY_FULFILLED;
     } else {
-      status = HelpRequestStatus.ACTIVE
+      status = HelpRequestStatus.ACTIVE;
     }
   }
 
@@ -92,30 +97,31 @@ export function applyEditInputToHelpRequest(
     location: input.location,
     visibility: input.visibility,
     media: input.media,
+    contactPhone: input.contactPhone,
     updatedAt: now,
     status,
-  }
+  };
 }
 
 export function applyFulfillmentAdjustment(
   request: HelpRequest,
-  delta: number
+  delta: number,
 ): HelpRequest {
-  const required = request.quantity.required
+  const required = request.quantity.required;
   const fulfilled = Math.max(
     0,
-    Math.min(required, request.quantity.fulfilled + delta)
-  )
-  const remaining = Math.max(0, required - fulfilled)
-  const now = new Date().toISOString()
+    Math.min(required, request.quantity.fulfilled + delta),
+  );
+  const remaining = Math.max(0, required - fulfilled);
+  const now = new Date().toISOString();
 
-  let status = request.status
+  let status = request.status;
   if (fulfilled >= required) {
-    status = HelpRequestStatus.FULFILLED
+    status = HelpRequestStatus.FULFILLED;
   } else if (fulfilled > 0) {
-    status = HelpRequestStatus.PARTIALLY_FULFILLED
+    status = HelpRequestStatus.PARTIALLY_FULFILLED;
   } else {
-    status = HelpRequestStatus.ACTIVE
+    status = HelpRequestStatus.ACTIVE;
   }
 
   return {
@@ -134,26 +140,22 @@ export function applyFulfillmentAdjustment(
       : undefined,
     status,
     updatedAt: now,
-  }
+  };
 }
 
 export function mapFormToCreateInput(
-  values: CreateHelpRequestFormValues
+  values: CreateHelpRequestFormValues,
 ): CreateHelpRequestInput {
   const beneficiaries = !values.beneficiariesCount?.trim()
     ? undefined
-    : Number(values.beneficiariesCount)
+    : Number(values.beneficiariesCount);
 
-  const isFinancial = values.helpType === HelpType.FINANCIAL
-  const amount = Number(values.quantityRequired)
-  const currency = values.quantityUnit?.trim()
+  const isFinancial = values.helpType === HelpType.FINANCIAL;
+  const amount = Number(values.quantityRequired);
+  const currency = values.quantityUnit?.trim();
 
-  const lat = values.latitude?.trim()
-    ? Number(values.latitude)
-    : undefined
-  const lng = values.longitude?.trim()
-    ? Number(values.longitude)
-    : undefined
+  const lat = values.latitude?.trim() ? Number(values.latitude) : undefined;
+  const lng = values.longitude?.trim() ? Number(values.longitude) : undefined;
 
   return {
     title: values.title.trim(),
@@ -188,15 +190,16 @@ export function mapFormToCreateInput(
     },
     visibility: Visibility.PUBLIC,
     media: values.proofImageUrls?.length ? values.proofImageUrls : undefined,
-  }
+    contactPhone: formatContactPhone(values.phoneCode, values.phoneNumber),
+  };
 }
 
 export function mapCreateInputToHelpRequest(
   input: CreateHelpRequestInput,
-  createdBy: string
+  createdBy: string,
 ): HelpRequest {
-  const now = new Date().toISOString()
-  const required = input.quantity.required
+  const now = new Date().toISOString();
+  const required = input.quantity.required;
 
   return {
     _id: `hr_${crypto.randomUUID().slice(0, 8)}`,
@@ -218,8 +221,9 @@ export function mapCreateInputToHelpRequest(
     status: HelpRequestStatus.ACTIVE,
     visibility: input.visibility,
     media: input.media,
+    contactPhone: input.contactPhone,
     isVerified: false,
     createdAt: now,
     updatedAt: now,
-  }
+  };
 }
