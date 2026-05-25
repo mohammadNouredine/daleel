@@ -1,7 +1,9 @@
+"use client"
+
+import { useState } from "react"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -14,23 +16,21 @@ import {
   SUB_CATEGORY_LABELS,
 } from "../constants"
 import type { HelpRequest } from "../types"
-import { HelpType } from "../types"
 import {
   getHelpTypeTagClass,
   getPriorityBadgeClass,
-  getProgressFillClass,
-  getProgressLabelClass,
-  getProgressTrackClass,
   getStatusBadgeClass,
   getSubCategoryTagClass,
   getVerifiedBadgeClass,
 } from "../utils/request-visuals"
-import { MapPin, Pencil, Settings2, Trash2, Users } from "lucide-react"
+import { getNeedsCardSummary } from "../utils/request-needs"
+import { HandHelping, MapPin, Pencil, Settings2, Trash2, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { RequestNeedsProgress } from "./request-needs-progress"
+import { HelpRequestDetailDialog } from "./help-request-detail-dialog"
 
 type HelpRequestCardProps = {
   request: HelpRequest
-  /** Active list: focus on what still needs help. Archive: show closure status. */
   variant?: "active" | "archive"
   canEdit?: boolean
   canManage?: boolean
@@ -38,6 +38,10 @@ type HelpRequestCardProps = {
   onEdit?: () => void
   onManage?: () => void
   onDelete?: () => void
+}
+
+function stopCardNavigation(event: React.MouseEvent) {
+  event.stopPropagation()
 }
 
 export function HelpRequestCard({
@@ -50,16 +54,9 @@ export function HelpRequestCard({
   onManage,
   onDelete,
 }: HelpRequestCardProps) {
+  const [detailOpen, setDetailOpen] = useState(false)
   const isArchive = variant === "archive"
-  const progress =
-    request.quantity.required > 0
-      ? Math.min(
-          100,
-          Math.round(
-            (request.quantity.fulfilled / request.quantity.required) * 100
-          )
-        )
-      : 0
+  const summary = getNeedsCardSummary(request.needs)
 
   const locationLabel = [
     request.location.city,
@@ -69,163 +66,168 @@ export function HelpRequestCard({
     .filter(Boolean)
     .join(", ")
 
-  const isFinancial = request.helpType === HelpType.FINANCIAL
-  const amountUnit =
-    request.financialDetails?.currency ?? request.quantity.unit ?? ""
+  const showOwnerActions = canEdit || canManage || canDelete
 
-  const showActions = canEdit || canManage || canDelete
+  const openDetails = () => setDetailOpen(true)
 
   return (
-    <Card
-      className={cn(
-        "transition-shadow hover:shadow-md",
-        isArchive && "border-dashed bg-muted/30 opacity-90"
-      )}
-    >
-      <CardHeader className="gap-3">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <CardTitle className="text-base leading-snug">{request.title}</CardTitle>
-          <div className="flex flex-wrap gap-1.5">
-            {isArchive ? (
-              <Badge
-                variant="outline"
-                className={getStatusBadgeClass(request.status)}
-              >
-                {STATUS_LABELS[request.status]}
-              </Badge>
-            ) : (
-              <Badge
-                variant="outline"
-                className={getPriorityBadgeClass(request.priorityLevel)}
-              >
-                {PRIORITY_LABELS[request.priorityLevel]}
-              </Badge>
-            )}
-            {request.isVerified ? (
-              <Badge variant="outline" className={getVerifiedBadgeClass()}>
-                Verified
-              </Badge>
-            ) : null}
-          </div>
-        </div>
-        <CardDescription className="line-clamp-2">
-          {request.description}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-wrap gap-2 text-xs font-medium">
-          <span
-            className={cn(
-              "rounded-md px-2 py-1",
-              getHelpTypeTagClass(request.helpType)
-            )}
-          >
-            {HELP_TYPE_LABELS[request.helpType]}
-          </span>
-          <span
-            className={cn(
-              "rounded-md px-2 py-1",
-              getSubCategoryTagClass()
-            )}
-          >
-            {SUB_CATEGORY_LABELS[request.subCategory]}
-          </span>
-        </div>
-
-        {!isArchive ? (
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">
-                {isFinancial ? "Raised" : "Fulfilled"}{" "}
-                {request.quantity.fulfilled} / {request.quantity.required}
-                {amountUnit ? ` ${amountUnit}` : ""}
-              </span>
-              <span className={getProgressLabelClass(progress)}>
-                {progress}%
-              </span>
-            </div>
-            <div
-              className={cn(
-                "h-2.5 overflow-hidden rounded-full",
-                getProgressTrackClass()
-              )}
-              role="progressbar"
-              aria-valuenow={progress}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label={`${progress}% fulfilled`}
-            >
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all duration-500 ease-out",
-                  getProgressFillClass(progress)
-                )}
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            {request.quantity.fulfilled} / {request.quantity.required}
-            {request.quantity.unit ? ` ${request.quantity.unit}` : ""} fulfilled ·{" "}
-            {STATUS_LABELS[request.status]}
-          </p>
+    <>
+      <Card
+        className={cn(
+          "transition-shadow hover:shadow-md",
+          isArchive && "border-dashed bg-muted/30 opacity-90"
         )}
+      >
+        <div
+          role="button"
+          tabIndex={0}
+          className="cursor-pointer rounded-t-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          onClick={openDetails}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault()
+              openDetails()
+            }
+          }}
+          aria-label={`View details for ${request.title}`}
+        >
+          <CardHeader className="gap-3 pb-3">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <CardTitle className="text-base leading-snug">
+                {request.title}
+              </CardTitle>
+              <div className="flex flex-wrap gap-1.5">
+                {isArchive ? (
+                  <Badge
+                    variant="outline"
+                    className={getStatusBadgeClass(request.status)}
+                  >
+                    {STATUS_LABELS[request.status]}
+                  </Badge>
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className={getPriorityBadgeClass(request.priorityLevel)}
+                  >
+                    {PRIORITY_LABELS[request.priorityLevel]}
+                  </Badge>
+                )}
+                {request.isVerified ? (
+                  <Badge variant="outline" className={getVerifiedBadgeClass()}>
+                    Verified
+                  </Badge>
+                ) : null}
+              </div>
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {summary}
+            </p>
+          </CardHeader>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <MapPin className="size-3.5 shrink-0" />
-            {locationLabel}
-          </span>
-          {request.beneficiariesCount ? (
-            <span className="inline-flex items-center gap-1">
-              <Users className="size-3.5 shrink-0" />
-              {request.beneficiariesCount} beneficiaries
-            </span>
-          ) : null}
+          <CardContent className="space-y-3 pt-0">
+            <div className="flex flex-wrap gap-2 text-xs font-medium">
+              <span
+                className={cn(
+                  "rounded-md px-2 py-1",
+                  getHelpTypeTagClass(request.helpType)
+                )}
+              >
+                {HELP_TYPE_LABELS[request.helpType]}
+              </span>
+              <span
+                className={cn(
+                  "rounded-md px-2 py-1",
+                  getSubCategoryTagClass()
+                )}
+              >
+                {SUB_CATEGORY_LABELS[request.subCategory]}
+              </span>
+            </div>
+
+            <RequestNeedsProgress
+              needs={request.needs}
+              variant={variant}
+              compact
+            />
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="size-3.5 shrink-0" />
+                {locationLabel}
+              </span>
+              {request.beneficiariesCount ? (
+                <span className="inline-flex items-center gap-1">
+                  <Users className="size-3.5 shrink-0" />
+                  {request.beneficiariesCount} beneficiaries
+                </span>
+              ) : null}
+            </div>
+          </CardContent>
         </div>
 
-        {showActions ? (
-          <div className="flex flex-wrap gap-2 border-t border-border/60 pt-3">
-            {canEdit ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8"
-                onClick={onEdit}
-              >
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-            ) : null}
-            {canManage ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8"
-                onClick={onManage}
-              >
-                <Settings2 className="size-3.5" />
-                Manage
-              </Button>
-            ) : null}
-            {canDelete ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                onClick={onDelete}
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
+        <CardContent
+          className="border-t border-border/60 pt-3"
+          onClick={stopCardNavigation}
+        >
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              className="h-8"
+              onClick={openDetails}
+            >
+              <HandHelping className="size-3.5" />
+              Help
+            </Button>
+            {showOwnerActions ? (
+              <>
+                {canEdit ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                    onClick={onEdit}
+                  >
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canManage ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                    onClick={onManage}
+                  >
+                    <Settings2 className="size-3.5" />
+                    Manage
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={onDelete}
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </>
             ) : null}
           </div>
-        ) : null}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <HelpRequestDetailDialog
+        request={request}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
+    </>
   )
 }

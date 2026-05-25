@@ -5,7 +5,8 @@ import type { HelpRequest } from "../types"
 
 export type ManageHelpRequestPayload = {
   requestId: string
-  adjustmentType: "add" | "remove"
+  lineId: string
+  adjustmentType: "add" | "remove" | "set"
   amount: number
 }
 

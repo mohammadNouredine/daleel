@@ -4,6 +4,8 @@ import {
   PriorityLevel,
   SubCategory,
   Visibility,
+  HelpRequestNeedKind,
+  type HelpRequestNeedKindValue,
   type HelpRequestStatusValue,
   type HelpTypeValue,
   type PriorityLevelValue,
@@ -66,6 +68,15 @@ export const PRIORITY_OPTIONS: {
   { value: PriorityLevel.MEDIUM, label: "Medium" },
   { value: PriorityLevel.HIGH, label: "High" },
   { value: PriorityLevel.CRITICAL, label: "Critical" },
+]
+
+export const NEED_KIND_OPTIONS: {
+  value: HelpRequestNeedKindValue
+  label: string
+}[] = [
+  { value: HelpRequestNeedKind.ITEM, label: "Physical item" },
+  { value: HelpRequestNeedKind.SERVICE, label: "Service" },
+  { value: HelpRequestNeedKind.FINANCIAL, label: "Financial" },
 ]
 
 export const VISIBILITY_OPTIONS: {

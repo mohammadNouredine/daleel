@@ -21,14 +21,25 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { HelpType } from "../types"
 import {
   manageHelpRequestDefaultValues,
   manageHelpRequestSchema,
   type ManageHelpRequestFormValues,
 } from "../schemas/manage-help-request.schema"
+import {
+  formatNeedQuantity,
+  getNeedRemaining,
+} from "../utils/request-needs"
 import { useManageHelpRequestDialogHandlers } from "./manage-help-request-dialog-context"
+import { RequestNeedsProgress } from "./request-needs-progress"
 
 type ManageHelpRequestDialogProps = {
   open: boolean
@@ -43,26 +54,30 @@ export function ManageHelpRequestDialog({ open }: ManageHelpRequestDialogProps) 
     defaultValues: manageHelpRequestDefaultValues,
   })
 
+  const lineId = form.watch("lineId")
   const adjustmentType = form.watch("adjustmentType")
 
   useEffect(() => {
     if (!open) {
       form.reset(manageHelpRequestDefaultValues)
+      return
     }
-  }, [open, form])
+    if (request?.needs.length) {
+      form.setValue("lineId", request.needs[0].id)
+    }
+  }, [open, request, form])
 
   if (!request) {
     return null
   }
 
-  const isFinancial = request.helpType === HelpType.FINANCIAL
-  const unit =
-    request.financialDetails?.currency ?? request.quantity.unit ?? ""
-  const label = isFinancial ? "amount" : "quantity"
+  const selectedLine = request.needs.find((line) => line.id === lineId)
+  const remaining = selectedLine ? getNeedRemaining(selectedLine) : 0
 
   const handleSubmit = (values: ManageHelpRequestFormValues) => {
     onSubmit({
       requestId: request._id,
+      lineId: values.lineId,
       adjustmentType: values.adjustmentType,
       amount: Number(values.amount),
     })
@@ -71,28 +86,63 @@ export function ManageHelpRequestDialog({ open }: ManageHelpRequestDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md gap-0 p-0">
-        <DialogHeader className="space-y-1 px-6 pt-6 pb-2">
+      <DialogContent className="flex max-h-[min(90vh,640px)] max-w-md flex-col gap-0 overflow-hidden p-0">
+        <DialogHeader className="shrink-0 space-y-1 px-6 pt-6 pb-2">
           <DialogTitle>Manage progress</DialogTitle>
           <DialogDescription>
-            Record {isFinancial ? "donations received" : "items fulfilled"} or
-            correct a previous entry. Does not change the request details.
+            Update fulfillment per line — add donations, correct mistakes, or set
+            the exact fulfilled amount.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-6 pb-2">
-          <p className="rounded-lg bg-muted/60 px-3 py-2 text-sm">
-            <span className="text-muted-foreground">Current: </span>
-            <span className="font-medium">
-              {request.quantity.fulfilled} / {request.quantity.required}
-              {unit ? ` ${unit}` : ""}
-            </span>
-          </p>
-        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-2">
+          <RequestNeedsProgress needs={request.needs} compact />
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
-            <div className="space-y-4 px-6 py-2">
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="mt-4 space-y-4"
+            >
+              <FormField
+                control={form.control}
+                name="lineId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Which need line?</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a line" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="max-h-60">
+                        {request.needs.map((line) => (
+                          <SelectItem key={line.id} value={line.id}>
+                            {line.label} ({line.fulfilled}/{line.required}
+                            {line.unit ? ` ${line.unit}` : ""})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {selectedLine ? (
+                <p className="rounded-lg bg-muted/60 px-3 py-2 text-sm">
+                  <span className="text-muted-foreground">Current: </span>
+                  <span className="font-medium">
+                    {formatNeedQuantity(selectedLine, selectedLine.fulfilled)}{" "}
+                    of {formatNeedQuantity(selectedLine, selectedLine.required)}{" "}
+                    — {remaining > 0 ? `${remaining} remaining` : "complete"}
+                  </span>
+                </p>
+              ) : null}
+
               <FormField
                 control={form.control}
                 name="adjustmentType"
@@ -100,33 +150,32 @@ export function ManageHelpRequestDialog({ open }: ManageHelpRequestDialogProps) 
                   <FormItem>
                     <FormLabel>Action</FormLabel>
                     <FormControl>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          type="button"
-                          variant={
-                            field.value === "add" ? "default" : "outline"
-                          }
-                          className={cn(
-                            field.value === "add" &&
-                              "ring-2 ring-primary ring-offset-2"
-                          )}
-                          onClick={() => field.onChange("add")}
-                        >
-                          Add {label}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={
-                            field.value === "remove" ? "default" : "outline"
-                          }
-                          className={cn(
-                            field.value === "remove" &&
-                              "ring-2 ring-primary ring-offset-2"
-                          )}
-                          onClick={() => field.onChange("remove")}
-                        >
-                          Remove {label}
-                        </Button>
+                      <div className="grid grid-cols-3 gap-2">
+                        {(
+                          [
+                            { value: "add", label: "Add" },
+                            { value: "remove", label: "Remove" },
+                            { value: "set", label: "Set exact" },
+                          ] as const
+                        ).map((option) => (
+                          <Button
+                            key={option.value}
+                            type="button"
+                            variant={
+                              field.value === option.value
+                                ? "default"
+                                : "outline"
+                            }
+                            className={cn(
+                              "h-8 text-xs",
+                              field.value === option.value &&
+                                "ring-2 ring-primary ring-offset-2"
+                            )}
+                            onClick={() => field.onChange(option.value)}
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -140,35 +189,45 @@ export function ManageHelpRequestDialog({ open }: ManageHelpRequestDialogProps) 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      How much to {adjustmentType === "add" ? "add" : "remove"}?
+                      {adjustmentType === "set"
+                        ? "Set fulfilled amount to"
+                        : adjustmentType === "add"
+                          ? "How much to add?"
+                          : "How much to remove?"}
                     </FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         type="number"
-                        min={1}
-                        step={isFinancial ? "0.01" : "1"}
-                        placeholder={isFinancial ? "e.g. 500" : "e.g. 5"}
+                        min={adjustmentType === "set" ? 0 : 1}
+                        step={
+                          selectedLine?.kind === "financial" ? "0.01" : "1"
+                        }
+                        placeholder={
+                          adjustmentType === "set"
+                            ? String(selectedLine?.fulfilled ?? 0)
+                            : "e.g. 1"
+                        }
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
 
-            <DialogFooter className="gap-2 border-t px-6 py-4 sm:justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit">Update progress</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+              <DialogFooter className="gap-2 border-t px-0 pt-4 sm:justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">Update progress</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </div>
       </DialogContent>
     </Dialog>
   )

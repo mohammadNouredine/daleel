@@ -1,37 +1,65 @@
 import {
   HelpRequestStatus,
-  HelpType,
   Visibility,
   type CreateHelpRequestInput,
+  type CreateHelpRequestNeedInput,
   type HelpRequest,
-  type HelpTypeValue,
+  type HelpRequestNeedLine,
+  type HelpRequestNeedKindValue,
   type PriorityLevelValue,
   type SubCategoryValue,
-} from "../types";
-import type { CreateHelpRequestFormValues } from "../schemas/create-help-request.schema";
+  type HelpTypeValue,
+} from "../types"
+import type { CreateHelpRequestFormValues } from "../schemas/create-help-request.schema"
+import type { NeedLineFormValue } from "../schemas/need-line.schema"
 import {
   splitContactPhone,
   formatContactPhone,
-} from "@/components/forms/Phone/phone-utils";
+} from "@/components/forms/Phone/phone-utils"
+import {
+  buildNeedsFromCreateInput,
+  createNeedLineId,
+  deriveStatusFromNeeds,
+  normalizeNeedLine,
+  normalizeNeedLines,
+} from "./request-needs"
+
+function mapFormNeedLines(
+  lines: NeedLineFormValue[]
+): CreateHelpRequestNeedInput[] {
+  return lines.map((line) => ({
+    id: line.id,
+    label: line.label.trim(),
+    required: Number(line.required),
+    unit: line.unit?.trim() || undefined,
+    kind: line.kind as HelpRequestNeedKindValue,
+    notes: line.notes?.trim() || undefined,
+  }))
+}
+
+function mapRequestNeedsToFormLines(
+  needs: HelpRequestNeedLine[]
+): NeedLineFormValue[] {
+  return needs.map((line) => ({
+    id: line.id,
+    label: line.label,
+    required: String(line.required),
+    unit: line.unit ?? "",
+    notes: line.notes ?? "",
+    kind: line.kind,
+  }))
+}
 
 export function mapHelpRequestToFormValues(
-  request: HelpRequest,
+  request: HelpRequest
 ): CreateHelpRequestFormValues {
-  const isFinancial = request.helpType === HelpType.FINANCIAL;
-  const amount = isFinancial
-    ? (request.financialDetails?.requiredAmount ?? request.quantity.required)
-    : request.quantity.required;
-
   return {
     title: request.title,
     description: request.description,
     helpType: request.helpType,
     subCategory: request.subCategory,
     priorityLevel: request.priorityLevel,
-    quantityRequired: String(amount),
-    quantityUnit: isFinancial
-      ? (request.financialDetails?.currency ?? request.quantity.unit ?? "USD")
-      : (request.quantity.unit ?? ""),
+    needLines: mapRequestNeedsToFormLines(request.needs),
     governorate: request.location.governorate,
     district: request.location.district,
     city: request.location.city,
@@ -47,32 +75,33 @@ export function mapHelpRequestToFormValues(
       : "",
     proofImageUrls: request.media ?? [],
     ...splitContactPhone(request.contactPhone),
-  };
+  }
 }
 
 export function applyEditInputToHelpRequest(
   existing: HelpRequest,
-  input: CreateHelpRequestInput,
+  input: CreateHelpRequestInput
 ): HelpRequest {
-  const now = new Date().toISOString();
-  const required = input.quantity.required;
-  const fulfilled = Math.min(existing.quantity.fulfilled, required);
-  const remaining = Math.max(0, required - fulfilled);
+  const now = new Date().toISOString()
 
-  let status = existing.status;
-  if (
-    existing.status === HelpRequestStatus.ACTIVE ||
-    existing.status === HelpRequestStatus.PARTIALLY_FULFILLED ||
-    existing.status === HelpRequestStatus.FULFILLED
-  ) {
-    if (fulfilled >= required) {
-      status = HelpRequestStatus.FULFILLED;
-    } else if (fulfilled > 0) {
-      status = HelpRequestStatus.PARTIALLY_FULFILLED;
-    } else {
-      status = HelpRequestStatus.ACTIVE;
-    }
-  }
+  const needs = normalizeNeedLines(
+    input.needs.map((needInput) => {
+      const previous = existing.needs.find((line) => line.id === needInput.id)
+      const fulfilled = previous
+        ? Math.min(previous.fulfilled, needInput.required)
+        : 0
+
+      return normalizeNeedLine({
+        id: needInput.id ?? createNeedLineId(),
+        label: needInput.label,
+        required: needInput.required,
+        fulfilled,
+        unit: needInput.unit,
+        kind: needInput.kind,
+        notes: needInput.notes,
+      })
+    })
+  )
 
   return {
     ...existing,
@@ -81,81 +110,28 @@ export function applyEditInputToHelpRequest(
     helpType: input.helpType,
     subCategory: input.subCategory,
     priorityLevel: input.priorityLevel,
-    quantity: {
-      required,
-      fulfilled,
-      remaining,
-      unit: input.quantity.unit,
-    },
-    financialDetails: input.financialDetails
-      ? {
-          ...input.financialDetails,
-          collectedAmount: input.financialDetails.collectedAmount ?? fulfilled,
-        }
-      : undefined,
+    needs,
     beneficiariesCount: input.beneficiariesCount,
     location: input.location,
     visibility: input.visibility,
     media: input.media,
     contactPhone: input.contactPhone,
     updatedAt: now,
-    status,
-  };
-}
-
-export function applyFulfillmentAdjustment(
-  request: HelpRequest,
-  delta: number,
-): HelpRequest {
-  const required = request.quantity.required;
-  const fulfilled = Math.max(
-    0,
-    Math.min(required, request.quantity.fulfilled + delta),
-  );
-  const remaining = Math.max(0, required - fulfilled);
-  const now = new Date().toISOString();
-
-  let status = request.status;
-  if (fulfilled >= required) {
-    status = HelpRequestStatus.FULFILLED;
-  } else if (fulfilled > 0) {
-    status = HelpRequestStatus.PARTIALLY_FULFILLED;
-  } else {
-    status = HelpRequestStatus.ACTIVE;
+    status: deriveStatusFromNeeds(needs, existing.status),
   }
-
-  return {
-    ...request,
-    quantity: {
-      ...request.quantity,
-      required,
-      fulfilled,
-      remaining,
-    },
-    financialDetails: request.financialDetails
-      ? {
-          ...request.financialDetails,
-          collectedAmount: fulfilled,
-        }
-      : undefined,
-    status,
-    updatedAt: now,
-  };
 }
+
+export { applyNeedLineFulfillment as applyFulfillmentAdjustment } from "./request-needs"
 
 export function mapFormToCreateInput(
-  values: CreateHelpRequestFormValues,
+  values: CreateHelpRequestFormValues
 ): CreateHelpRequestInput {
   const beneficiaries = !values.beneficiariesCount?.trim()
     ? undefined
-    : Number(values.beneficiariesCount);
+    : Number(values.beneficiariesCount)
 
-  const isFinancial = values.helpType === HelpType.FINANCIAL;
-  const amount = Number(values.quantityRequired);
-  const currency = values.quantityUnit?.trim();
-
-  const lat = values.latitude?.trim() ? Number(values.latitude) : undefined;
-  const lng = values.longitude?.trim() ? Number(values.longitude) : undefined;
+  const lat = values.latitude?.trim() ? Number(values.latitude) : undefined
+  const lng = values.longitude?.trim() ? Number(values.longitude) : undefined
 
   return {
     title: values.title.trim(),
@@ -163,17 +139,7 @@ export function mapFormToCreateInput(
     helpType: values.helpType as HelpTypeValue,
     subCategory: values.subCategory as SubCategoryValue,
     priorityLevel: values.priorityLevel as PriorityLevelValue,
-    quantity: {
-      required: amount,
-      unit: isFinancial ? currency : values.quantityUnit?.trim() || undefined,
-    },
-    financialDetails: isFinancial
-      ? {
-          requiredAmount: amount,
-          collectedAmount: 0,
-          currency: currency ?? "USD",
-        }
-      : undefined,
+    needs: mapFormNeedLines(values.needLines),
     beneficiariesCount: beneficiaries,
     location: {
       governorate: values.governorate.trim(),
@@ -191,15 +157,15 @@ export function mapFormToCreateInput(
     visibility: Visibility.PUBLIC,
     media: values.proofImageUrls?.length ? values.proofImageUrls : undefined,
     contactPhone: formatContactPhone(values.phoneCode, values.phoneNumber),
-  };
+  }
 }
 
 export function mapCreateInputToHelpRequest(
   input: CreateHelpRequestInput,
-  createdBy: string,
+  createdBy: string
 ): HelpRequest {
-  const now = new Date().toISOString();
-  const required = input.quantity.required;
+  const now = new Date().toISOString()
+  const needs = buildNeedsFromCreateInput(input.needs)
 
   return {
     _id: `hr_${crypto.randomUUID().slice(0, 8)}`,
@@ -209,13 +175,7 @@ export function mapCreateInputToHelpRequest(
     helpType: input.helpType,
     subCategory: input.subCategory,
     priorityLevel: input.priorityLevel,
-    quantity: {
-      required,
-      fulfilled: 0,
-      remaining: required,
-      unit: input.quantity.unit,
-    },
-    financialDetails: input.financialDetails,
+    needs,
     beneficiariesCount: input.beneficiariesCount,
     location: input.location,
     status: HelpRequestStatus.ACTIVE,
@@ -225,5 +185,5 @@ export function mapCreateInputToHelpRequest(
     isVerified: false,
     createdAt: now,
     updatedAt: now,
-  };
+  }
 }

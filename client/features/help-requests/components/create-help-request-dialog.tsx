@@ -25,14 +25,13 @@ import {
   createHelpRequestSchema,
   type CreateHelpRequestFormValues,
 } from "../schemas/create-help-request.schema";
-import { HelpType } from "../types";
 import {
   mapFormToCreateInput,
   mapHelpRequestToFormValues,
 } from "../utils/map-form-to-request";
 import { LocationMapPicker } from "./location-map-picker-lazy";
 import { ProofImagesUpload } from "./proof-images-upload";
-import { QuantityOrFinancialFields } from "./quantity-or-financial-fields";
+import { RequestNeedsField } from "./request-needs-field";
 import { useCreateHelpRequestDialogHandlers } from "./create-help-request-dialog-context";
 
 type CreateHelpRequestDialogProps = {
@@ -50,7 +49,6 @@ export function CreateHelpRequestDialog({
     defaultValues: createHelpRequestDefaultValues,
   });
 
-  const helpType = form.watch("helpType");
   const latitude = form.watch("latitude");
   const longitude = form.watch("longitude");
 
@@ -70,15 +68,6 @@ export function CreateHelpRequestDialog({
 
     form.reset(createHelpRequestDefaultValues);
   }, [open, isEdit, editingRequest, form]);
-
-  useEffect(() => {
-    if (helpType === HelpType.FINANCIAL) {
-      const current = form.getValues("quantityUnit");
-      if (!current) {
-        form.setValue("quantityUnit", "USD");
-      }
-    }
-  }, [helpType, form]);
 
   const handleSubmit = (values: CreateHelpRequestFormValues) => {
     onSubmit(mapFormToCreateInput(values));
@@ -157,7 +146,7 @@ export function CreateHelpRequestDialog({
                       options={SUB_CATEGORY_OPTIONS}
                     />
                   </div>
-                  <QuantityOrFinancialFields />
+                  <RequestNeedsField />
                   <TextInput
                     name="beneficiariesCount"
                     label="Beneficiaries (optional)"

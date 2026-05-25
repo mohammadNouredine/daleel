@@ -12,14 +12,17 @@ Next.js frontend rules:
 - separate UI from business logic
 - avoid prop drilling when possible
 - reuse shared UI patterns
+- nest files in folders if files are not related to outher external files.
 
 Performance:
+
 - optimize images
 - avoid unnecessary rerenders
 - lazy load heavy components
 - avoid large client bundles
 
 UI:
+
 - maintain consistent spacing and design patterns
 - make components reusable only when justified
 - avoid overly generic components

@@ -121,13 +121,15 @@ export function HelpRequestsView() {
   }
 
   const handleManage = (payload: ManageHelpRequestPayload) => {
-    const delta =
-      payload.adjustmentType === "add" ? payload.amount : -payload.amount
-
     setRequests((prev) =>
       prev.map((item) =>
         item._id === payload.requestId
-          ? applyFulfillmentAdjustment(item, delta)
+          ? applyFulfillmentAdjustment(
+              item,
+              payload.lineId,
+              payload.adjustmentType,
+              payload.amount
+            )
           : item
       )
     )

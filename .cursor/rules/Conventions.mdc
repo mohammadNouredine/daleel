@@ -1,0 +1,9 @@
+---
+alwaysApply: true
+---
+
+Naming conventions for NEXT.JS:
+
+- components: PascalCase
+- pages: kebab-case
+- api: kebab-case

@@ -52,11 +52,24 @@ export const Visibility = {
 
 export type VisibilityValue = (typeof Visibility)[keyof typeof Visibility]
 
-export type HelpRequestQuantity = {
+export const HelpRequestNeedKind = {
+  ITEM: "item",
+  FINANCIAL: "financial",
+  SERVICE: "service",
+} as const
+
+export type HelpRequestNeedKindValue =
+  (typeof HelpRequestNeedKind)[keyof typeof HelpRequestNeedKind]
+
+/** One qualitative need line (insulin boxes, surgery fund, hospital rides, etc.) */
+export type HelpRequestNeedLine = {
+  id: string
+  label: string
   required: number
   fulfilled: number
-  remaining: number
   unit?: string
+  kind: HelpRequestNeedKindValue
+  notes?: string
 }
 
 export type HelpRequestLocation = {
@@ -70,12 +83,6 @@ export type HelpRequestLocation = {
   }
 }
 
-export type HelpRequestFinancialDetails = {
-  requiredAmount: number
-  collectedAmount?: number
-  currency: string
-}
-
 export type HelpRequest = {
   _id: string
   createdBy: string
@@ -84,17 +91,25 @@ export type HelpRequest = {
   helpType: HelpTypeValue
   subCategory: SubCategoryValue
   priorityLevel: PriorityLevelValue
-  quantity: HelpRequestQuantity
+  needs: HelpRequestNeedLine[]
   beneficiariesCount?: number
   location: HelpRequestLocation
   status: HelpRequestStatusValue
   visibility: VisibilityValue
   isVerified: boolean
   media?: string[]
-  financialDetails?: HelpRequestFinancialDetails
   contactPhone?: string
   createdAt: string
   updatedAt: string
+}
+
+export type CreateHelpRequestNeedInput = {
+  id?: string
+  label: string
+  required: number
+  unit?: string
+  kind: HelpRequestNeedKindValue
+  notes?: string
 }
 
 export type CreateHelpRequestInput = {
@@ -103,14 +118,10 @@ export type CreateHelpRequestInput = {
   helpType: HelpTypeValue
   subCategory: SubCategoryValue
   priorityLevel: PriorityLevelValue
-  quantity: {
-    required: number
-    unit?: string
-  }
+  needs: CreateHelpRequestNeedInput[]
   beneficiariesCount?: number
   location: HelpRequestLocation
   visibility: VisibilityValue
   media?: string[]
-  financialDetails?: HelpRequestFinancialDetails
   contactPhone?: string
 }
