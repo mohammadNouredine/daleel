@@ -90,3 +90,36 @@ export function getProgressLabelClass(progress: number): string {
 export function getProgressTrackClass(): string {
   return "bg-slate-200 dark:bg-slate-800"
 }
+
+/** Dialog left accent — urgency from priority, not fulfillment status */
+export function getPriorityDialogAccentClass(
+  priority: PriorityLevelValue
+): string {
+  switch (priority) {
+    case PriorityLevel.CRITICAL:
+      return "border-l-rose-500"
+    case PriorityLevel.HIGH:
+      return "border-l-orange-500"
+    case PriorityLevel.MEDIUM:
+      return "border-l-amber-400"
+    case PriorityLevel.LOW:
+      return "border-l-slate-300 dark:border-l-slate-600"
+    default:
+      return "border-l-border"
+  }
+}
+
+export function getPriorityDialogHeaderTintClass(
+  priority: PriorityLevelValue
+): string {
+  switch (priority) {
+    case PriorityLevel.CRITICAL:
+      return "bg-rose-50/80 dark:bg-rose-950/30"
+    case PriorityLevel.HIGH:
+      return "bg-orange-50/70 dark:bg-orange-950/25"
+    case PriorityLevel.MEDIUM:
+      return "bg-amber-50/50 dark:bg-amber-950/20"
+    default:
+      return "bg-transparent"
+  }
+}

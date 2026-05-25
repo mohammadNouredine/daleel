@@ -21,10 +21,9 @@ import {
   getPriorityBadgeClass,
   getStatusBadgeClass,
   getSubCategoryTagClass,
-  getVerifiedBadgeClass,
 } from "../utils/request-visuals"
 import { getNeedsCardSummary } from "../utils/request-needs"
-import { HandHelping, MapPin, Pencil, Settings2, Trash2, Users } from "lucide-react"
+import { HandHelping, MapPin, Pencil, Settings2, Trash2, Users, BadgeCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { RequestNeedsProgress } from "./request-needs-progress"
 import { HelpRequestDetailDialog } from "./help-request-detail-dialog"
@@ -93,9 +92,17 @@ export function HelpRequestCard({
         >
           <CardHeader className="gap-3 pb-3">
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <CardTitle className="text-base leading-snug">
-                {request.title}
-              </CardTitle>
+              <div className="flex min-w-0 flex-1 items-start gap-1.5">
+                <CardTitle className="text-base leading-snug">
+                  {request.title}
+                </CardTitle>
+                {request.isVerified ? (
+                  <BadgeCheck
+                    className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+                    aria-label="Verified"
+                  />
+                ) : null}
+              </div>
               <div className="flex flex-wrap gap-1.5">
                 {isArchive ? (
                   <Badge
@@ -112,11 +119,6 @@ export function HelpRequestCard({
                     {PRIORITY_LABELS[request.priorityLevel]}
                   </Badge>
                 )}
-                {request.isVerified ? (
-                  <Badge variant="outline" className={getVerifiedBadgeClass()}>
-                    Verified
-                  </Badge>
-                ) : null}
               </div>
             </div>
             <p className="text-xs leading-relaxed text-muted-foreground">

@@ -17,6 +17,12 @@ export function normalizePhoneDigits(value: string): string {
   return value.replace(/\D/g, "")
 }
 
+export function formatWhatsAppUrl(fullPhone: string): string {
+  const digits = fullPhone.replace(/\D/g, "")
+  if (!digits) return ""
+  return `https://wa.me/${digits}`
+}
+
 export function formatContactPhone(code: string, number: string): string {
   const digits = normalizePhoneDigits(number)
   if (!digits) return ""

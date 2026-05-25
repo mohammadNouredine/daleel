@@ -104,7 +104,7 @@ export const PRIORITY_LABELS: Record<PriorityLevelValue, string> =
 
 export const STATUS_LABELS: Record<HelpRequestStatusValue, string> = {
   [HelpRequestStatus.ACTIVE]: "Active",
-  [HelpRequestStatus.PARTIALLY_FULFILLED]: "Partially fulfilled",
+  [HelpRequestStatus.PARTIALLY_FULFILLED]: "Open",
   [HelpRequestStatus.FULFILLED]: "Fulfilled",
   [HelpRequestStatus.EXPIRED]: "Expired",
   [HelpRequestStatus.CANCELLED]: "Cancelled",

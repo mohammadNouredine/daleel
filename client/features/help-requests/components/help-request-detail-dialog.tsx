@@ -7,23 +7,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { formatWhatsAppUrl } from "@/components/forms/Phone/phone-utils"
 import {
   HELP_TYPE_LABELS,
-  PRIORITY_LABELS,
-  STATUS_LABELS,
   SUB_CATEGORY_LABELS,
 } from "../constants"
 import type { HelpRequest } from "../types"
 import {
   getHelpTypeTagClass,
-  getPriorityBadgeClass,
-  getStatusBadgeClass,
+  getPriorityDialogAccentClass,
+  getPriorityDialogHeaderTintClass,
   getSubCategoryTagClass,
-  getVerifiedBadgeClass,
 } from "../utils/request-visuals"
-import { MapPin, Phone, Users } from "lucide-react"
+import { BadgeCheck, MapPin, MessageCircle, Phone, Users } from "lucide-react"
 import { RequestNeedsProgress } from "./request-needs-progress"
 
 type HelpRequestDetailDialogProps = {
@@ -46,35 +43,37 @@ export function HelpRequestDetailDialog({
     .filter(Boolean)
     .join(", ")
 
+  const accentClass = getPriorityDialogAccentClass(request.priorityLevel)
+  const headerTint = getPriorityDialogHeaderTintClass(request.priorityLevel)
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(90vh,720px)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
-        <DialogHeader className="shrink-0 space-y-2 px-6 pt-6 pb-2">
-          <DialogTitle className="text-left leading-snug">
-            {request.title}
-          </DialogTitle>
+      <DialogContent
+        className={cn(
+          "flex max-h-[min(90vh,720px)] max-w-lg flex-col gap-0 overflow-hidden border-l-4 p-0 sm:max-w-lg",
+          accentClass
+        )}
+      >
+        <DialogHeader
+          className={cn("shrink-0 space-y-2 px-6 pt-6 pb-3", headerTint)}
+        >
+          <div className="flex items-start gap-2">
+            <DialogTitle className="flex-1 text-left leading-snug">
+              {request.title}
+            </DialogTitle>
+            {request.isVerified ? (
+              <span
+                className="inline-flex shrink-0 items-center gap-1 text-emerald-600 dark:text-emerald-400"
+                title="Verified request"
+              >
+                <BadgeCheck className="size-5" aria-hidden />
+                <span className="sr-only">Verified</span>
+              </span>
+            ) : null}
+          </div>
           <DialogDescription className="text-left text-sm leading-relaxed">
             {request.description}
           </DialogDescription>
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            <Badge
-              variant="outline"
-              className={getPriorityBadgeClass(request.priorityLevel)}
-            >
-              {PRIORITY_LABELS[request.priorityLevel]}
-            </Badge>
-            <Badge
-              variant="outline"
-              className={getStatusBadgeClass(request.status)}
-            >
-              {STATUS_LABELS[request.status]}
-            </Badge>
-            {request.isVerified ? (
-              <Badge variant="outline" className={getVerifiedBadgeClass()}>
-                Verified
-              </Badge>
-            ) : null}
-          </div>
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6">
@@ -112,16 +111,30 @@ export function HelpRequestDetailDialog({
                 </p>
               ) : null}
               {request.contactPhone ? (
-                <p className="inline-flex items-center gap-2">
-                  <Phone className="size-4 shrink-0" />
-                  <a
-                    href={`tel:${request.contactPhone}`}
-                    className="font-medium text-foreground underline-offset-4 hover:underline"
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    {request.contactPhone}
-                  </a>
-                </p>
+                <div className="space-y-1.5">
+                  <p className="inline-flex items-center gap-2">
+                    <Phone className="size-4 shrink-0" />
+                    <a
+                      href={`tel:${request.contactPhone}`}
+                      className="font-medium text-foreground underline-offset-4 hover:underline"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      {request.contactPhone}
+                    </a>
+                  </p>
+                  <p className="inline-flex items-center gap-2">
+                    <MessageCircle className="size-4 shrink-0" />
+                    <a
+                      href={formatWhatsAppUrl(request.contactPhone)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-foreground underline-offset-4 hover:underline"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      Message on WhatsApp
+                    </a>
+                  </p>
+                </div>
               ) : null}
             </div>
           </div>

@@ -154,8 +154,8 @@ export function CreateHelpRequestDialog({
                     placeholder="Number of people helped"
                   />
                   <PhoneInput
-                    label="Contact phone"
-                    description="Reachable number for coordinators or donors."
+                    label="Contact phone / WhatsApp"
+                    description="Same number for calls and WhatsApp messages."
                     phonePlaceholder="71 123 456"
                   />
                 </FormSection>

@@ -53,6 +53,8 @@ function mapRequestNeedsToFormLines(
 export function mapHelpRequestToFormValues(
   request: HelpRequest
 ): CreateHelpRequestFormValues {
+  const phone = splitContactPhone(request.contactPhone)
+
   return {
     title: request.title,
     description: request.description,
@@ -74,7 +76,8 @@ export function mapHelpRequestToFormValues(
       ? String(request.beneficiariesCount)
       : "",
     proofImageUrls: request.media ?? [],
-    ...splitContactPhone(request.contactPhone),
+    phoneCode: phone.phoneCode,
+    phoneNumber: phone.phoneNumber,
   }
 }
 
