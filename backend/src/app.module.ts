@@ -6,6 +6,7 @@ import configuration from './config/configuration';
 import { DatabaseModule } from './database/database.module';
 import { HelpRequestsModule } from './modules/help-requests/help-requests.module';
 import { HelpUpdatesModule } from './modules/help-updates/help-updates.module';
+import { ReferenceModule } from './modules/reference/reference.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -24,6 +25,7 @@ import { UsersModule } from './modules/users/users.module';
       },
     }),
     UsersModule,
+    ReferenceModule,
     HelpRequestsModule,
     HelpUpdatesModule,
     ReportsModule,

@@ -4,11 +4,11 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useHelpRequestReference } from "@/features/reference/hooks/use-help-request-reference";
+import { getReferenceLabel } from "@/features/reference/utils/reference-labels";
 import {
-  HELP_TYPE_LABELS,
   PRIORITY_LABELS,
   STATUS_LABELS,
-  SUB_CATEGORY_LABELS,
 } from "../constants";
 import type { HelpRequest } from "../types";
 import {
@@ -55,6 +55,7 @@ export function HelpRequestCard({
   onDelete,
 }: HelpRequestCardProps) {
   const [detailOpen, setDetailOpen] = useState(false);
+  const { helpTypes, subCategories } = useHelpRequestReference();
   const isArchive = variant === "archive";
   const summary = getNeedsCardSummary(request.needs);
 
@@ -148,8 +149,8 @@ export function HelpRequestCard({
             </div>
 
             <p className="text-xs text-muted-foreground">
-              {HELP_TYPE_LABELS[request.helpType]} ·{" "}
-              {SUB_CATEGORY_LABELS[request.subCategory]}
+              {getReferenceLabel(helpTypes, request.helpType)} ·{" "}
+              {getReferenceLabel(subCategories, request.subCategory)}
             </p>
           </CardContent>
         </div>

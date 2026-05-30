@@ -3,7 +3,12 @@
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { HELP_TYPE_OPTIONS, PRIORITY_OPTIONS } from "../constants"
+import { useHelpRequestReference } from "@/features/reference/hooks/use-help-request-reference"
+import {
+  getReferenceLabel,
+  toSelectOptions,
+} from "@/features/reference/utils/reference-labels"
+import { PRIORITY_OPTIONS } from "../constants"
 import {
   DEFAULT_HELP_REQUEST_FILTERS,
   type HelpRequestFilters,
@@ -29,6 +34,8 @@ export function HelpRequestFiltersBar({
   onChange,
   className,
 }: HelpRequestFiltersBarProps) {
+  const { helpTypes, isLoading: isReferenceLoading } = useHelpRequestReference()
+  const helpTypeOptions = toSelectOptions(helpTypes)
   const showClear = hasActiveFilters(filters)
 
   return (
@@ -60,6 +67,7 @@ export function HelpRequestFiltersBar({
           <select
             className={selectClassName}
             value={filters.helpType}
+            disabled={isReferenceLoading}
             onChange={(e) =>
               onChange({
                 ...filters,
@@ -68,7 +76,7 @@ export function HelpRequestFiltersBar({
             }
           >
             <option value="all">All types</option>
-            {HELP_TYPE_OPTIONS.map((opt) => (
+            {helpTypeOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>

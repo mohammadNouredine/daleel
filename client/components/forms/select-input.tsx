@@ -28,6 +28,7 @@ type SelectInputProps = {
   placeholder?: string
   description?: string
   options: SelectOption[]
+  disabled?: boolean
 }
 
 export function SelectInput({
@@ -36,6 +37,7 @@ export function SelectInput({
   placeholder = "Select…",
   description,
   options,
+  disabled = false,
 }: SelectInputProps) {
   const form = useFormContext()
 
@@ -49,9 +51,10 @@ export function SelectInput({
           <Select
             value={(field.value as string) ?? ""}
             onValueChange={field.onChange}
+            disabled={disabled}
           >
             <FormControl>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full" disabled={disabled}>
                 <SelectValue placeholder={placeholder} />
               </SelectTrigger>
             </FormControl>

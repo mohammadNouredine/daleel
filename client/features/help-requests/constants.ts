@@ -1,15 +1,11 @@
 import {
   HelpRequestStatus,
-  HelpType,
   PriorityLevel,
-  SubCategory,
   Visibility,
   HelpRequestNeedKind,
   type HelpRequestNeedKindValue,
   type HelpRequestStatusValue,
-  type HelpTypeValue,
   type PriorityLevelValue,
-  type SubCategoryValue,
   type VisibilityValue,
 } from "./types"
 
@@ -34,31 +30,6 @@ export const ACCEPTED_PROOF_IMAGE_TYPES = [
   "image/heic",
   "image/heif",
 ] as const
-
-export const HELP_TYPE_OPTIONS: { value: HelpTypeValue; label: string }[] = [
-  { value: HelpType.MATERIAL, label: "Material" },
-  { value: HelpType.FINANCIAL, label: "Financial" },
-  { value: HelpType.MEDICAL, label: "Medical" },
-  { value: HelpType.SHELTER, label: "Shelter" },
-  { value: HelpType.TRANSPORT, label: "Transport" },
-]
-
-export const SUB_CATEGORY_OPTIONS: {
-  value: SubCategoryValue
-  label: string
-}[] = [
-  { value: SubCategory.FOOD, label: "Food" },
-  { value: SubCategory.WATER, label: "Water" },
-  { value: SubCategory.DIAPERS, label: "Diapers" },
-  { value: SubCategory.MILK, label: "Milk" },
-  { value: SubCategory.MEDICINE, label: "Medicine" },
-  { value: SubCategory.BEDDING, label: "Bedding" },
-  { value: SubCategory.CLOTHES, label: "Clothes" },
-  { value: SubCategory.SURGERY, label: "Surgery" },
-  { value: SubCategory.HOSPITAL, label: "Hospital" },
-  { value: SubCategory.RENT, label: "Rent" },
-  { value: SubCategory.FURNITURE_TRANSPORT, label: "Furniture / transport" },
-]
 
 export const PRIORITY_OPTIONS: {
   value: PriorityLevelValue
@@ -86,16 +57,6 @@ export const VISIBILITY_OPTIONS: {
   { value: Visibility.PUBLIC, label: "Public" },
   { value: Visibility.PRIVATE, label: "Private" },
 ]
-
-export const HELP_TYPE_LABELS: Record<HelpTypeValue, string> =
-  Object.fromEntries(
-    HELP_TYPE_OPTIONS.map((o) => [o.value, o.label])
-  ) as Record<HelpTypeValue, string>
-
-export const SUB_CATEGORY_LABELS: Record<SubCategoryValue, string> =
-  Object.fromEntries(
-    SUB_CATEGORY_OPTIONS.map((o) => [o.value, o.label])
-  ) as Record<SubCategoryValue, string>
 
 export const PRIORITY_LABELS: Record<PriorityLevelValue, string> =
   Object.fromEntries(

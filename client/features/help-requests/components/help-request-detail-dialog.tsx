@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { formatWhatsAppUrl } from "@/components/forms/Phone/phone-utils";
-import { HELP_TYPE_LABELS, SUB_CATEGORY_LABELS } from "../constants";
+import { useHelpRequestReference } from "@/features/reference/hooks/use-help-request-reference";
+import { getReferenceLabel } from "@/features/reference/utils/reference-labels";
 import type { HelpRequest } from "../types";
 import {
   getPriorityDialogAccentClass,
@@ -29,6 +30,7 @@ export function HelpRequestDetailDialog({
   open,
   onOpenChange,
 }: HelpRequestDetailDialogProps) {
+  const { helpTypes, subCategories } = useHelpRequestReference();
   const locationLabel = [
     request.location.city,
     request.location.district,
@@ -116,8 +118,8 @@ export function HelpRequestDetailDialog({
             </div>
 
             <p className="text-xs text-muted-foreground">
-              {HELP_TYPE_LABELS[request.helpType]} ·{" "}
-              {SUB_CATEGORY_LABELS[request.subCategory]}
+              {getReferenceLabel(helpTypes, request.helpType)} ·{" "}
+              {getReferenceLabel(subCategories, request.subCategory)}
             </p>
           </div>
         </div>

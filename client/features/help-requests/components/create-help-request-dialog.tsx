@@ -19,7 +19,11 @@ import { PriorityPicker } from "@/components/forms/priority-picker";
 import { TextInput } from "@/components/forms/text-input";
 import { PhoneInput } from "@/components/forms/Phone/phone-input";
 import { TextareaInput } from "@/components/forms/textarea-input";
-import { HELP_TYPE_OPTIONS, SUB_CATEGORY_OPTIONS } from "../constants";
+import { useHelpRequestReference } from "@/features/reference/hooks/use-help-request-reference";
+import {
+  toSelectOptions,
+} from "@/features/reference/utils/reference-labels";
+import { PRIORITY_OPTIONS } from "../constants";
 import {
   createHelpRequestDefaultValues,
   createHelpRequestSchema,
@@ -44,6 +48,8 @@ export function CreateHelpRequestDialog({
   const { mode, editingRequest, onOpenChange, onSubmit } =
     useCreateHelpRequestDialogHandlers();
   const isEdit = mode === "edit";
+  const { helpTypes, subCategories, isLoading: isReferenceLoading, isError: isReferenceError } =
+    useHelpRequestReference();
   const form = useForm<CreateHelpRequestFormValues>({
     resolver: zodResolver(createHelpRequestSchema),
     defaultValues: createHelpRequestDefaultValues,
@@ -138,14 +144,22 @@ export function CreateHelpRequestDialog({
                     <SelectInput
                       name="helpType"
                       label="Help type"
-                      options={HELP_TYPE_OPTIONS}
+                      options={toSelectOptions(helpTypes)}
+                      disabled={isReferenceLoading || isReferenceError}
                     />
                     <SelectInput
                       name="subCategory"
                       label="Sub-category"
-                      options={SUB_CATEGORY_OPTIONS}
+                      options={toSelectOptions(subCategories)}
+                      disabled={isReferenceLoading || isReferenceError}
                     />
                   </div>
+                  {isReferenceError ? (
+                    <p className="text-xs text-destructive">
+                      Could not load categories from the server. Restart the
+                      backend and try again.
+                    </p>
+                  ) : null}
                   <RequestNeedsField />
                   <TextInput
                     name="beneficiariesCount"
