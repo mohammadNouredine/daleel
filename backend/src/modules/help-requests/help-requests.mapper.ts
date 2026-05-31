@@ -10,7 +10,7 @@ export type HelpRequestResponse = {
   priorityLevel: string;
   needs: NeedLine[];
   beneficiariesCount?: number;
-  location: HelpRequestDocument['location'];
+  location?: HelpRequestDocument['location'];
   status: string;
   visibility: string;
   approvalStatus: string;
@@ -35,7 +35,7 @@ export function mapHelpRequestToResponse(
     priorityLevel: doc.priorityLevel,
     needs: doc.needs ?? [],
     beneficiariesCount: doc.beneficiariesCount,
-    location: doc.location,
+    location: doc.location ?? undefined,
     status: doc.status,
     visibility: doc.visibility,
     approvalStatus: doc.approvalStatus,

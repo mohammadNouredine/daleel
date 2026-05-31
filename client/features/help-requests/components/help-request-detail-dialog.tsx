@@ -18,6 +18,7 @@ import {
 } from "../utils/request-visuals";
 import { BadgeCheck, MapPin, MessageCircle, Phone, Users } from "lucide-react";
 import { RequestNeedsProgress } from "./request-needs-progress";
+import { formatHelpRequestLocationLabel } from "../utils/help-request-location";
 
 type HelpRequestDetailDialogProps = {
   request: HelpRequest;
@@ -31,14 +32,7 @@ export function HelpRequestDetailDialog({
   onOpenChange,
 }: HelpRequestDetailDialogProps) {
   const { helpTypes, subCategories } = useHelpRequestReference();
-  const locationLabel = [
-    request.location.city,
-    request.location.district,
-    request.location.governorate,
-    request.location.street,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const locationLabel = formatHelpRequestLocationLabel(request.location);
 
   const accentClass = getPriorityDialogAccentClass(request.priorityLevel);
   const headerTint = getPriorityDialogHeaderTintClass(request.priorityLevel);
@@ -78,10 +72,12 @@ export function HelpRequestDetailDialog({
             <RequestNeedsProgress needs={request.needs} />
 
             <div className="space-y-2 text-sm text-muted-foreground">
-              <p className="inline-flex items-start gap-2">
-                <MapPin className="mt-0.5 size-4 shrink-0" />
-                {locationLabel}
-              </p>
+              {locationLabel ? (
+                <p className="inline-flex items-start gap-2">
+                  <MapPin className="mt-0.5 size-4 shrink-0" />
+                  {locationLabel}
+                </p>
+              ) : null}
               {request.beneficiariesCount ? (
                 <p className="inline-flex items-center gap-2">
                   <Users className="size-4 shrink-0" />

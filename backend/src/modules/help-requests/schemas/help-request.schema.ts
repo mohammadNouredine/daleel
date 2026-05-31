@@ -48,14 +48,14 @@ export const CoordinatesSchema = SchemaFactory.createForClass(Coordinates);
 
 @Schema({ _id: false })
 export class RequestLocation {
-  @Prop({ required: true, trim: true })
-  governorate: string;
+  @Prop({ trim: true })
+  governorate?: string;
 
-  @Prop({ required: true, trim: true })
-  district: string;
+  @Prop({ trim: true })
+  district?: string;
 
-  @Prop({ required: true, trim: true })
-  city: string;
+  @Prop({ trim: true })
+  city?: string;
 
   @Prop({ trim: true })
   street?: string;
@@ -97,8 +97,8 @@ export class HelpRequest {
   @Prop({ min: 1 })
   beneficiariesCount?: number;
 
-  @Prop({ type: RequestLocationSchema, required: true })
-  location: RequestLocation;
+  @Prop({ type: RequestLocationSchema })
+  location?: RequestLocation;
 
   @Prop({ trim: true })
   contactPhone?: string;

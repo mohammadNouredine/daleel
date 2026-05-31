@@ -54,7 +54,7 @@ export function filterHelpRequests(
     }
     if (
       filters.governorate !== "all" &&
-      request.location.governorate !== filters.governorate
+      request.location?.governorate !== filters.governorate
     ) {
       return false
     }
@@ -71,7 +71,7 @@ export function filterHelpRequests(
 export function extractGovernorates(requests: HelpRequest[]): string[] {
   const set = new Set<string>()
   for (const request of requests) {
-    if (request.location.governorate) {
+    if (request.location?.governorate) {
       set.add(request.location.governorate)
     }
   }

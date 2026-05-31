@@ -12,6 +12,7 @@ import {
 import type { CreateHelpRequestFormValues } from "../schemas/create-help-request.schema"
 import type { NeedLineFormValue } from "../schemas/need-line.schema"
 import { isFilledNeedLine } from "../schemas/need-line.schema"
+import { buildLocationFromFormFields } from "./help-request-location"
 import {
   splitContactPhone,
   formatContactPhone,
@@ -55,14 +56,14 @@ export function mapHelpRequestToFormValues(
     subCategory: request.subCategory,
     priorityLevel: request.priorityLevel,
     needLines: mapRequestNeedsToFormLines(request.needs),
-    governorate: request.location.governorate,
-    district: request.location.district,
-    city: request.location.city,
-    street: request.location.street ?? "",
-    latitude: request.location.coordinates?.lat
+    governorate: request.location?.governorate ?? "",
+    district: request.location?.district ?? "",
+    city: request.location?.city ?? "",
+    street: request.location?.street ?? "",
+    latitude: request.location?.coordinates?.lat
       ? String(request.location.coordinates.lat)
       : "",
-    longitude: request.location.coordinates?.lng
+    longitude: request.location?.coordinates?.lng
       ? String(request.location.coordinates.lng)
       : "",
     beneficiariesCount: request.beneficiariesCount
@@ -82,8 +83,7 @@ export function mapFormToCreateInput(
     ? undefined
     : Number(values.beneficiariesCount)
 
-  const lat = values.latitude?.trim() ? Number(values.latitude) : undefined
-  const lng = values.longitude?.trim() ? Number(values.longitude) : undefined
+  const location = buildLocationFromFormFields(values)
 
   return {
     title: values.title.trim(),
@@ -93,19 +93,7 @@ export function mapFormToCreateInput(
     priorityLevel: values.priorityLevel as PriorityLevelValue,
     needs: mapFormNeedLines(values.needLines),
     beneficiariesCount: beneficiaries,
-    location: {
-      governorate: values.governorate.trim(),
-      district: values.district.trim(),
-      city: values.city.trim(),
-      street: values.street?.trim() || undefined,
-      coordinates:
-        lat !== undefined &&
-        lng !== undefined &&
-        !Number.isNaN(lat) &&
-        !Number.isNaN(lng)
-          ? { lat, lng }
-          : undefined,
-    },
+    location,
     visibility: Visibility.PUBLIC,
     contactPhone: formatContactPhone(values.phoneCode, values.phoneNumber),
   }

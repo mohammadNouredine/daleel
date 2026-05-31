@@ -17,6 +17,7 @@ import {
   getStatusBadgeClass,
 } from "../utils/request-visuals";
 import { getNeedsCardSummary } from "../utils/request-needs";
+import { formatHelpRequestLocationLabel } from "../utils/help-request-location";
 import {
   HandHelping,
   MapPin,
@@ -79,13 +80,7 @@ export function HelpRequestCard({
   const isArchive = variant === "archive";
   const summary = getNeedsCardSummary(request.needs);
 
-  const locationLabel = [
-    request.location.city,
-    request.location.district,
-    request.location.governorate,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const locationLabel = formatHelpRequestLocationLabel(request.location);
 
   const showOwnerActions = canEdit || canManage || canDelete;
 
@@ -164,10 +159,12 @@ export function HelpRequestCard({
             />
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="size-3.5 shrink-0" />
-                {locationLabel}
-              </span>
+              {locationLabel ? (
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="size-3.5 shrink-0" />
+                  {locationLabel}
+                </span>
+              ) : null}
               {request.beneficiariesCount ? (
                 <span className="inline-flex items-center gap-1">
                   <Users className="size-3.5 shrink-0" />

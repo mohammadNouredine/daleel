@@ -82,9 +82,9 @@ export type HelpRequestNeedLine = {
 }
 
 export type HelpRequestLocation = {
-  governorate: string
-  district: string
-  city: string
+  governorate?: string
+  district?: string
+  city?: string
   street?: string
   coordinates?: {
     lat: number
@@ -102,7 +102,7 @@ export type HelpRequest = {
   priorityLevel: PriorityLevelValue
   needs: HelpRequestNeedLine[]
   beneficiariesCount?: number
-  location: HelpRequestLocation
+  location?: HelpRequestLocation
   status: HelpRequestStatusValue
   approvalStatus: HelpRequestApprovalStatusValue
   rejectionReason?: string
@@ -131,7 +131,7 @@ export type CreateHelpRequestInput = {
   priorityLevel: PriorityLevelValue
   needs: CreateHelpRequestNeedInput[]
   beneficiariesCount?: number
-  location: HelpRequestLocation
+  location?: HelpRequestLocation
   visibility: VisibilityValue
   media?: string[]
   contactPhone?: string

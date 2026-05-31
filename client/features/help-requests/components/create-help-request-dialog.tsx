@@ -176,8 +176,8 @@ export function CreateHelpRequestDialog({
                 </FormSection>
 
                 <FormSection
-                  title="Location"
-                  description="Where help should be delivered or coordinated."
+                  title="Location (optional)"
+                  description="Where help should be delivered or coordinated, if known."
                 >
                   {open ? (
                     <LocationMapPicker

@@ -29,20 +29,20 @@ export class CoordinatesDto {
 }
 
 export class LocationDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @MinLength(1)
-  governorate: string;
+  governorate?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @MinLength(1)
-  district: string;
+  district?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @MinLength(1)
-  city: string;
+  city?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -123,10 +123,11 @@ export class CreateHelpRequestDto {
   @Min(1)
   beneficiariesCount?: number;
 
-  @ApiProperty({ type: LocationDto })
+  @ApiPropertyOptional({ type: LocationDto })
+  @IsOptional()
   @ValidateNested()
   @Type(() => LocationDto)
-  location: LocationDto;
+  location?: LocationDto;
 
   @ApiPropertyOptional({ enum: Visibility })
   @IsOptional()

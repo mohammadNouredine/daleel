@@ -18,7 +18,7 @@ import {
 } from '../../common/enums';
 import { toObjectId } from '../../common/utils/object-id.util';
 import { UsersService } from '../users/users.service';
-import type { CreateHelpRequestDto } from './dto/create-help-request.dto';
+import type { CreateHelpRequestDto, LocationDto } from './dto/create-help-request.dto';
 import type { FulfillmentAdjustmentDto } from './dto/fulfillment-adjustment.dto';
 import type { ListHelpRequestsQueryDto } from './dto/list-help-requests-query.dto';
 import type { RejectHelpRequestDto } from './dto/reject-help-request.dto';
@@ -30,6 +30,7 @@ import {
   HelpRequest,
   type HelpRequestDocument,
   type NeedLine,
+  type RequestLocation,
 } from './schemas/help-request.schema';
 
 @Injectable()
@@ -127,7 +128,7 @@ export class HelpRequestsService {
       priorityLevel: dto.priorityLevel,
       needs: this.buildNeedsFromInput(dto.needs),
       beneficiariesCount: dto.beneficiariesCount,
-      location: dto.location,
+      location: this.resolveLocation(dto.location),
       contactPhone: dto.contactPhone?.trim(),
       visibility: dto.visibility ?? Visibility.PUBLIC,
       media,
@@ -165,7 +166,7 @@ export class HelpRequestsService {
     doc.priorityLevel = dto.priorityLevel;
     doc.needs = this.buildNeedsFromInput(dto.needs, previousNeeds);
     doc.beneficiariesCount = dto.beneficiariesCount;
-    doc.location = dto.location;
+    doc.location = this.resolveLocation(dto.location);
     doc.contactPhone = dto.contactPhone?.trim();
     doc.visibility = dto.visibility ?? doc.visibility;
     doc.media = media;
@@ -320,6 +321,32 @@ export class HelpRequestsService {
         notes: input.notes,
       });
     });
+  }
+
+  private resolveLocation(
+    location?: LocationDto,
+  ): RequestLocation | undefined {
+    if (!location) {
+      return undefined;
+    }
+
+    const governorate = location.governorate?.trim();
+    const district = location.district?.trim();
+    const city = location.city?.trim();
+    const street = location.street?.trim();
+    const coordinates = location.coordinates;
+
+    if (!governorate && !district && !city && !street && !coordinates) {
+      return undefined;
+    }
+
+    return {
+      governorate,
+      district,
+      city,
+      street,
+      coordinates,
+    };
   }
 
   private toPlainNeedLine(line: NeedLine): NeedLine {
