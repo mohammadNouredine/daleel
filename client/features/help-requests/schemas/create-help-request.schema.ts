@@ -28,6 +28,7 @@ export const createHelpRequestSchema = z.object({
   longitude: z.string().optional(),
   beneficiariesCount: z.string().optional(),
   proofImageUrls: z.array(z.string()).max(8).optional(),
+  proofImageFiles: z.array(z.custom<File>((val) => val instanceof File)).max(8).optional(),
   phoneCode: z.string().min(1, "Select a country code"),
   phoneNumber: z
     .string()
@@ -69,6 +70,7 @@ export const createHelpRequestDefaultValues: CreateHelpRequestFormValues = {
   longitude: "",
   beneficiariesCount: "",
   proofImageUrls: [],
+  proofImageFiles: [],
   phoneCode: "+961",
   phoneNumber: "",
 }

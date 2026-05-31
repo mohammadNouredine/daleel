@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { UsersModule } from '../users/users.module';
+import { HelpRequestsController } from './help-requests.controller';
+import { HelpRequestsService } from './help-requests.service';
 import { HelpRequest, HelpRequestSchema } from './schemas/help-request.schema';
 
 @Module({
@@ -7,7 +10,10 @@ import { HelpRequest, HelpRequestSchema } from './schemas/help-request.schema';
     MongooseModule.forFeature([
       { name: HelpRequest.name, schema: HelpRequestSchema },
     ]),
+    UsersModule,
   ],
-  exports: [MongooseModule],
+  controllers: [HelpRequestsController],
+  providers: [HelpRequestsService],
+  exports: [MongooseModule, HelpRequestsService],
 })
 export class HelpRequestsModule {}

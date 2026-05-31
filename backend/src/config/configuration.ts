@@ -16,4 +16,8 @@ export default () => ({
     password: process.env.ADMIN_PASSWORD,
     fullName: process.env.ADMIN_FULL_NAME ?? 'Daleel Admin',
   },
+  uploads: {
+    dir: process.env.UPLOAD_DIR ?? 'uploads/proof-images',
+    maxFiles: 8,
+  },
 });

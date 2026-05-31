@@ -4,11 +4,13 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 import { HelpRequestOptionsResponseDto } from './dto/help-request-options-response.dto';
 import { LocaleQueryDto } from './dto/locale-query.dto';
 import { ReferenceService } from './reference.service';
 
 @ApiTags('Reference')
+@AllowAnonymous()
 @Controller('reference')
 export class ReferenceController {
   constructor(private readonly referenceService: ReferenceService) {}

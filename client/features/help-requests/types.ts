@@ -45,6 +45,15 @@ export const HelpRequestStatus = {
 export type HelpRequestStatusValue =
   (typeof HelpRequestStatus)[keyof typeof HelpRequestStatus]
 
+export const HelpRequestApprovalStatus = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+} as const
+
+export type HelpRequestApprovalStatusValue =
+  (typeof HelpRequestApprovalStatus)[keyof typeof HelpRequestApprovalStatus]
+
 export const Visibility = {
   PUBLIC: "PUBLIC",
   PRIVATE: "PRIVATE",
@@ -95,6 +104,8 @@ export type HelpRequest = {
   beneficiariesCount?: number
   location: HelpRequestLocation
   status: HelpRequestStatusValue
+  approvalStatus: HelpRequestApprovalStatusValue
+  rejectionReason?: string
   visibility: VisibilityValue
   isVerified: boolean
   media?: string[]

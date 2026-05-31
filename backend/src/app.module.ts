@@ -8,6 +8,7 @@ import { HelpRequestsModule } from './modules/help-requests/help-requests.module
 import { HelpUpdatesModule } from './modules/help-updates/help-updates.module';
 import { ReferenceModule } from './modules/reference/reference.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { UsersModule } from './modules/users/users.module';
     }),
     UsersModule,
     ReferenceModule,
+    UploadsModule,
     HelpRequestsModule,
     HelpUpdatesModule,
     ReportsModule,

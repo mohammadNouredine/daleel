@@ -6,6 +6,7 @@ export interface RequestPermissions {
   edit: boolean;
   verify: boolean;
   manage: boolean;
+  delete: boolean;
 }
 
 export interface UserPermissions {

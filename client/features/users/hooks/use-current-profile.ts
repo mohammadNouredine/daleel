@@ -1,19 +1,26 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { getMockProfile } from "../mock-profile"
+import { useIsAuthenticated } from "@/features/auth/hooks/use-is-authenticated"
+import { getFromApi } from "@/lib/api/api-methods"
+import { CURRENT_PROFILE_QUERY_KEY, USERS_ME } from "../endpoints"
 import type { DaleelProfile } from "../types"
 
-export const CURRENT_PROFILE_QUERY_KEY = ["users", "me"] as const
+type UsersMeResponse = {
+  profile: DaleelProfile
+}
 
-/** Returns mock profile until the users/me API is integrated. */
 export function useCurrentProfile() {
+  const isAuthenticated = useIsAuthenticated()
+
   return useQuery({
     queryKey: CURRENT_PROFILE_QUERY_KEY,
-    queryFn: async (): Promise<DaleelProfile> => {
-      await new Promise((resolve) => setTimeout(resolve, 200))
-      return getMockProfile()
+    queryFn: async (): Promise<DaleelProfile | undefined> => {
+      const response = await getFromApi<UsersMeResponse>(USERS_ME)
+      return response.profile
     },
     staleTime: 5 * 60 * 1000,
+    enabled: isAuthenticated,
+    retry: 1,
   })
 }

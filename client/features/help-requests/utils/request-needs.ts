@@ -74,6 +74,11 @@ export function formatNeedLineSummary(line: HelpRequestNeedLine): string {
   return `${formatNeedQuantity(line, line.required)} — ${line.label}`
 }
 
+export function formatNeedLineSelectLabel(line: HelpRequestNeedLine): string {
+  const unitSuffix = line.unit?.trim() ? ` ${line.unit.trim()}` : ""
+  return `${line.label} (${line.fulfilled}/${line.required}${unitSuffix})`
+}
+
 /** One-line teaser for list cards */
 export function getNeedsCardSummary(needs: HelpRequestNeedLine[]): string {
   const progress = computeNeedsProgress(needs)

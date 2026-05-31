@@ -13,8 +13,11 @@ class RequestPermissionsDto {
   @ApiProperty({ description: 'Verify help requests (anti-fraud / moderation)' })
   verify: boolean;
 
-  @ApiProperty({ description: 'Full management (delete, assign, admin actions)' })
+  @ApiProperty({ description: 'Full management (assign, admin actions)' })
   manage: boolean;
+
+  @ApiProperty({ description: 'Delete help requests' })
+  delete: boolean;
 }
 
 class UserPermissionsDto {

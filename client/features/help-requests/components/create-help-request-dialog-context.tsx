@@ -1,7 +1,9 @@
 "use client"
 
 import { createContext, useContext } from "react"
-import type { CreateHelpRequestInput, HelpRequest } from "../types"
+import type { HelpRequest } from "../types"
+import type { CreateHelpRequestFormValues } from "../schemas/create-help-request.schema"
+import type { HelpRequestFormFiles } from "../utils/build-help-request-form-data"
 
 export type HelpRequestFormMode = "create" | "edit"
 
@@ -9,7 +11,10 @@ type CreateHelpRequestDialogHandlers = {
   mode: HelpRequestFormMode
   editingRequest: HelpRequest | null
   onOpenChange: (open: boolean) => void
-  onSubmit: (input: CreateHelpRequestInput) => void
+  onSubmit: (
+    values: CreateHelpRequestFormValues,
+    files: HelpRequestFormFiles
+  ) => void
 }
 
 const CreateHelpRequestDialogContext =

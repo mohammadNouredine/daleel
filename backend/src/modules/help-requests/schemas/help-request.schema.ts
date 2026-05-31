@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import {
+  HelpRequestApprovalStatus,
   HelpRequestStatus,
   HelpType,
   PriorityLevel,
@@ -9,68 +10,30 @@ import {
 } from '../../../common/enums';
 
 @Schema({ _id: false })
-export class Quantity {
+export class NeedLine {
+  @Prop({ required: true, trim: true })
+  id: string;
+
+  @Prop({ required: true, trim: true })
+  label: string;
+
   @Prop({ required: true, min: 0 })
   required: number;
 
   @Prop({ default: 0, min: 0 })
   fulfilled: number;
 
-  @Prop({ default: 0, min: 0 })
-  remaining: number;
+  @Prop({ trim: true })
+  unit?: string;
+
+  @Prop({ required: true, trim: true })
+  kind: string;
 
   @Prop({ trim: true })
-  unit: string;
+  notes?: string;
 }
 
-export const QuantitySchema = SchemaFactory.createForClass(Quantity);
-
-@Schema({ _id: false })
-export class SpecialCases {
-  @Prop({ default: false })
-  hasChildren: boolean;
-
-  @Prop({ default: false })
-  hasElderly: boolean;
-
-  @Prop({ default: false })
-  hasDisabled: boolean;
-
-  @Prop({ default: false })
-  hasChronicDisease: boolean;
-}
-
-export const SpecialCasesSchema = SchemaFactory.createForClass(SpecialCases);
-
-@Schema({ _id: false })
-export class MedicalDetails {
-  @Prop()
-  hospitalName: string;
-
-  @Prop()
-  operationType: string;
-
-  @Prop()
-  deadlineDate: Date;
-}
-
-export const MedicalDetailsSchema =
-  SchemaFactory.createForClass(MedicalDetails);
-
-@Schema({ _id: false })
-export class FinancialDetails {
-  @Prop({ min: 0 })
-  requiredAmount: number;
-
-  @Prop({ default: 0, min: 0 })
-  collectedAmount: number;
-
-  @Prop({ default: 'USD' })
-  currency: string;
-}
-
-export const FinancialDetailsSchema =
-  SchemaFactory.createForClass(FinancialDetails);
+export const NeedLineSchema = SchemaFactory.createForClass(NeedLine);
 
 @Schema({ _id: false })
 export class Coordinates {
@@ -85,35 +48,24 @@ export const CoordinatesSchema = SchemaFactory.createForClass(Coordinates);
 
 @Schema({ _id: false })
 export class RequestLocation {
-  @Prop()
+  @Prop({ required: true, trim: true })
   governorate: string;
 
-  @Prop()
+  @Prop({ required: true, trim: true })
   district: string;
 
-  @Prop()
+  @Prop({ required: true, trim: true })
   city: string;
 
-  @Prop()
-  street: string;
+  @Prop({ trim: true })
+  street?: string;
 
   @Prop({ type: CoordinatesSchema })
-  coordinates: Coordinates;
+  coordinates?: Coordinates;
 }
 
 export const RequestLocationSchema =
   SchemaFactory.createForClass(RequestLocation);
-
-@Schema({ _id: false })
-export class ContactInfo {
-  @Prop()
-  phone: string;
-
-  @Prop()
-  whatsapp: string;
-}
-
-export const ContactInfoSchema = SchemaFactory.createForClass(ContactInfo);
 
 @Schema({ timestamps: true, collection: 'help_requests' })
 export class HelpRequest {
@@ -139,26 +91,17 @@ export class HelpRequest {
   })
   priorityLevel: PriorityLevel;
 
-  @Prop({ type: QuantitySchema, required: true })
-  quantity: Quantity;
+  @Prop({ type: [NeedLineSchema], default: [] })
+  needs: NeedLine[];
 
   @Prop({ min: 1 })
-  beneficiariesCount: number;
-
-  @Prop({ type: SpecialCasesSchema, default: () => ({}) })
-  specialCases: SpecialCases;
-
-  @Prop({ type: MedicalDetailsSchema })
-  medicalDetails: MedicalDetails;
-
-  @Prop({ type: FinancialDetailsSchema })
-  financialDetails: FinancialDetails;
+  beneficiariesCount?: number;
 
   @Prop({ type: RequestLocationSchema, required: true })
   location: RequestLocation;
 
-  @Prop({ type: ContactInfoSchema })
-  contactInfo: ContactInfo;
+  @Prop({ trim: true })
+  contactPhone?: string;
 
   @Prop({ type: [String], default: [] })
   media: string[];
@@ -173,14 +116,31 @@ export class HelpRequest {
   @Prop({ type: String, enum: Visibility, default: Visibility.PUBLIC })
   visibility: Visibility;
 
+  @Prop({
+    type: String,
+    enum: HelpRequestApprovalStatus,
+    default: HelpRequestApprovalStatus.PENDING,
+    index: true,
+  })
+  approvalStatus: HelpRequestApprovalStatus;
+
+  @Prop({ trim: true })
+  rejectionReason?: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'users', default: null })
+  reviewedBy?: Types.ObjectId | null;
+
+  @Prop({ type: Date, default: null })
+  reviewedAt?: Date | null;
+
   @Prop()
-  expiresAt: Date;
+  expiresAt?: Date;
 
   @Prop({ default: false })
   isVerified: boolean;
 
   @Prop()
-  verificationNotes: string;
+  verificationNotes?: string;
 
   @Prop({ default: 0, min: 0 })
   reportsCount: number;
@@ -198,31 +158,57 @@ export class HelpRequest {
 export type HelpRequestDocument = HydratedDocument<HelpRequest>;
 export const HelpRequestSchema = SchemaFactory.createForClass(HelpRequest);
 
-function syncQuantityAndStatus(doc: HelpRequestDocument): void {
-  if (!doc.quantity) return;
-
-  const { required, fulfilled } = doc.quantity;
-  doc.quantity.remaining = Math.max(0, required - fulfilled);
-
+function deriveStatusFromNeeds(
+  needs: NeedLine[],
+  currentStatus: HelpRequestStatus,
+): HelpRequestStatus {
   if (
-    doc.status !== HelpRequestStatus.EXPIRED &&
-    doc.status !== HelpRequestStatus.CANCELLED
+    currentStatus === HelpRequestStatus.EXPIRED ||
+    currentStatus === HelpRequestStatus.CANCELLED
   ) {
-    if (fulfilled >= required && required > 0) {
-      doc.status = HelpRequestStatus.FULFILLED;
-    } else if (fulfilled > 0) {
-      doc.status = HelpRequestStatus.PARTIALLY_FULFILLED;
-    } else if (doc.status === HelpRequestStatus.PARTIALLY_FULFILLED) {
-      doc.status = HelpRequestStatus.ACTIVE;
-    }
+    return currentStatus;
   }
+
+  if (needs.length === 0) {
+    return HelpRequestStatus.ACTIVE;
+  }
+
+  const allFulfilled = needs.every((line) => line.fulfilled >= line.required);
+  const hasPartial = needs.some(
+    (line) => line.fulfilled > 0 && line.fulfilled < line.required,
+  );
+  const totalFulfilled = needs.reduce((sum, line) => sum + line.fulfilled, 0);
+
+  if (allFulfilled) return HelpRequestStatus.FULFILLED;
+  if (hasPartial || totalFulfilled > 0) {
+    return HelpRequestStatus.PARTIALLY_FULFILLED;
+  }
+  return HelpRequestStatus.ACTIVE;
+}
+
+function normalizeNeedLines(needs: NeedLine[]): NeedLine[] {
+  return needs.map((line) => {
+    const required = Math.max(0, line.required);
+    const fulfilled = Math.max(0, Math.min(required, line.fulfilled));
+    return {
+      id: line.id,
+      kind: line.kind,
+      label: line.label.trim(),
+      required,
+      fulfilled,
+      unit: line.unit?.trim() || undefined,
+      notes: line.notes?.trim() || undefined,
+    };
+  });
 }
 
 HelpRequestSchema.pre('save', function () {
-  syncQuantityAndStatus(this);
+  this.needs = normalizeNeedLines(this.needs ?? []);
+  this.status = deriveStatusFromNeeds(this.needs, this.status);
 });
 
 HelpRequestSchema.index({ helpType: 1, subCategory: 1, status: 1 });
+HelpRequestSchema.index({ approvalStatus: 1, deletedAt: 1, status: 1 });
 HelpRequestSchema.index({
   'location.governorate': 1,
   'location.district': 1,

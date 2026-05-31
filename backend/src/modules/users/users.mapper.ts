@@ -33,6 +33,7 @@ export function mapDocumentToUser(record: Record<string, unknown>): DaleelUser |
             edit: false,
             verify: false,
             manage: false,
+            delete: false,
           },
         },
     phoneNumber: typeof record.phoneNumber === 'string' ? record.phoneNumber : null,

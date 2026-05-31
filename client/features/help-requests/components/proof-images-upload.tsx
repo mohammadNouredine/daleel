@@ -12,7 +12,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { ACCEPTED_PROOF_IMAGE_TYPES, MAX_PROOF_IMAGES } from "../constants";
+import { resolveMediaUrl } from "../utils/build-help-request-form-data";
 import { useFormContext } from "react-hook-form";
+
+type ProofPreview = {
+  key: string;
+  src: string;
+  kind: "url" | "file";
+  urlIndex?: number;
+  fileIndex?: number;
+};
 
 export function ProofImagesUpload() {
   const form = useFormContext();
@@ -22,16 +31,36 @@ export function ProofImagesUpload() {
     <FormField
       control={form.control}
       name="proofImageUrls"
-      render={({ field }) => {
-        const urls = (field.value as string[] | undefined) ?? [];
-        const atLimit = urls.length >= MAX_PROOF_IMAGES;
+      render={() => {
+        const urls = (form.watch("proofImageUrls") as string[] | undefined) ?? [];
+        const files =
+          (form.watch("proofImageFiles") as File[] | undefined) ?? [];
+        const totalCount = urls.length + files.length;
+        const atLimit = totalCount >= MAX_PROOF_IMAGES;
 
-        const addFiles = (files: FileList | null) => {
-          if (!files?.length) return;
+        const previews: ProofPreview[] = [
+          ...urls.map((url, index) => ({
+            key: `url-${url}-${index}`,
+            src: resolveMediaUrl(url),
+            kind: "url" as const,
+            urlIndex: index,
+          })),
+          ...files.map((file, index) => ({
+            key: `file-${file.name}-${index}`,
+            src: URL.createObjectURL(file),
+            kind: "file" as const,
+            fileIndex: index,
+          })),
+        ];
 
-          const next = [...urls];
-          for (const file of Array.from(files)) {
-            if (next.length >= MAX_PROOF_IMAGES) break;
+        const addFiles = (fileList: FileList | null) => {
+          if (!fileList?.length) return;
+
+          const nextUrls = [...urls];
+          const nextFiles = [...files];
+
+          for (const file of Array.from(fileList)) {
+            if (nextUrls.length + nextFiles.length >= MAX_PROOF_IMAGES) break;
             if (
               !ACCEPTED_PROOF_IMAGE_TYPES.includes(
                 file.type as (typeof ACCEPTED_PROOF_IMAGE_TYPES)[number],
@@ -39,17 +68,28 @@ export function ProofImagesUpload() {
             ) {
               continue;
             }
-            next.push(URL.createObjectURL(file));
+            nextFiles.push(file);
           }
-          field.onChange(next);
+
+          form.setValue("proofImageUrls", nextUrls, { shouldDirty: true });
+          form.setValue("proofImageFiles", nextFiles, { shouldDirty: true });
         };
 
-        const removeAt = (index: number) => {
-          const target = urls[index];
-          if (target?.startsWith("blob:")) {
-            URL.revokeObjectURL(target);
+        const removePreview = (preview: ProofPreview) => {
+          if (preview.kind === "url" && preview.urlIndex !== undefined) {
+            form.setValue(
+              "proofImageUrls",
+              urls.filter((_, index) => index !== preview.urlIndex),
+              { shouldDirty: true },
+            );
           }
-          field.onChange(urls.filter((_, i) => i !== index));
+          if (preview.kind === "file" && preview.fileIndex !== undefined) {
+            form.setValue(
+              "proofImageFiles",
+              files.filter((_, index) => index !== preview.fileIndex),
+              { shouldDirty: true },
+            );
+          }
         };
 
         return (
@@ -84,16 +124,16 @@ export function ProofImagesUpload() {
                   Add photos
                 </Button>
 
-                {urls.length > 0 ? (
+                {previews.length > 0 ? (
                   <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {urls.map((url, index) => (
+                    {previews.map((preview) => (
                       <li
-                        key={`${url}-${index}`}
+                        key={preview.key}
                         className="group relative aspect-4/3 overflow-hidden rounded-lg border border-border bg-muted"
                       >
                         <img
-                          src={url}
-                          alt={`Proof ${index + 1}`}
+                          src={preview.src}
+                          alt="Proof"
                           className="h-full w-full object-cover"
                         />
                         <Button
@@ -101,8 +141,8 @@ export function ProofImagesUpload() {
                           variant="destructive"
                           size="icon-xs"
                           className="absolute top-1 right-1 opacity-90 group-hover:opacity-100"
-                          onClick={() => removeAt(index)}
-                          aria-label={`Remove photo ${index + 1}`}
+                          onClick={() => removePreview(preview)}
+                          aria-label="Remove photo"
                         >
                           <X className="size-3" />
                         </Button>

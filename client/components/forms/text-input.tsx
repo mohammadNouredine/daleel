@@ -17,6 +17,8 @@ type TextInputProps = {
   placeholder?: string
   type?: React.ComponentProps<"input">["type"]
   description?: string
+  min?: React.ComponentProps<"input">["min"]
+  step?: React.ComponentProps<"input">["step"]
 }
 
 export function TextInput({
@@ -25,6 +27,8 @@ export function TextInput({
   placeholder,
   type = "text",
   description,
+  min,
+  step,
 }: TextInputProps) {
   const form = useFormContext()
 
@@ -39,6 +43,8 @@ export function TextInput({
             <Input
               type={type}
               placeholder={placeholder}
+              min={min}
+              step={step}
               {...field}
               value={(field.value as string) ?? ""}
             />

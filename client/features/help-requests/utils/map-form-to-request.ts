@@ -1,5 +1,4 @@
 import {
-  HelpRequestStatus,
   Visibility,
   type CreateHelpRequestInput,
   type CreateHelpRequestNeedInput,
@@ -17,13 +16,6 @@ import {
   splitContactPhone,
   formatContactPhone,
 } from "@/components/forms/Phone/phone-utils"
-import {
-  buildNeedsFromCreateInput,
-  createNeedLineId,
-  deriveStatusFromNeeds,
-  normalizeNeedLine,
-  normalizeNeedLines,
-} from "./request-needs"
 
 function mapFormNeedLines(
   lines: NeedLineFormValue[]
@@ -77,55 +69,11 @@ export function mapHelpRequestToFormValues(
       ? String(request.beneficiariesCount)
       : "",
     proofImageUrls: request.media ?? [],
+    proofImageFiles: [],
     phoneCode: phone.phoneCode,
     phoneNumber: phone.phoneNumber,
   }
 }
-
-export function applyEditInputToHelpRequest(
-  existing: HelpRequest,
-  input: CreateHelpRequestInput
-): HelpRequest {
-  const now = new Date().toISOString()
-
-  const needs = normalizeNeedLines(
-    input.needs.map((needInput) => {
-      const previous = existing.needs.find((line) => line.id === needInput.id)
-      const fulfilled = previous
-        ? Math.min(previous.fulfilled, needInput.required)
-        : 0
-
-      return normalizeNeedLine({
-        id: needInput.id ?? createNeedLineId(),
-        label: needInput.label,
-        required: needInput.required,
-        fulfilled,
-        unit: needInput.unit,
-        kind: needInput.kind,
-        notes: needInput.notes,
-      })
-    })
-  )
-
-  return {
-    ...existing,
-    title: input.title,
-    description: input.description,
-    helpType: input.helpType,
-    subCategory: input.subCategory,
-    priorityLevel: input.priorityLevel,
-    needs,
-    beneficiariesCount: input.beneficiariesCount,
-    location: input.location,
-    visibility: input.visibility,
-    media: input.media,
-    contactPhone: input.contactPhone,
-    updatedAt: now,
-    status: deriveStatusFromNeeds(needs, existing.status),
-  }
-}
-
-export { applyNeedLineFulfillment as applyFulfillmentAdjustment } from "./request-needs"
 
 export function mapFormToCreateInput(
   values: CreateHelpRequestFormValues
@@ -159,35 +107,6 @@ export function mapFormToCreateInput(
           : undefined,
     },
     visibility: Visibility.PUBLIC,
-    media: values.proofImageUrls?.length ? values.proofImageUrls : undefined,
     contactPhone: formatContactPhone(values.phoneCode, values.phoneNumber),
-  }
-}
-
-export function mapCreateInputToHelpRequest(
-  input: CreateHelpRequestInput,
-  createdBy: string
-): HelpRequest {
-  const now = new Date().toISOString()
-  const needs = buildNeedsFromCreateInput(input.needs)
-
-  return {
-    _id: `hr_${crypto.randomUUID().slice(0, 8)}`,
-    createdBy,
-    title: input.title,
-    description: input.description,
-    helpType: input.helpType,
-    subCategory: input.subCategory,
-    priorityLevel: input.priorityLevel,
-    needs,
-    beneficiariesCount: input.beneficiariesCount,
-    location: input.location,
-    status: HelpRequestStatus.ACTIVE,
-    visibility: input.visibility,
-    media: input.media,
-    contactPhone: input.contactPhone,
-    isVerified: false,
-    createdAt: now,
-    updatedAt: now,
   }
 }

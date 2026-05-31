@@ -1,18 +1,15 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Plus } from "lucide-react"
+import toast from "react-hot-toast"
 import { PageShell } from "@/components/layout/page-shell"
 import { Button } from "@/components/ui/button"
-import { canWriteHelpRequests } from "@/lib/permissions"
+import { useIsAuthenticated } from "@/features/auth/hooks/use-is-authenticated"
 import { useCurrentProfile } from "@/features/users/hooks/use-current-profile"
-import { MOCK_HELP_REQUESTS } from "../mock-data"
-import type { CreateHelpRequestInput, HelpRequest } from "../types"
-import {
-  applyEditInputToHelpRequest,
-  applyFulfillmentAdjustment,
-  mapCreateInputToHelpRequest,
-} from "../utils/map-form-to-request"
+import type { HelpRequest } from "../types"
+import { HelpRequestApprovalStatus } from "../types"
 import {
   canDeleteHelpRequest,
   canEditHelpRequest,
@@ -26,6 +23,18 @@ import {
   partitionRequests,
   type HelpRequestFilters,
 } from "../utils/request-filters"
+import { mapFormToCreateInput } from "../utils/map-form-to-request"
+import {
+  buildHelpRequestFormData,
+  type HelpRequestFormFiles,
+} from "../utils/build-help-request-form-data"
+import type { CreateHelpRequestFormValues } from "../schemas/create-help-request.schema"
+import { useHelpRequests } from "../hooks/use-help-requests"
+import { useMyHelpRequests } from "../hooks/use-my-help-requests"
+import { useCreateHelpRequest } from "../hooks/use-create-help-request"
+import { useUpdateHelpRequest } from "../hooks/use-update-help-request"
+import { useDeleteHelpRequest } from "../hooks/use-delete-help-request"
+import { useManageHelpRequestFulfillment } from "../hooks/use-manage-help-request-fulfillment"
 import { CreateHelpRequestDialog } from "./create-help-request-dialog"
 import { CreateHelpRequestDialogProvider } from "./create-help-request-dialog-context"
 import { DeleteHelpRequestDialog } from "./delete-help-request-dialog"
@@ -42,7 +51,9 @@ import {
 } from "./manage-help-request-dialog-context"
 
 export function HelpRequestsView() {
-  const [requests, setRequests] = useState<HelpRequest[]>(MOCK_HELP_REQUESTS)
+  const router = useRouter()
+  const isAuthenticated = useIsAuthenticated()
+
   const [formDialogOpen, setFormDialogOpen] = useState(false)
   const [editingRequest, setEditingRequest] = useState<HelpRequest | null>(null)
   const [managingRequest, setManagingRequest] = useState<HelpRequest | null>(
@@ -55,27 +66,81 @@ export function HelpRequestsView() {
   const [filters, setFilters] = useState<HelpRequestFilters>(
     DEFAULT_HELP_REQUEST_FILTERS
   )
+
   const { data: profile, isLoading: isProfileLoading } = useCurrentProfile()
 
-  const canWrite = canWriteHelpRequests(profile?.permissions)
+  const listViewMode = viewMode === "mine" ? "active" : viewMode
+  const publicQuery = useHelpRequests({ filters, viewMode: listViewMode })
+  const mineQuery = useMyHelpRequests(isAuthenticated && viewMode === "mine")
+
+  const createMutation = useCreateHelpRequest({
+    showSuccessToast: false,
+    onSuccess: (created) => {
+      const autoApproved =
+        created.approvalStatus === HelpRequestApprovalStatus.APPROVED
+      toast.success(
+        autoApproved
+          ? "Help request published"
+          : "Request submitted for review"
+      )
+      setFormDialogOpen(false)
+    },
+  })
+
+  const updateMutation = useUpdateHelpRequest({
+    onSuccess: () => {
+      setFormDialogOpen(false)
+      setEditingRequest(null)
+    },
+  })
+
+  const deleteMutation = useDeleteHelpRequest({
+    onSuccess: () => setDeletingRequest(null),
+  })
+
+  const manageMutation = useManageHelpRequestFulfillment({
+    onSuccess: () => setManagingRequest(null),
+  })
+
   const canEdit = canEditHelpRequest(profile)
   const canDelete = canDeleteHelpRequest(profile)
+  const canCreate = isAuthenticated
+
+  const sourceRequests = viewMode === "mine" ? (mineQuery.data ?? []) : (publicQuery.data ?? [])
 
   const { active, archive } = useMemo(
-    () => partitionRequests(requests),
-    [requests]
+    () => partitionRequests(publicQuery.data ?? []),
+    [publicQuery.data]
   )
 
-  const governorates = useMemo(() => extractGovernorates(requests), [requests])
+  const governorates = useMemo(
+    () =>
+      extractGovernorates(
+        viewMode === "mine" ? sourceRequests : (publicQuery.data ?? [])
+      ),
+    [viewMode, sourceRequests, publicQuery.data]
+  )
 
-  const sourceList = viewMode === "active" ? active : archive
+  const sourceList =
+    viewMode === "mine"
+      ? sourceRequests
+      : viewMode === "active"
+        ? active
+        : archive
 
   const displayedRequests = useMemo(
     () => filterHelpRequests(sourceList, filters),
     [sourceList, filters]
   )
 
+  const isLoading =
+    viewMode === "mine" ? mineQuery.isLoading : publicQuery.isLoading
+
   const openCreateDialog = () => {
+    if (!canCreate) {
+      router.push("/auth")
+      return
+    }
     setEditingRequest(null)
     setFormDialogOpen(true)
   }
@@ -92,53 +157,27 @@ export function HelpRequestsView() {
     }
   }
 
-  const handleCreate = (input: CreateHelpRequestInput) => {
-    const createdBy = profile?._id ?? "anonymous"
-    const newRequest = mapCreateInputToHelpRequest(input, createdBy)
-    setRequests((prev) => [newRequest, ...prev])
-    setFormDialogOpen(false)
-  }
+  const submitForm = (
+    values: CreateHelpRequestFormValues,
+    files: HelpRequestFormFiles
+  ) => {
+    const input = mapFormToCreateInput(values)
+    const formData = buildHelpRequestFormData(input, files)
 
-  const handleEdit = (input: CreateHelpRequestInput) => {
-    if (!editingRequest) {
+    if (editingRequest) {
+      updateMutation.mutate({ id: editingRequest._id, formData })
       return
     }
-    setRequests((prev) =>
-      prev.map((item) =>
-        item._id === editingRequest._id
-          ? applyEditInputToHelpRequest(item, input)
-          : item
-      )
-    )
-    setFormDialogOpen(false)
-    setEditingRequest(null)
-  }
 
-  const handleManageOpenChange = (open: boolean) => {
-    if (!open) {
-      setManagingRequest(null)
-    }
+    createMutation.mutate(formData)
   }
 
   const handleManage = (payload: ManageHelpRequestPayload) => {
-    setRequests((prev) =>
-      prev.map((item) =>
-        item._id === payload.requestId
-          ? applyFulfillmentAdjustment(
-              item,
-              payload.lineId,
-              payload.adjustmentType,
-              payload.amount
-            )
-          : item
-      )
-    )
-    setManagingRequest(null)
+    manageMutation.mutate(payload)
   }
 
   const handleDelete = (requestId: string) => {
-    setRequests((prev) => prev.filter((item) => item._id !== requestId))
-    setDeletingRequest(null)
+    deleteMutation.mutate(requestId)
   }
 
   const handleViewModeChange = (mode: HelpRequestsViewMode) => {
@@ -147,28 +186,32 @@ export function HelpRequestsView() {
   }
 
   const emptyMessage =
-    viewMode === "active"
-      ? hasActiveFilters(filters)
-        ? "No open requests match your filters."
-        : "No open requests right now."
-      : hasActiveFilters(filters)
-        ? "No completed or inactive requests match your filters."
-        : "No completed or inactive requests."
+    viewMode === "mine"
+      ? "You have not submitted any requests yet."
+      : viewMode === "active"
+        ? hasActiveFilters(filters)
+          ? "No open requests match your filters."
+          : "No open requests right now."
+        : hasActiveFilters(filters)
+          ? "No completed or inactive requests match your filters."
+          : "No completed or inactive requests."
 
-  const showFormDialog = canWrite || canEdit
   const formMode = editingRequest ? "edit" : "create"
+  const showFormDialog = canCreate || (canEdit && editingRequest !== null)
 
   return (
     <PageShell
       size="wide"
       title="Help Requests"
       description={
-        viewMode === "active"
-          ? "Find requests that still need your help."
-          : "Review completed, expired, or cancelled requests."
+        viewMode === "mine"
+          ? "Track your submissions, including those awaiting approval."
+          : viewMode === "active"
+            ? "Find requests that still need your help."
+            : "Review completed, expired, or cancelled requests."
       }
       headerAction={
-        !isProfileLoading && canWrite && viewMode === "active" ? (
+        !isProfileLoading && canCreate && viewMode !== "archive" ? (
           <Button
             type="button"
             size="icon"
@@ -186,6 +229,8 @@ export function HelpRequestsView() {
           viewMode={viewMode}
           activeCount={active.length}
           archiveCount={archive.length}
+          mineCount={mineQuery.data?.length ?? 0}
+          showMineTab={isAuthenticated}
           onViewModeChange={handleViewModeChange}
         />
 
@@ -195,7 +240,11 @@ export function HelpRequestsView() {
           onChange={setFilters}
         />
 
-        {displayedRequests.length === 0 ? (
+        {isLoading ? (
+          <div className="rounded-2xl border border-dashed border-border/80 bg-card/50 px-6 py-14 text-center text-muted-foreground">
+            Loading requests…
+          </div>
+        ) : displayedRequests.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 bg-card/50 px-6 py-14 text-center">
             <p className="text-muted-foreground">{emptyMessage}</p>
             {hasActiveFilters(filters) ? (
@@ -209,7 +258,7 @@ export function HelpRequestsView() {
                 Clear filters
               </Button>
             ) : null}
-            {viewMode === "active" && canWrite && !hasActiveFilters(filters) ? (
+            {viewMode === "active" && canCreate && !hasActiveFilters(filters) ? (
               <Button
                 type="button"
                 className="mt-4"
@@ -226,7 +275,8 @@ export function HelpRequestsView() {
               <li key={request._id}>
                 <HelpRequestCard
                   request={request}
-                  variant={viewMode}
+                  variant={viewMode === "archive" ? "archive" : "active"}
+                  showApprovalStatus={viewMode === "mine"}
                   canEdit={canEdit}
                   canManage={canManageHelpRequest(request, profile)}
                   canDelete={canDelete}
@@ -245,7 +295,7 @@ export function HelpRequestsView() {
           mode={formMode}
           editingRequest={editingRequest}
           onOpenChange={handleFormDialogOpenChange}
-          onSubmit={formMode === "edit" ? handleEdit : handleCreate}
+          onSubmit={submitForm}
         >
           <CreateHelpRequestDialog open={formDialogOpen} />
         </CreateHelpRequestDialogProvider>
@@ -253,7 +303,9 @@ export function HelpRequestsView() {
 
       <ManageHelpRequestDialogProvider
         request={managingRequest}
-        onOpenChange={handleManageOpenChange}
+        onOpenChange={(open) => {
+          if (!open) setManagingRequest(null)
+        }}
         onSubmit={handleManage}
       >
         <ManageHelpRequestDialog open={managingRequest !== null} />
@@ -263,9 +315,7 @@ export function HelpRequestsView() {
         request={deletingRequest}
         open={deletingRequest !== null}
         onOpenChange={(open) => {
-          if (!open) {
-            setDeletingRequest(null)
-          }
+          if (!open) setDeletingRequest(null)
         }}
         onConfirm={handleDelete}
       />

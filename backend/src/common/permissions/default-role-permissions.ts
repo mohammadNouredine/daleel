@@ -15,6 +15,7 @@ export function defaultRequestPermissionsForRole(
         edit: true,
         verify: true,
         manage: true,
+        delete: true,
       };
     case UserRole.VOLUNTEER:
       return {
@@ -23,6 +24,7 @@ export function defaultRequestPermissionsForRole(
         edit: true,
         verify: true,
         manage: false,
+        delete: false,
       };
     case UserRole.ORGANIZATION:
       return {
@@ -31,6 +33,7 @@ export function defaultRequestPermissionsForRole(
         edit: true,
         verify: false,
         manage: false,
+        delete: false,
       };
     default:
       return {
@@ -39,6 +42,7 @@ export function defaultRequestPermissionsForRole(
         edit: false,
         verify: false,
         manage: false,
+        delete: false,
       };
   }
 }

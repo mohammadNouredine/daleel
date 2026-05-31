@@ -30,7 +30,6 @@ import {
   type CreateHelpRequestFormValues,
 } from "../schemas/create-help-request.schema";
 import {
-  mapFormToCreateInput,
   mapHelpRequestToFormValues,
 } from "../utils/map-form-to-request";
 import { LocationMapPicker } from "./location-map-picker-lazy";
@@ -60,10 +59,6 @@ export function CreateHelpRequestDialog({
 
   useEffect(() => {
     if (!open) {
-      const urls = form.getValues("proofImageUrls") ?? [];
-      for (const url of urls) {
-        if (url.startsWith("blob:")) URL.revokeObjectURL(url);
-      }
       return;
     }
 
@@ -76,11 +71,10 @@ export function CreateHelpRequestDialog({
   }, [open, isEdit, editingRequest, form]);
 
   const handleSubmit = (values: CreateHelpRequestFormValues) => {
-    onSubmit(mapFormToCreateInput(values));
-    const urls = values.proofImageUrls ?? [];
-    for (const url of urls) {
-      if (url.startsWith("blob:")) URL.revokeObjectURL(url);
-    }
+    onSubmit(values, {
+      existingMedia: values.proofImageUrls ?? [],
+      newFiles: values.proofImageFiles ?? [],
+    });
     if (!isEdit) {
       form.reset(createHelpRequestDefaultValues);
     }

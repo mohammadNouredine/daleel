@@ -29,6 +29,8 @@ type SelectInputProps = {
   description?: string
   options: SelectOption[]
   disabled?: boolean
+  /** Override trigger label when item text cannot be resolved (e.g. portaled selects). */
+  displayValue?: string
 }
 
 export function SelectInput({
@@ -38,6 +40,7 @@ export function SelectInput({
   description,
   options,
   disabled = false,
+  displayValue,
 }: SelectInputProps) {
   const form = useFormContext()
 
@@ -55,7 +58,9 @@ export function SelectInput({
           >
             <FormControl>
               <SelectTrigger className="w-full" disabled={disabled}>
-                <SelectValue placeholder={placeholder} />
+                <SelectValue placeholder={placeholder}>
+                  {displayValue ?? null}
+                </SelectValue>
               </SelectTrigger>
             </FormControl>
             <SelectContent>

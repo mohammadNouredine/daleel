@@ -10,7 +10,8 @@ import {
   PRIORITY_LABELS,
   STATUS_LABELS,
 } from "../constants";
-import type { HelpRequest } from "../types";
+import type { HelpRequest, HelpRequestApprovalStatusValue } from "../types";
+import { HelpRequestApprovalStatus } from "../types";
 import {
   getPriorityBadgeClass,
   getStatusBadgeClass,
@@ -32,12 +33,30 @@ import { HelpRequestDetailDialog } from "./help-request-detail-dialog";
 type HelpRequestCardProps = {
   request: HelpRequest;
   variant?: "active" | "archive";
+  showApprovalStatus?: boolean;
   canEdit?: boolean;
   canManage?: boolean;
   canDelete?: boolean;
   onEdit?: () => void;
   onManage?: () => void;
   onDelete?: () => void;
+};
+
+function getApprovalBadgeClass(status: HelpRequestApprovalStatusValue): string {
+  switch (status) {
+    case HelpRequestApprovalStatus.APPROVED:
+      return "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
+    case HelpRequestApprovalStatus.REJECTED:
+      return "border-destructive/30 bg-destructive/10 text-destructive";
+    default:
+      return "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300";
+  }
+}
+
+const APPROVAL_LABELS: Record<HelpRequestApprovalStatusValue, string> = {
+  [HelpRequestApprovalStatus.PENDING]: "Pending review",
+  [HelpRequestApprovalStatus.APPROVED]: "Approved",
+  [HelpRequestApprovalStatus.REJECTED]: "Rejected",
 };
 
 function stopCardNavigation(event: React.MouseEvent) {
@@ -47,6 +66,7 @@ function stopCardNavigation(event: React.MouseEvent) {
 export function HelpRequestCard({
   request,
   variant = "active",
+  showApprovalStatus = false,
   canEdit = false,
   canManage = false,
   canDelete = false,
@@ -106,6 +126,14 @@ export function HelpRequestCard({
                 ) : null}
               </div>
               <div className="flex flex-wrap gap-1.5">
+                {showApprovalStatus ? (
+                  <Badge
+                    variant="outline"
+                    className={getApprovalBadgeClass(request.approvalStatus)}
+                  >
+                    {APPROVAL_LABELS[request.approvalStatus]}
+                  </Badge>
+                ) : null}
                 {isArchive ? (
                   <Badge
                     variant="outline"

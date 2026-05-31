@@ -1,0 +1,179 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UnauthorizedException,
+  UploadedFiles,
+  UseInterceptors,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { Session, AllowAnonymous, OptionalAuth } from '@thallesp/nestjs-better-auth';
+import type { UserSession } from '@thallesp/nestjs-better-auth';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
+import { randomUUID } from 'crypto';
+import { MAX_PROOF_IMAGES } from '../uploads/uploads.constants';
+import { FulfillmentAdjustmentDto } from './dto/fulfillment-adjustment.dto';
+import { ListHelpRequestsQueryDto } from './dto/list-help-requests-query.dto';
+import { RejectHelpRequestDto } from './dto/reject-help-request.dto';
+import { HelpRequestsService } from './help-requests.service';
+
+function requireUserId(session: UserSession | null): string {
+  if (!session?.user?.id) {
+    throw new UnauthorizedException('Authentication required');
+  }
+  return session.user.id;
+}
+
+const multipartInterceptor = FilesInterceptor('files', MAX_PROOF_IMAGES, {
+  storage: diskStorage({
+    destination: (_req, _file, cb) => {
+      const dir = join(process.cwd(), 'uploads/proof-images');
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
+      cb(null, dir);
+    },
+    filename: (_req, file, cb) => {
+      const extension = extname(file.originalname) || '.jpg';
+      cb(null, `${randomUUID()}${extension}`);
+    },
+  }),
+});
+
+@ApiTags('Help Requests')
+@Controller('help-requests')
+export class HelpRequestsController {
+  constructor(private readonly helpRequestsService: HelpRequestsService) {}
+
+  @Get()
+  @AllowAnonymous()
+  @ApiOperation({ summary: 'List approved help requests (public feed)' })
+  list(@Query() query: ListHelpRequestsQueryDto) {
+    return this.helpRequestsService.listPublic(query);
+  }
+
+  @Get('mine')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ summary: 'List current user help requests' })
+  listMine(@Session() session: UserSession | null) {
+    const userId = requireUserId(session);
+    return this.helpRequestsService.listMine(userId);
+  }
+
+  @Get('moderation/pending')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ summary: 'List pending help requests (admin)' })
+  listPending(@Session() session: UserSession | null) {
+    const userId = requireUserId(session);
+    return this.helpRequestsService.listPendingModeration(userId);
+  }
+
+  @Get(':id')
+  @OptionalAuth()
+  @ApiOperation({ summary: 'Get help request by id' })
+  findOne(
+    @Param('id') id: string,
+    @Session() session: UserSession | null,
+  ) {
+    return this.helpRequestsService.findById(id, session?.user?.id);
+  }
+
+  @Post()
+  @ApiBearerAuth('bearer')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Create a help request' })
+  @UseInterceptors(multipartInterceptor)
+  create(
+    @Session() session: UserSession | null,
+    @Body('payload') payload: string,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    const userId = requireUserId(session);
+    const dto = this.helpRequestsService.parsePayloadJson(payload);
+    const uploadedMedia = this.helpRequestsService.mapUploadedFiles(files);
+    return this.helpRequestsService.create(userId, dto, uploadedMedia);
+  }
+
+  @Patch(':id')
+  @ApiBearerAuth('bearer')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Update a help request' })
+  @UseInterceptors(multipartInterceptor)
+  update(
+    @Param('id') id: string,
+    @Session() session: UserSession | null,
+    @Body('payload') payload: string,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    const userId = requireUserId(session);
+    const dto = this.helpRequestsService.parsePayloadJson(payload);
+    const uploadedMedia = this.helpRequestsService.mapUploadedFiles(files);
+    return this.helpRequestsService.update(id, userId, dto, uploadedMedia);
+  }
+
+  @Delete(':id')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ summary: 'Soft-delete a help request' })
+  async remove(
+    @Param('id') id: string,
+    @Session() session: UserSession | null,
+  ) {
+    const userId = requireUserId(session);
+    await this.helpRequestsService.remove(id, userId);
+    return { message: 'Help request deleted' };
+  }
+
+  @Patch(':id/needs/:lineId/fulfillment')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ summary: 'Adjust fulfillment for a need line' })
+  adjustFulfillment(
+    @Param('id') id: string,
+    @Param('lineId') lineId: string,
+    @Session() session: UserSession | null,
+    @Body() dto: FulfillmentAdjustmentDto,
+  ) {
+    const userId = requireUserId(session);
+    return this.helpRequestsService.adjustFulfillment(
+      id,
+      lineId,
+      userId,
+      dto,
+    );
+  }
+
+  @Patch(':id/approve')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ summary: 'Approve a pending help request (admin)' })
+  approve(
+    @Param('id') id: string,
+    @Session() session: UserSession | null,
+  ) {
+    const userId = requireUserId(session);
+    return this.helpRequestsService.approve(id, userId);
+  }
+
+  @Patch(':id/reject')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ summary: 'Reject a pending help request (admin)' })
+  reject(
+    @Param('id') id: string,
+    @Session() session: UserSession | null,
+    @Body() dto: RejectHelpRequestDto,
+  ) {
+    const userId = requireUserId(session);
+    return this.helpRequestsService.reject(id, userId, dto);
+  }
+}
