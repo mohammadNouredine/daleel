@@ -4,6 +4,7 @@ import {
   Visibility,
   HelpRequestNeedKind,
   type HelpRequestNeedKindValue,
+  type HelpRequestSortValue,
   type HelpRequestStatusValue,
   type PriorityLevelValue,
   type VisibilityValue,
@@ -39,6 +40,15 @@ export const PRIORITY_OPTIONS: {
   { value: PriorityLevel.MEDIUM, label: "Medium" },
   { value: PriorityLevel.HIGH, label: "High" },
   { value: PriorityLevel.CRITICAL, label: "Critical" },
+]
+
+export const SORT_OPTIONS: {
+  value: HelpRequestSortValue
+  label: string
+}[] = [
+  { value: "latest", label: "Latest" },
+  { value: "priority", label: "Priority" },
+  { value: "nearest", label: "Nearest" },
 ]
 
 export const NEED_KIND_OPTIONS: {

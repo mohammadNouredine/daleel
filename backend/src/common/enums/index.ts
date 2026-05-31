@@ -5,6 +5,7 @@ export * from './sub-category.enum';
 export * from './priority-level.enum';
 export * from './help-request-status.enum';
 export * from './help-request-approval-status.enum';
+export * from './help-request-sort.enum';
 export * from './visibility.enum';
 export * from './help-update-type.enum';
 export * from './report-status.enum';

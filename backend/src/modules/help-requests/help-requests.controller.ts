@@ -26,6 +26,7 @@ import { existsSync, mkdirSync } from 'fs';
 import { randomUUID } from 'crypto';
 import { MAX_PROOF_IMAGES } from '../uploads/uploads.constants';
 import { FulfillmentAdjustmentDto } from './dto/fulfillment-adjustment.dto';
+import { HelpRequestSortQueryDto } from './dto/help-request-sort-query.dto';
 import { ListHelpRequestsQueryDto } from './dto/list-help-requests-query.dto';
 import { RejectHelpRequestDto } from './dto/reject-help-request.dto';
 import { HelpRequestsService } from './help-requests.service';
@@ -68,9 +69,12 @@ export class HelpRequestsController {
   @Get('mine')
   @ApiBearerAuth('bearer')
   @ApiOperation({ summary: 'List current user help requests' })
-  listMine(@Session() session: UserSession | null) {
+  listMine(
+    @Session() session: UserSession | null,
+    @Query() query: HelpRequestSortQueryDto,
+  ) {
     const userId = requireUserId(session);
-    return this.helpRequestsService.listMine(userId);
+    return this.helpRequestsService.listMine(userId, query);
   }
 
   @Get('moderation/pending')

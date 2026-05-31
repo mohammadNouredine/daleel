@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Plus } from "lucide-react"
 import toast from "react-hot-toast"
@@ -23,6 +23,9 @@ import {
   partitionRequests,
   type HelpRequestFilters,
 } from "../utils/request-filters"
+import { DEFAULT_HELP_REQUEST_SORT } from "../utils/request-sort"
+import type { HelpRequestSortValue } from "../types"
+import { useUserLocation } from "../hooks/use-user-location"
 import { mapFormToCreateInput } from "../utils/map-form-to-request"
 import {
   buildHelpRequestFormData,
@@ -66,12 +69,42 @@ export function HelpRequestsView() {
   const [filters, setFilters] = useState<HelpRequestFilters>(
     DEFAULT_HELP_REQUEST_FILTERS
   )
+  const [sort, setSort] = useState<HelpRequestSortValue>(
+    DEFAULT_HELP_REQUEST_SORT
+  )
+
+  const { coords: userCoords, status: locationStatus } = useUserLocation({
+    enabled: true,
+  })
+
+  useEffect(() => {
+    if (sort !== "nearest") return
+    if (locationStatus === "denied" || locationStatus === "unsupported") {
+      toast.error("Location access is needed to sort by nearest")
+      setSort(DEFAULT_HELP_REQUEST_SORT)
+    }
+  }, [sort, locationStatus])
+
+  const sortHint =
+    sort === "nearest" && locationStatus === "loading"
+      ? "Getting your location…"
+      : undefined
 
   const { data: profile, isLoading: isProfileLoading } = useCurrentProfile()
 
   const listViewMode = viewMode === "mine" ? "active" : viewMode
-  const publicQuery = useHelpRequests({ filters, viewMode: listViewMode })
-  const mineQuery = useMyHelpRequests(isAuthenticated && viewMode === "mine")
+  const publicQuery = useHelpRequests({
+    filters,
+    viewMode: listViewMode,
+    sort,
+    userCoords,
+    enabled: viewMode !== "mine",
+  })
+  const mineQuery = useMyHelpRequests({
+    enabled: isAuthenticated && viewMode === "mine",
+    sort,
+    userCoords,
+  })
 
   const createMutation = useCreateHelpRequest({
     showSuccessToast: false,
@@ -134,7 +167,10 @@ export function HelpRequestsView() {
   )
 
   const isLoading =
-    viewMode === "mine" ? mineQuery.isLoading : publicQuery.isLoading
+    viewMode === "mine"
+      ? mineQuery.isLoading || (sort === "nearest" && locationStatus === "loading")
+      : publicQuery.isLoading ||
+        (sort === "nearest" && locationStatus === "loading")
 
   const openCreateDialog = () => {
     if (!canCreate) {
@@ -183,6 +219,7 @@ export function HelpRequestsView() {
   const handleViewModeChange = (mode: HelpRequestsViewMode) => {
     setViewMode(mode)
     setFilters(DEFAULT_HELP_REQUEST_FILTERS)
+    setSort(DEFAULT_HELP_REQUEST_SORT)
   }
 
   const emptyMessage =
@@ -236,8 +273,11 @@ export function HelpRequestsView() {
 
         <HelpRequestFiltersBar
           filters={filters}
+          sort={sort}
           governorates={governorates}
           onChange={setFilters}
+          onSortChange={setSort}
+          sortHint={sortHint}
         />
 
         {isLoading ? (

@@ -20,8 +20,10 @@ import { toObjectId } from '../../common/utils/object-id.util';
 import { UsersService } from '../users/users.service';
 import type { CreateHelpRequestDto, LocationDto } from './dto/create-help-request.dto';
 import type { FulfillmentAdjustmentDto } from './dto/fulfillment-adjustment.dto';
+import type { HelpRequestSortQueryDto } from './dto/help-request-sort-query.dto';
 import type { ListHelpRequestsQueryDto } from './dto/list-help-requests-query.dto';
 import type { RejectHelpRequestDto } from './dto/reject-help-request.dto';
+import { sortHelpRequestDocuments } from './utils/help-request-sort.util';
 import {
   mapHelpRequestToResponse,
   type HelpRequestResponse,
@@ -48,24 +50,23 @@ export class HelpRequestsService {
       approvalStatus: HelpRequestApprovalStatus.APPROVED,
     });
 
-    const docs = await this.helpRequestModel
-      .find(filter)
-      .sort({ createdAt: -1 })
-      .exec();
+    const docs = await this.helpRequestModel.find(filter).exec();
 
-    return docs.map(mapHelpRequestToResponse);
+    return sortHelpRequestDocuments(docs, query).map(mapHelpRequestToResponse);
   }
 
-  async listMine(userId: string): Promise<HelpRequestResponse[]> {
+  async listMine(
+    userId: string,
+    query: HelpRequestSortQueryDto = {},
+  ): Promise<HelpRequestResponse[]> {
     const docs = await this.helpRequestModel
       .find({
         createdBy: toObjectId(userId),
         deletedAt: null,
       })
-      .sort({ createdAt: -1 })
       .exec();
 
-    return docs.map(mapHelpRequestToResponse);
+    return sortHelpRequestDocuments(docs, query).map(mapHelpRequestToResponse);
   }
 
   async listPendingModeration(userId: string): Promise<HelpRequestResponse[]> {

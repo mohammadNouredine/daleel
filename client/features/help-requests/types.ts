@@ -34,6 +34,15 @@ export const PriorityLevel = {
 export type PriorityLevelValue =
   (typeof PriorityLevel)[keyof typeof PriorityLevel]
 
+export const HelpRequestSort = {
+  PRIORITY: "priority",
+  LATEST: "latest",
+  NEAREST: "nearest",
+} as const
+
+export type HelpRequestSortValue =
+  (typeof HelpRequestSort)[keyof typeof HelpRequestSort]
+
 export const HelpRequestStatus = {
   ACTIVE: "ACTIVE",
   PARTIALLY_FULFILLED: "PARTIALLY_FULFILLED",

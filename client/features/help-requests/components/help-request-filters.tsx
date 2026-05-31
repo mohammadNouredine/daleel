@@ -8,12 +8,13 @@ import {
   getReferenceLabel,
   toSelectOptions,
 } from "@/features/reference/utils/reference-labels"
-import { PRIORITY_OPTIONS } from "../constants"
+import { PRIORITY_OPTIONS, SORT_OPTIONS } from "../constants"
 import {
   DEFAULT_HELP_REQUEST_FILTERS,
   type HelpRequestFilters,
   hasActiveFilters,
 } from "../utils/request-filters"
+import type { HelpRequestSortValue } from "../types"
 
 const selectClassName = cn(
   "h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-sm",
@@ -23,15 +24,21 @@ const selectClassName = cn(
 
 type HelpRequestFiltersBarProps = {
   filters: HelpRequestFilters
+  sort: HelpRequestSortValue
   governorates: string[]
   onChange: (filters: HelpRequestFilters) => void
+  onSortChange: (sort: HelpRequestSortValue) => void
+  sortHint?: string
   className?: string
 }
 
 export function HelpRequestFiltersBar({
   filters,
+  sort,
   governorates,
   onChange,
+  onSortChange,
+  sortHint,
   className,
 }: HelpRequestFiltersBarProps) {
   const { helpTypes, isLoading: isReferenceLoading } = useHelpRequestReference()
@@ -61,7 +68,7 @@ export function HelpRequestFiltersBar({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="grid gap-1.5 text-xs font-medium text-muted-foreground">
           Type
           <select
@@ -121,6 +128,28 @@ export function HelpRequestFiltersBar({
               </option>
             ))}
           </select>
+        </label>
+
+        <label className="grid gap-1.5 text-xs font-medium text-muted-foreground sm:col-span-2 lg:col-span-1">
+          Sort by
+          <select
+            className={selectClassName}
+            value={sort}
+            onChange={(e) =>
+              onSortChange(e.target.value as HelpRequestSortValue)
+            }
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          {sortHint ? (
+            <span className="text-[11px] font-normal leading-snug text-muted-foreground">
+              {sortHint}
+            </span>
+          ) : null}
         </label>
       </div>
     </div>
