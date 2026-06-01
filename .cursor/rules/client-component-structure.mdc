@@ -1,0 +1,60 @@
+---
+description: React component naming and nested folder structure (PascalCase + index.tsx)
+globs: client/features/**/*.tsx,client/app/**/*.tsx
+alwaysApply: false
+---
+
+# Client component structure
+
+Applies to feature and page UI under `client/features/**` and co-located `client/app/**` UI.  
+`client/components/ui/**` (shadcn primitives) keeps its existing flat/lowercase names.
+
+## Naming
+
+- **Components and folders**: `PascalCase` only — no kebab-case, no `snake_case`.
+  - ✅ `HouseListingSection`, `HouseListingCard`, `CardHeader.tsx`
+  - ❌ `house-listing-section`, `houseListingCard`, `house_listing_card`
+- **Files** that export a component: match the component name (`HouseListingCard.tsx`) or use `index.tsx` as the folder entry (see below).
+
+## Nested folders
+
+When a component owns subcomponents, give it a **folder with the same PascalCase name** and `index.tsx` as the public entry.
+
+```
+HouseListingSection/
+  index.tsx              # exports HouseListingSection; composes children
+  HeaderHouse.tsx        # HouseListingSection-only child (optional flat sibling)
+  HouseListingCard/      # nested subcomponent → its own folder
+    index.tsx            # exports HouseListingCard
+    CardHeader.tsx
+    CardBody.tsx
+```
+
+### Rules
+
+1. **One folder per named component** that has children or multiple files.
+2. **`index.tsx`** is always the main file importers use (`import { HouseListingCard } from './HouseListingCard'`).
+3. **Nest recursively** — any subcomponent with its own children gets its own PascalCase folder + `index.tsx`.
+4. **Keep siblings flat** only for tiny, single-file helpers used exclusively by the parent (e.g. `HeaderHouse.tsx` next to `index.tsx`).
+5. **Do not** create one long page file with many inline subcomponents; extract into this tree instead.
+
+### Imports
+
+```tsx
+// ✅ From parent section
+import { HouseListingCard } from "./HouseListingCard"
+
+// ✅ From app or another feature
+import { HouseListingSection } from "@/features/housing/components/HouseListingSection"
+```
+
+```tsx
+// ❌ Avoid kebab-case paths for domain components
+import { HouseListingCard } from "./house-listing-card"
+```
+
+## When adding UI
+
+- New feature UI lives under `client/features/<feature>/components/` using this layout.
+- Prefer a **folder + `index.tsx`** over a single `kebab-case.tsx` at the feature root.
+- Split before files grow large; mirror the domain (Section → Card → CardHeader).
