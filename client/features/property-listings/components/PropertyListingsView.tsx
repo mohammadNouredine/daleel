@@ -106,9 +106,10 @@ export function PropertyListingsView() {
             </div>
           ) : items.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
-              <p className="text-sm font-medium">No listings match your filters</p>
+              <p className="text-sm font-medium">No listings to show yet</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Try adjusting filters or add the first property listing.
+                Only approved, available listings appear here. Publish a new
+                listing or ask an admin to approve pending ones.
               </p>
               <Button type="button" className="mt-4 gap-1.5" onClick={openCreate}>
                 <Plus className="size-4" />

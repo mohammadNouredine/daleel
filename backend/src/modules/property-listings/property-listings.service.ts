@@ -146,13 +146,24 @@ export class PropertyListingsService {
     await this.validateAmenityIds(dto.amenityIds);
 
     const images = this.buildImages(dto, uploadedUrls);
+    const user = await this.usersService.findById(userId);
+    const autoApprove =
+      !dto.saveAsDraft && user?.role === UserRole.ADMIN;
+
     const status = dto.saveAsDraft
       ? PropertyListingStatus.DRAFT
-      : PropertyListingStatus.PENDING_APPROVAL;
+      : autoApprove
+        ? PropertyListingStatus.APPROVED
+        : PropertyListingStatus.PENDING_APPROVAL;
+
+    const approvalMeta = autoApprove
+      ? this.buildApprovalMetadata(userId)
+      : {};
 
     const doc = await this.propertyListingModel.create({
       ownerId: toObjectId(userId),
       status,
+      ...approvalMeta,
       listingType: dto.listingType,
       propertyType: dto.propertyType,
       title: dto.title.trim(),
@@ -303,16 +314,9 @@ export class PropertyListingsService {
       throw new BadRequestException('Only pending listings can be approved');
     }
 
-    const now = new Date();
-    const expiresAt = new Date(now);
-    expiresAt.setDate(expiresAt.getDate() + LISTING_EXPIRY_DAYS);
-
+    Object.assign(doc, this.buildApprovalMetadata(adminId));
     doc.status = PropertyListingStatus.APPROVED;
     doc.rejectionReason = undefined;
-    doc.reviewedBy = toObjectId(adminId);
-    doc.reviewedAt = now;
-    doc.publishedAt = now;
-    doc.expiresAt = expiresAt;
 
     await doc.save();
     return mapPropertyListingToResponse(doc, { isAdmin: true });
@@ -527,5 +531,23 @@ export class PropertyListingsService {
     if (!(await this.isAdmin(userId))) {
       throw new ForbiddenException('Admin access required');
     }
+  }
+
+  private buildApprovalMetadata(reviewerId: string): {
+    reviewedBy: ReturnType<typeof toObjectId>;
+    reviewedAt: Date;
+    publishedAt: Date;
+    expiresAt: Date;
+  } {
+    const now = new Date();
+    const expiresAt = new Date(now);
+    expiresAt.setDate(expiresAt.getDate() + LISTING_EXPIRY_DAYS);
+
+    return {
+      reviewedBy: toObjectId(reviewerId),
+      reviewedAt: now,
+      publishedAt: now,
+      expiresAt,
+    };
   }
 }
