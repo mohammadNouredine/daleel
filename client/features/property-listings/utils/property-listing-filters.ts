@@ -2,6 +2,7 @@ import type {
   CurrencyValue,
   FurnishingStatusValue,
   ListingTypeValue,
+  PropertyListing,
   PropertyTypeValue,
 } from "../types"
 
@@ -29,6 +30,21 @@ export type PropertyListingListFilters = {
   isAvailable?: boolean
   amenityIds?: string[]
   limit?: number
+}
+
+export type PropertyListingUiFilters = Omit<
+  PropertyListingListFilters,
+  "governorate" | "city" | "district"
+> & {
+  governorate?: string
+  city?: string
+  district?: string
+}
+
+export const DEFAULT_PROPERTY_LISTING_UI_FILTERS: PropertyListingUiFilters = {
+  governorate: "all",
+  city: "all",
+  district: "all",
 }
 
 export function buildPropertyListingListParams(
@@ -66,5 +82,58 @@ export function buildPropertyListingListParams(
     amenityIds:
       filters.amenityIds?.length ? filters.amenityIds.join(",") : undefined,
     limit: filters.limit,
+  }
+}
+
+export function extractGovernoratesFromListings(
+  items: PropertyListing[]
+): string[] {
+  const set = new Set<string>()
+  for (const item of items) {
+    if (item.location.governorate) {
+      set.add(item.location.governorate)
+    }
+  }
+  return Array.from(set).sort((a, b) => a.localeCompare(b))
+}
+
+export function hasActivePropertyListingFilters(
+  filters: PropertyListingUiFilters
+): boolean {
+  return (
+    filters.listingType !== undefined ||
+    filters.propertyType !== undefined ||
+    (filters.governorate !== undefined && filters.governorate !== "all") ||
+    (filters.city !== undefined && filters.city !== "all") ||
+    (filters.district !== undefined && filters.district !== "all") ||
+    filters.priceMin !== undefined ||
+    filters.priceMax !== undefined ||
+    filters.currency !== undefined ||
+    filters.areaMin !== undefined ||
+    filters.areaMax !== undefined ||
+    filters.bedrooms !== undefined ||
+    filters.bathrooms !== undefined ||
+    filters.furnishingStatus !== undefined ||
+    filters.isEmergencyShelter === true ||
+    filters.acceptFamilies === true ||
+    filters.acceptChildren === true ||
+    filters.acceptPets === true ||
+    filters.womenOnly === true ||
+    filters.menOnly === true ||
+    filters.isVerified === true ||
+    filters.isAvailable === false ||
+    (filters.amenityIds?.length ?? 0) > 0
+  )
+}
+
+export function toListFilters(
+  ui: PropertyListingUiFilters
+): PropertyListingListFilters {
+  const { governorate, city, district, ...rest } = ui
+  return {
+    ...rest,
+    governorate: governorate === "all" ? undefined : governorate,
+    city: city === "all" ? undefined : city,
+    district: district === "all" ? undefined : district,
   }
 }

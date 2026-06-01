@@ -13,7 +13,7 @@ export function HousingListingsSection() {
         <SectionHeader
           title="Available Housing & Shelters"
           badge="New"
-          viewAllHref="#housing-listings"
+          viewAllHref="/properties"
           viewAllLabel="View all housing"
         />
       </div>

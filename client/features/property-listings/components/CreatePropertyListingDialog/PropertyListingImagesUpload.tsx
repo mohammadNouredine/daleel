@@ -1,0 +1,164 @@
+"use client"
+
+import { useRef } from "react"
+import { ImagePlus, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { useFormContext } from "react-hook-form"
+import {
+  ACCEPTED_PROPERTY_IMAGE_TYPES,
+  MAX_PROPERTY_LISTING_IMAGES,
+} from "../../constants"
+import { resolvePropertyListingMediaUrl } from "../../utils/build-property-listing-form-data"
+
+type ImagePreview = {
+  key: string
+  src: string
+  kind: "url" | "file"
+  urlIndex?: number
+  fileIndex?: number
+}
+
+export function PropertyListingImagesUpload() {
+  const form = useFormContext()
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  return (
+    <FormField
+      control={form.control}
+      name="imageUrls"
+      render={() => {
+        const urls = (form.watch("imageUrls") as string[] | undefined) ?? []
+        const files = (form.watch("imageFiles") as File[] | undefined) ?? []
+        const totalCount = urls.length + files.length
+        const atLimit = totalCount >= MAX_PROPERTY_LISTING_IMAGES
+
+        const previews: ImagePreview[] = [
+          ...urls.map((url, index) => ({
+            key: `url-${url}-${index}`,
+            src: resolvePropertyListingMediaUrl(url),
+            kind: "url" as const,
+            urlIndex: index,
+          })),
+          ...files.map((file, index) => ({
+            key: `file-${file.name}-${index}`,
+            src: URL.createObjectURL(file),
+            kind: "file" as const,
+            fileIndex: index,
+          })),
+        ]
+
+        const addFiles = (fileList: FileList | null) => {
+          if (!fileList?.length) return
+
+          const nextUrls = [...urls]
+          const nextFiles = [...files]
+
+          for (const file of Array.from(fileList)) {
+            if (nextUrls.length + nextFiles.length >= MAX_PROPERTY_LISTING_IMAGES) {
+              break
+            }
+            if (
+              !ACCEPTED_PROPERTY_IMAGE_TYPES.includes(
+                file.type as (typeof ACCEPTED_PROPERTY_IMAGE_TYPES)[number]
+              )
+            ) {
+              continue
+            }
+            nextFiles.push(file)
+          }
+
+          form.setValue("imageUrls", nextUrls, { shouldDirty: true })
+          form.setValue("imageFiles", nextFiles, { shouldDirty: true })
+        }
+
+        const removePreview = (preview: ImagePreview) => {
+          if (preview.kind === "url" && preview.urlIndex !== undefined) {
+            form.setValue(
+              "imageUrls",
+              urls.filter((_, index) => index !== preview.urlIndex),
+              { shouldDirty: true }
+            )
+          }
+          if (preview.kind === "file" && preview.fileIndex !== undefined) {
+            form.setValue(
+              "imageFiles",
+              files.filter((_, index) => index !== preview.fileIndex),
+              { shouldDirty: true }
+            )
+          }
+        }
+
+        return (
+          <FormItem>
+            <FormLabel>Property photos</FormLabel>
+            <FormDescription>
+              Up to {MAX_PROPERTY_LISTING_IMAGES} images. First image may be used
+              as cover.
+            </FormDescription>
+            <FormControl>
+              <div className="space-y-3">
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept={ACCEPTED_PROPERTY_IMAGE_TYPES.join(",")}
+                  multiple
+                  className="sr-only"
+                  onChange={(e) => {
+                    addFiles(e.target.files)
+                    e.target.value = ""
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={atLimit}
+                  onClick={() => inputRef.current?.click()}
+                >
+                  <ImagePlus className="size-4" />
+                  Add photos
+                </Button>
+
+                {previews.length > 0 ? (
+                  <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {previews.map((preview) => (
+                      <li
+                        key={preview.key}
+                        className="group relative aspect-[4/3] overflow-hidden rounded-lg border border-border bg-muted"
+                      >
+                        <img
+                          src={preview.src}
+                          alt="Property"
+                          className="h-full w-full object-cover"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon-xs"
+                          className="absolute right-1 top-1 opacity-90 group-hover:opacity-100"
+                          onClick={() => removePreview(preview)}
+                          aria-label="Remove photo"
+                        >
+                          <X className="size-3" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )
+      }}
+    />
+  )
+}

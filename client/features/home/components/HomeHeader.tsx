@@ -8,7 +8,7 @@ import { DaleelLogo } from "./DaleelLogo"
 
 const NAV_LINKS = [
   { href: "#services", label: "Services" },
-  { href: "#housing-listings", label: "Housing" },
+  { href: "/properties", label: "Housing" },
   { href: "/help-requests", label: "Help Requests" },
 ] as const
 
