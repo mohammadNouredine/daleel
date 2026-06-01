@@ -3,9 +3,9 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
-import { FormRoot } from "@/components/forms/form-root"
-import { PasswordInput } from "@/components/forms/password-input"
-import { TextInput } from "@/components/forms/text-input"
+import { FormRoot } from "@/components/forms/FormRoot"
+import { PasswordInput } from "@/components/forms/PasswordInput"
+import { TextInput } from "@/components/forms/TextInput"
 import { ApiError } from "@/lib/api/client"
 import { useSignUp } from "../hooks/use-sign-up"
 import {

@@ -1,36 +1,33 @@
-"use client"
+"use client";
 
-import { X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { useHelpRequestReference } from "@/features/reference/hooks/use-help-request-reference"
-import {
-  getReferenceLabel,
-  toSelectOptions,
-} from "@/features/reference/utils/reference-labels"
-import { PRIORITY_OPTIONS, SORT_OPTIONS } from "../constants"
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useHelpRequestReference } from "@/features/reference/hooks/use-help-request-reference";
+import { toSelectOptions } from "@/features/reference/utils/reference-labels";
+import { PRIORITY_OPTIONS, SORT_OPTIONS } from "../constants";
 import {
   DEFAULT_HELP_REQUEST_FILTERS,
   type HelpRequestFilters,
   hasActiveFilters,
-} from "../utils/request-filters"
-import type { HelpRequestSortValue } from "../types"
+} from "../utils/request-filters";
+import type { HelpRequestSortValue } from "../types";
 
 const selectClassName = cn(
   "h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-sm",
   "outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-  "dark:bg-input/30"
-)
+  "dark:bg-input/30",
+);
 
 type HelpRequestFiltersBarProps = {
-  filters: HelpRequestFilters
-  sort: HelpRequestSortValue
-  governorates: string[]
-  onChange: (filters: HelpRequestFilters) => void
-  onSortChange: (sort: HelpRequestSortValue) => void
-  sortHint?: string
-  className?: string
-}
+  filters: HelpRequestFilters;
+  sort: HelpRequestSortValue;
+  governorates: string[];
+  onChange: (filters: HelpRequestFilters) => void;
+  onSortChange: (sort: HelpRequestSortValue) => void;
+  sortHint?: string;
+  className?: string;
+};
 
 export function HelpRequestFiltersBar({
   filters,
@@ -41,15 +38,16 @@ export function HelpRequestFiltersBar({
   sortHint,
   className,
 }: HelpRequestFiltersBarProps) {
-  const { helpTypes, isLoading: isReferenceLoading } = useHelpRequestReference()
-  const helpTypeOptions = toSelectOptions(helpTypes)
-  const showClear = hasActiveFilters(filters)
+  const { helpTypes, isLoading: isReferenceLoading } =
+    useHelpRequestReference();
+  const helpTypeOptions = toSelectOptions(helpTypes);
+  const showClear = hasActiveFilters(filters);
 
   return (
     <div
       className={cn(
         "rounded-xl border border-border/80 bg-card/60 p-3 sm:p-4",
-        className
+        className,
       )}
     >
       <div className="mb-3 flex items-center justify-between gap-2">
@@ -153,5 +151,5 @@ export function HelpRequestFiltersBar({
         </label>
       </div>
     </div>
-  )
+  );
 }

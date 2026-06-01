@@ -6,7 +6,7 @@ import { motion } from "framer-motion"
 import { Bath, BedDouble, MapPin, Maximize2, Users } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import type { HousingListingPreview } from "../types"
+import type { HousingListingPreview } from "../../types"
 
 type HousingListingCardProps = {
   listing: HousingListingPreview

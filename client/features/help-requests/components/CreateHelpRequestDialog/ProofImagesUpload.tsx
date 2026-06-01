@@ -11,8 +11,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { ACCEPTED_PROOF_IMAGE_TYPES, MAX_PROOF_IMAGES } from "../constants";
-import { resolveMediaUrl } from "../utils/build-help-request-form-data";
+import { ACCEPTED_PROOF_IMAGE_TYPES, MAX_PROOF_IMAGES } from "../../constants";
+import { resolveMediaUrl } from "../../utils/build-help-request-form-data";
 import { useFormContext } from "react-hook-form";
 
 type ProofPreview = {

@@ -12,36 +12,66 @@ Applies to feature and page UI under `client/features/**` and co-located `client
 ## Naming
 
 - **Components and folders**: `PascalCase` only — no kebab-case, no `snake_case`.
-  - ✅ `HouseListingSection`, `HouseListingCard`, `CardHeader.tsx`
+  - ✅ `HouseListingSection`, `HouseListingCard`, `ProofImagesUpload.tsx`
   - ❌ `house-listing-section`, `houseListingCard`, `house_listing_card`
-- **Files** that export a component: match the component name (`HouseListingCard.tsx`) or use `index.tsx` as the folder entry (see below).
+- **Single-file components**: `ComponentName.tsx` (same name as the export).
+- **Multi-file or parent components**: `ComponentName/index.tsx` plus siblings or child folders (see below).
+
+## File vs folder (important)
+
+**Use a single `.tsx` file, not a folder, when the component has exactly one file and no child components.**
+
+```
+CreateHelpRequestDialog/
+  index.tsx
+  ProofImagesUpload.tsx          # ✅ one file → flat PascalCase file
+  RequestNeedsField.tsx          # ✅ (or a folder only if it gains children)
+  CreateHelpRequestDialogContext.tsx
+```
+
+```
+ProofImagesUpload/               # ❌ folder with only index.tsx inside
+  index.tsx
+```
+
+| Situation | Use |
+|-----------|-----|
+| One component, one file, no children | `ProofImagesUpload.tsx` |
+| Multiple files for the same component | `CreateHelpRequestDialog/` + `index.tsx` + siblings |
+| Component with nested subcomponents | `HouseListingCard/` folder + `index.tsx` + child folders |
+
+**Do not** create `ComponentName/index.tsx` as the only file in that folder — that is unnecessary nesting. Promote it to `ComponentName.tsx` next to the parent.
 
 ## Nested folders
 
-When a component owns subcomponents, give it a **folder with the same PascalCase name** and `index.tsx` as the public entry.
+When a component **owns subcomponents or multiple files**, give it a **folder with the same PascalCase name** and `index.tsx` as the public entry.
 
 ```
 HouseListingSection/
   index.tsx              # exports HouseListingSection; composes children
-  HeaderHouse.tsx        # HouseListingSection-only child (optional flat sibling)
-  HouseListingCard/      # nested subcomponent → its own folder
-    index.tsx            # exports HouseListingCard
+  SectionIntro.tsx       # HouseListingSection-only helper (optional flat sibling)
+  HouseListingCard/      # subcomponent with its own children → folder
+    index.tsx
     CardHeader.tsx
     CardBody.tsx
 ```
 
 ### Rules
 
-1. **One folder per named component** that has children or multiple files.
-2. **`index.tsx`** is always the main file importers use (`import { HouseListingCard } from './HouseListingCard'`).
-3. **Nest recursively** — any subcomponent with its own children gets its own PascalCase folder + `index.tsx`.
-4. **Keep siblings flat** only for tiny, single-file helpers used exclusively by the parent (e.g. `HeaderHouse.tsx` next to `index.tsx`).
-5. **Do not** create one long page file with many inline subcomponents; extract into this tree instead.
+1. **Folder + `index.tsx`** only when the component has **more than one file** and/or **child component folders**.
+2. **Single file, no children** → **`ComponentName.tsx`** at the appropriate level (e.g. under the parent folder).
+3. **`index.tsx`** is the main entry for folder-based components (`import { X } from './X'` resolves to the folder).
+4. **Nest recursively** — any subcomponent that gains its own children or multiple files gets its own PascalCase folder + `index.tsx`.
+5. **Keep siblings flat** for small helpers used only by the parent (e.g. `CreateHelpRequestDialogContext.tsx` next to `index.tsx`).
+6. **Do not** create one long page file with many inline subcomponents; extract into this tree instead.
 
 ### Imports
 
 ```tsx
-// ✅ From parent section
+// ✅ Single-file child
+import { ProofImagesUpload } from "./ProofImagesUpload"
+
+// ✅ Folder-based child
 import { HouseListingCard } from "./HouseListingCard"
 
 // ✅ From app or another feature
@@ -49,12 +79,15 @@ import { HouseListingSection } from "@/features/housing/components/HouseListingS
 ```
 
 ```tsx
-// ❌ Avoid kebab-case paths for domain components
+// ❌ Folder that only wraps one index.tsx
+import { ProofImagesUpload } from "./ProofImagesUpload"  // when ProofImagesUpload/ only contains index.tsx
+
+// ❌ Kebab-case paths for domain components
 import { HouseListingCard } from "./house-listing-card"
 ```
 
 ## When adding UI
 
 - New feature UI lives under `client/features/<feature>/components/` using this layout.
-- Prefer a **folder + `index.tsx`** over a single `kebab-case.tsx` at the feature root.
+- Default to **`ComponentName.tsx`** until you need a second file or a child component folder — then introduce **`ComponentName/index.tsx`** and move related files in.
 - Split before files grow large; mirror the domain (Section → Card → CardHeader).

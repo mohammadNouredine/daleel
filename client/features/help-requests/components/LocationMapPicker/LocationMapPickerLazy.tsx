@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react"
 
 export const LocationMapPicker = dynamic(
   () =>
-    import("./location-map-picker").then((mod) => mod.LocationMapPicker),
+    import("./index").then((mod) => mod.LocationMapPicker),
   {
     ssr: false,
     loading: () => (

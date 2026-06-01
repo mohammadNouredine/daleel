@@ -1,7 +1,7 @@
-import { HOUSING_LISTINGS } from "../mock-data"
-import { HorizontalScrollRow } from "./horizontal-scroll-row"
-import { HousingListingCard } from "./housing-listing-card"
-import { SectionHeader } from "./section-header"
+import { HOUSING_LISTINGS } from "../../mock-data"
+import { HorizontalScrollRow } from "../HorizontalScrollRow"
+import { HousingListingCard } from "./HousingListingCard"
+import { SectionHeader } from "../SectionHeader"
 
 export function HousingListingsSection() {
   return (

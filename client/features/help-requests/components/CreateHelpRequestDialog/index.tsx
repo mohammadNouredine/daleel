@@ -13,29 +13,29 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { FormSection } from "@/components/forms/form-section";
-import { SelectInput } from "@/components/forms/select-input";
-import { PriorityPicker } from "@/components/forms/priority-picker";
-import { TextInput } from "@/components/forms/text-input";
-import { PhoneInput } from "@/components/forms/Phone/phone-input";
-import { TextareaInput } from "@/components/forms/textarea-input";
+import { FormSection } from "@/components/forms/FormSection";
+import { SelectInput } from "@/components/forms/SelectInput";
+import { PriorityPicker } from "@/components/forms/PriorityPicker";
+import { TextInput } from "@/components/forms/TextInput";
+import { PhoneInput } from "@/components/forms/Phone/PhoneInput";
+import { TextareaInput } from "@/components/forms/TextareaInput";
 import { useHelpRequestReference } from "@/features/reference/hooks/use-help-request-reference";
 import {
   toSelectOptions,
 } from "@/features/reference/utils/reference-labels";
-import { PRIORITY_OPTIONS } from "../constants";
+import { PRIORITY_OPTIONS } from "../../constants";
 import {
   createHelpRequestDefaultValues,
   createHelpRequestSchema,
   type CreateHelpRequestFormValues,
-} from "../schemas/create-help-request.schema";
+} from "../../schemas/create-help-request.schema";
 import {
   mapHelpRequestToFormValues,
-} from "../utils/map-form-to-request";
-import { LocationMapPicker } from "./location-map-picker-lazy";
-import { ProofImagesUpload } from "./proof-images-upload";
-import { RequestNeedsField } from "./request-needs-field";
-import { useCreateHelpRequestDialogHandlers } from "./create-help-request-dialog-context";
+} from "../../utils/map-form-to-request";
+import { LocationMapPicker } from "../LocationMapPicker/LocationMapPickerLazy";
+import { ProofImagesUpload } from "./ProofImagesUpload";
+import { RequestNeedsField } from "./RequestNeedsField";
+import { useCreateHelpRequestDialogHandlers } from "./CreateHelpRequestDialogContext";
 
 type CreateHelpRequestDialogProps = {
   open: boolean;

@@ -1,9 +1,9 @@
 "use client"
 
 import { createContext, useContext } from "react"
-import type { HelpRequest } from "../types"
-import type { CreateHelpRequestFormValues } from "../schemas/create-help-request.schema"
-import type { HelpRequestFormFiles } from "../utils/build-help-request-form-data"
+import type { HelpRequest } from "../../types"
+import type { CreateHelpRequestFormValues } from "../../schemas/create-help-request.schema"
+import type { HelpRequestFormFiles } from "../../utils/build-help-request-form-data"
 
 export type HelpRequestFormMode = "create" | "edit"
 

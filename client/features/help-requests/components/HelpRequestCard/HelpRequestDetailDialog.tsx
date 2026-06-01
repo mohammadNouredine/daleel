@@ -11,14 +11,14 @@ import { cn } from "@/lib/utils";
 import { formatWhatsAppUrl } from "@/components/forms/Phone/phone-utils";
 import { useHelpRequestReference } from "@/features/reference/hooks/use-help-request-reference";
 import { getReferenceLabel } from "@/features/reference/utils/reference-labels";
-import type { HelpRequest } from "../types";
+import type { HelpRequest } from "../../types";
 import {
   getPriorityDialogAccentClass,
   getPriorityDialogHeaderTintClass,
-} from "../utils/request-visuals";
+} from "../../utils/request-visuals";
 import { BadgeCheck, MapPin, MessageCircle, Phone, Users } from "lucide-react";
-import { RequestNeedsProgress } from "./request-needs-progress";
-import { formatHelpRequestLocationLabel } from "../utils/help-request-location";
+import { RequestNeedsProgress } from "../RequestNeedsProgress";
+import { formatHelpRequestLocationLabel } from "../../utils/help-request-location";
 
 type HelpRequestDetailDialogProps = {
   request: HelpRequest;

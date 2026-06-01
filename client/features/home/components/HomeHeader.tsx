@@ -4,7 +4,7 @@ import Link from "next/link"
 import { ChevronDown, MapPin, Plus } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { DaleelLogo } from "./daleel-logo"
+import { DaleelLogo } from "./DaleelLogo"
 
 const NAV_LINKS = [
   { href: "#services", label: "Services" },

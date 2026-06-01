@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Plus } from "lucide-react"
 import toast from "react-hot-toast"
-import { PageShell } from "@/components/layout/page-shell"
+import { PageShell } from "@/components/layout/PageShell"
 import { Button } from "@/components/ui/button"
 import { useIsAuthenticated } from "@/features/auth/hooks/use-is-authenticated"
 import { useCurrentProfile } from "@/features/users/hooks/use-current-profile"
@@ -38,20 +38,20 @@ import { useCreateHelpRequest } from "../hooks/use-create-help-request"
 import { useUpdateHelpRequest } from "../hooks/use-update-help-request"
 import { useDeleteHelpRequest } from "../hooks/use-delete-help-request"
 import { useManageHelpRequestFulfillment } from "../hooks/use-manage-help-request-fulfillment"
-import { CreateHelpRequestDialog } from "./create-help-request-dialog"
-import { CreateHelpRequestDialogProvider } from "./create-help-request-dialog-context"
-import { DeleteHelpRequestDialog } from "./delete-help-request-dialog"
-import { HelpRequestCard } from "./help-request-card"
-import { HelpRequestFiltersBar } from "./help-request-filters"
+import { CreateHelpRequestDialog } from "./CreateHelpRequestDialog"
+import { CreateHelpRequestDialogProvider } from "./CreateHelpRequestDialog/CreateHelpRequestDialogContext"
+import { DeleteHelpRequestDialog } from "./DeleteHelpRequestDialog"
+import { HelpRequestCard } from "./HelpRequestCard"
+import { HelpRequestFiltersBar } from "./HelpRequestFiltersBar"
 import {
   HelpRequestsToolbar,
   type HelpRequestsViewMode,
-} from "./help-requests-toolbar"
-import { ManageHelpRequestDialog } from "./manage-help-request-dialog"
+} from "./HelpRequestsToolbar"
+import { ManageHelpRequestDialog } from "./ManageHelpRequestDialog"
 import {
   ManageHelpRequestDialogProvider,
   type ManageHelpRequestPayload,
-} from "./manage-help-request-dialog-context"
+} from "./ManageHelpRequestDialog/ManageHelpRequestDialogContext"
 
 export function HelpRequestsView() {
   const router = useRouter()

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { MapPin } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { UrgentHelpRequestPreview } from "../types"
+import type { UrgentHelpRequestPreview } from "../../types"
 
 const CATEGORY_STYLES = {
   violet:

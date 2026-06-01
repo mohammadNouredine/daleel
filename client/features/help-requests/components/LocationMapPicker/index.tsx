@@ -13,8 +13,8 @@ import L from "leaflet"
 import { Loader2, LocateFixed, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { LEBANON_MAP_CENTER } from "../constants"
-import { reverseGeocode } from "../utils/geocoding"
+import { LEBANON_MAP_CENTER } from "../../constants"
+import { reverseGeocode } from "../../utils/geocoding"
 import "leaflet/dist/leaflet.css"
 
 const markerIcon = L.icon({

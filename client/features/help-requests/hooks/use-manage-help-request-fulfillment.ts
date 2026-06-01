@@ -12,7 +12,7 @@ import {
   MY_HELP_REQUESTS_QUERY_KEY,
   helpRequestFulfillmentEndpoint,
 } from "../endpoints"
-import type { ManageHelpRequestPayload } from "../components/manage-help-request-dialog-context"
+import type { ManageHelpRequestPayload } from "../components/ManageHelpRequestDialog/ManageHelpRequestDialogContext"
 import type { HelpRequest } from "../types"
 
 export function useManageHelpRequestFulfillment(options?: {

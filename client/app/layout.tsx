@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { Geist } from "next/font/google"
-import { QueryProvider } from "@/components/providers/query-provider"
-import { ToastProvider } from "@/components/providers/toast-provider"
+import { QueryProvider } from "@/components/providers/QueryProvider"
+import { ToastProvider } from "@/components/providers/ToastProvider"
 import { cn } from "@/lib/utils"
 import "./globals.css"
 

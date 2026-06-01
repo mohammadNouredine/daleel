@@ -3,15 +3,15 @@
 import { useFieldArray, useFormContext } from "react-hook-form"
 import { Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { TextInput } from "@/components/forms/text-input"
-import { SelectInput } from "@/components/forms/select-input"
-import { TextareaInput } from "@/components/forms/textarea-input"
+import { TextInput } from "@/components/forms/TextInput"
+import { SelectInput } from "@/components/forms/SelectInput"
+import { TextareaInput } from "@/components/forms/TextareaInput"
 import {
   createEmptyNeedLine,
   type CreateHelpRequestFormValues,
-} from "../schemas/create-help-request.schema"
-import { NEED_KIND_OPTIONS } from "../constants"
-import { HelpType, type HelpTypeValue } from "../types"
+} from "../../schemas/create-help-request.schema"
+import { NEED_KIND_OPTIONS } from "../../constants"
+import { HelpType, type HelpTypeValue } from "../../types"
 
 export function RequestNeedsField() {
   const form = useFormContext<CreateHelpRequestFormValues>()

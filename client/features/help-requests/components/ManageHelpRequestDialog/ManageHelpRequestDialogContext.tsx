@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext } from "react"
-import type { HelpRequest } from "../types"
+import type { HelpRequest } from "../../types"
 
 export type ManageHelpRequestPayload = {
   requestId: string

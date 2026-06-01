@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { useFormContext } from "react-hook-form"
 import { DEFAULT_PHONE_CODE } from "./phone-codes"
-import { PhoneCodeSelect } from "./phone-code-select"
+import { PhoneCodeSelect } from "./PhoneCodeSelect"
 import { normalizePhoneDigits } from "./phone-utils"
 
 export type PhoneInputProps = {

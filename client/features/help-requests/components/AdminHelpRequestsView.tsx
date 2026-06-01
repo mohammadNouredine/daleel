@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { PageShell } from "@/components/layout/page-shell"
+import { PageShell } from "@/components/layout/PageShell"
 import { Button } from "@/components/ui/button"
 import { useCurrentProfile } from "@/features/users/hooks/use-current-profile"
 import {
@@ -10,7 +10,7 @@ import {
   usePendingHelpRequests,
   useRejectHelpRequest,
 } from "@/features/help-requests/hooks/use-moderate-help-request"
-import { HelpRequestCard } from "@/features/help-requests/components/help-request-card"
+import { HelpRequestCard } from "@/features/help-requests/components/HelpRequestCard"
 import type { HelpRequest } from "@/features/help-requests/types"
 
 export function AdminHelpRequestsView() {

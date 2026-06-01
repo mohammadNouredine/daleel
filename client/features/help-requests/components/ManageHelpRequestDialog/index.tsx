@@ -3,9 +3,9 @@
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ButtonGroupInput } from "@/components/forms/button-group-input";
-import { SelectInput } from "@/components/forms/select-input";
-import { TextInput } from "@/components/forms/text-input";
+import { ButtonGroupInput } from "@/components/forms/ButtonGroupInput";
+import { SelectInput } from "@/components/forms/SelectInput";
+import { TextInput } from "@/components/forms/TextInput";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,14 +20,14 @@ import {
   manageHelpRequestDefaultValues,
   manageHelpRequestSchema,
   type ManageHelpRequestFormValues,
-} from "../schemas/manage-help-request.schema";
+} from "../../schemas/manage-help-request.schema";
 import {
   formatNeedLineSelectLabel,
   formatNeedQuantity,
   getNeedRemaining,
-} from "../utils/request-needs";
-import { useManageHelpRequestDialogHandlers } from "./manage-help-request-dialog-context";
-import { RequestNeedsProgress } from "./request-needs-progress";
+} from "../../utils/request-needs";
+import { useManageHelpRequestDialogHandlers } from "./ManageHelpRequestDialogContext";
+import { RequestNeedsProgress } from "../RequestNeedsProgress";
 
 const ADJUSTMENT_OPTIONS = [
   { value: "add", label: "Add" },

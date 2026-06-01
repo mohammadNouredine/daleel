@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { DaleelLogo } from "./daleel-logo"
+import { DaleelLogo } from "./DaleelLogo"
 
 const FOOTER_LINKS = [
   { href: "#services", label: "Services" },

@@ -1,7 +1,7 @@
-import { URGENT_HELP_REQUESTS } from "../mock-data"
-import { HorizontalScrollRow } from "./horizontal-scroll-row"
-import { SectionHeader } from "./section-header"
-import { UrgentRequestCard } from "./urgent-request-card"
+import { URGENT_HELP_REQUESTS } from "../../mock-data"
+import { HorizontalScrollRow } from "../HorizontalScrollRow"
+import { SectionHeader } from "../SectionHeader"
+import { UrgentRequestCard } from "./UrgentRequestCard"
 
 export function UrgentRequestsSection() {
   return (

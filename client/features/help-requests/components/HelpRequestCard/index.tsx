@@ -9,15 +9,15 @@ import { getReferenceLabel } from "@/features/reference/utils/reference-labels";
 import {
   PRIORITY_LABELS,
   STATUS_LABELS,
-} from "../constants";
-import type { HelpRequest, HelpRequestApprovalStatusValue } from "../types";
-import { HelpRequestApprovalStatus } from "../types";
+} from "../../constants";
+import type { HelpRequest, HelpRequestApprovalStatusValue } from "../../types";
+import { HelpRequestApprovalStatus } from "../../types";
 import {
   getPriorityBadgeClass,
   getStatusBadgeClass,
-} from "../utils/request-visuals";
-import { getNeedsCardSummary } from "../utils/request-needs";
-import { formatHelpRequestLocationLabel } from "../utils/help-request-location";
+} from "../../utils/request-visuals";
+import { getNeedsCardSummary } from "../../utils/request-needs";
+import { formatHelpRequestLocationLabel } from "../../utils/help-request-location";
 import {
   HandHelping,
   MapPin,
@@ -28,8 +28,8 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RequestNeedsProgress } from "./request-needs-progress";
-import { HelpRequestDetailDialog } from "./help-request-detail-dialog";
+import { RequestNeedsProgress } from "../RequestNeedsProgress";
+import { HelpRequestDetailDialog } from "./HelpRequestDetailDialog";
 
 type HelpRequestCardProps = {
   request: HelpRequest;

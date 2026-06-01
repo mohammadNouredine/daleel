@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { SignInForm } from "@/features/auth/components/sign-in-form"
-import { SignUpForm } from "@/features/auth/components/sign-up-form"
+import { SignInForm } from "@/features/auth/components/SignInForm"
+import { SignUpForm } from "@/features/auth/components/SignUpForm"
 import {
   Card,
   CardContent,
