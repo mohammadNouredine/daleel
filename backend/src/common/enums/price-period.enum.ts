@@ -1,0 +1,7 @@
+export enum PricePeriod {
+  NIGHTLY = 'NIGHTLY',
+  WEEKLY = 'WEEKLY',
+  MONTHLY = 'MONTHLY',
+  QUARTERLY = 'QUARTERLY',
+  YEARLY = 'YEARLY',
+}

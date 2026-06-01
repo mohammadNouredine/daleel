@@ -1,0 +1,7 @@
+export enum ListingType {
+  RENT = 'RENT',
+  SALE = 'SALE',
+  SHELTER = 'SHELTER',
+  TEMPORARY_HOUSING = 'TEMPORARY_HOUSING',
+  ROOMMATE = 'ROOMMATE',
+}

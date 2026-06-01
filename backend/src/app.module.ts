@@ -7,6 +7,7 @@ import { DatabaseModule } from './database/database.module';
 import { HelpRequestsModule } from './modules/help-requests/help-requests.module';
 import { HelpUpdatesModule } from './modules/help-updates/help-updates.module';
 import { ReferenceModule } from './modules/reference/reference.module';
+import { PropertyListingsModule } from './modules/property-listings/property-listings.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { UsersModule } from './modules/users/users.module';
@@ -31,6 +32,7 @@ import { UsersModule } from './modules/users/users.module';
     HelpRequestsModule,
     HelpUpdatesModule,
     ReportsModule,
+    PropertyListingsModule,
   ],
 })
 export class AppModule {}
