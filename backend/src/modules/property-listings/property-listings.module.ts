@@ -1,5 +1,10 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { UsersModule } from '../users/users.module';
+import { AmenitiesController } from './amenities.controller';
+import { PropertyListingsController } from './property-listings.controller';
+import { PropertyListingsService } from './property-listings.service';
+import { PropertyReportsController } from './property-reports.controller';
 import { Amenity, AmenitySchema } from './schemas/amenity.schema';
 import {
   PropertyFavorite,
@@ -18,10 +23,6 @@ import {
   SubscriptionPlanSchema,
 } from './schemas/subscription-plan.schema';
 
-/**
- * Phase 1: schema registration only.
- * Next: APIs, moderation, favorites, subscription enforcement via User.currentPlanId.
- */
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -31,7 +32,14 @@ import {
       { name: PropertyReport.name, schema: PropertyReportSchema },
       { name: SubscriptionPlan.name, schema: SubscriptionPlanSchema },
     ]),
+    UsersModule,
   ],
-  exports: [MongooseModule],
+  controllers: [
+    PropertyListingsController,
+    AmenitiesController,
+    PropertyReportsController,
+  ],
+  providers: [PropertyListingsService],
+  exports: [MongooseModule, PropertyListingsService],
 })
 export class PropertyListingsModule {}
