@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { phoneFormFields } from "@/lib/validation/phone-fields"
 import {
   Currency,
   FurnishingStatus,
@@ -79,7 +80,7 @@ export const createPropertyListingSchema = z.object({
   availableFrom: z.string().optional(),
   availableUntil: z.string().optional(),
   contactMethod: z.enum(contactMethodValues).optional(),
-  contactPhone: z.string().optional(),
+  ...phoneFormFields,
   contactWhatsapp: z.string().optional(),
   imageUrls: z.array(z.string()).max(20).optional(),
   imageFiles: z
@@ -137,7 +138,8 @@ export const createPropertyListingDefaultValues: CreatePropertyListingFormValues
     availableFrom: "",
     availableUntil: "",
     contactMethod: ListingContactMethod.PLATFORM_ONLY,
-    contactPhone: "",
+    phoneCode: "+961",
+    phoneNumber: "",
     contactWhatsapp: "",
     imageUrls: [],
     imageFiles: [],

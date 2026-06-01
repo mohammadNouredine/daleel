@@ -11,6 +11,10 @@ import type {
   PropertyListing,
   PropertyTypeValue,
 } from "../types"
+import {
+  formatContactPhone,
+  splitContactPhone,
+} from "@/components/forms/Phone/phone-utils"
 import type { CreatePropertyListingFormValues } from "../schemas/create-property-listing.schema"
 
 function parseOptionalInt(value?: string): number | undefined {
@@ -84,7 +88,7 @@ export function mapFormToCreatePropertyListingInput(
     availableFrom: values.availableFrom || undefined,
     availableUntil: values.availableUntil || undefined,
     contactMethod: values.contactMethod as ListingContactMethodValue | undefined,
-    contactPhone: values.contactPhone?.trim() || undefined,
+    contactPhone: formatContactPhone(values.phoneCode, values.phoneNumber),
     contactWhatsapp: values.contactWhatsapp?.trim() || undefined,
     saveAsDraft: values.saveAsDraft,
   }
@@ -93,6 +97,8 @@ export function mapFormToCreatePropertyListingInput(
 export function mapPropertyListingToFormValues(
   listing: PropertyListing
 ): CreatePropertyListingFormValues {
+  const phone = splitContactPhone(listing.contactPhone)
+
   return {
     listingType: listing.listingType,
     propertyType: listing.propertyType,
@@ -159,7 +165,8 @@ export function mapPropertyListingToFormValues(
     availableFrom: listing.availableFrom ?? "",
     availableUntil: listing.availableUntil ?? "",
     contactMethod: listing.contactMethod,
-    contactPhone: listing.contactPhone ?? "",
+    phoneCode: phone.phoneCode,
+    phoneNumber: phone.phoneNumber,
     contactWhatsapp: listing.contactWhatsapp ?? "",
     imageUrls: listing.images.map((img) => img.url),
     imageFiles: [],

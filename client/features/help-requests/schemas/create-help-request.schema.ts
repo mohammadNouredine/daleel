@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { phoneFormFields } from "@/lib/validation/phone-fields"
 import { HelpType, PriorityLevel, SubCategory } from "../types"
 import { needLineFormSchema, type NeedLineFormValue } from "./need-line.schema"
 import {
@@ -29,14 +30,7 @@ export const createHelpRequestSchema = z.object({
   beneficiariesCount: z.string().optional(),
   proofImageUrls: z.array(z.string()).max(8).optional(),
   proofImageFiles: z.array(z.custom<File>((val) => val instanceof File)).max(8).optional(),
-  phoneCode: z.string().min(1, "Select a country code"),
-  phoneNumber: z
-    .string()
-    .min(1, "Phone number is required")
-    .refine((v) => {
-      const digits = v.replace(/\D/g, "")
-      return digits.length >= 6 && digits.length <= 15
-    }, "Enter a valid phone number (6–15 digits)"),
+  ...phoneFormFields,
 })
 
 export type CreateHelpRequestFormValues = z.infer<typeof createHelpRequestSchema>
