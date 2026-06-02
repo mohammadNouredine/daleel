@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useCallback, useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Button } from "@/components/ui/button"
+import { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,31 +11,31 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FormSection } from "@/components/forms/FormSection"
-import { AddressAutocomplete } from "@/components/forms/AddressAutocomplete"
-import { PhoneInput } from "@/components/forms/Phone/PhoneInput"
-import { RangeSelectGroup } from "@/components/forms/RangeSelectGroup"
-import { SelectInput } from "@/components/forms/SelectInput"
-import { TextInput } from "@/components/forms/TextInput"
-import { TextareaInput } from "@/components/forms/TextareaInput"
-import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form"
-import { LocationMapPicker } from "@/features/help-requests/components/LocationMapPicker/LocationMapPickerLazy"
-import toast from "react-hot-toast"
-import { useCreatePropertyListing } from "../../hooks/use-create-property-listing"
-import { useUpdatePropertyListing } from "../../hooks/use-update-property-listing"
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FormSection } from "@/components/forms/FormSection";
+import { AddressAutocomplete } from "@/components/forms/AddressAutocomplete";
+import { PhoneInput } from "@/components/forms/Phone/PhoneInput";
+import { RangeSelectGroup } from "@/components/forms/RangeSelectGroup";
+import { SelectInput } from "@/components/forms/SelectInput";
+import { TextInput } from "@/components/forms/TextInput";
+import { TextareaInput } from "@/components/forms/TextareaInput";
+import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { LocationMapPicker } from "@/features/help-requests/components/LocationMapPicker/LocationMapPickerLazy";
+import toast from "react-hot-toast";
+import { useCreatePropertyListing } from "../../hooks/use-create-property-listing";
+import { useUpdatePropertyListing } from "../../hooks/use-update-property-listing";
 import {
   createPropertyListingDefaultValues,
   createPropertyListingSchema,
   type CreatePropertyListingFormValues,
-} from "../../schemas/create-property-listing.schema"
-import { PropertyListingStatus, type PropertyListing } from "../../types"
-import { buildPropertyListingFormData } from "../../utils/build-property-listing-form-data"
+} from "../../schemas/create-property-listing.schema";
+import { PropertyListingStatus, type PropertyListing } from "../../types";
+import { buildPropertyListingFormData } from "../../utils/build-property-listing-form-data";
 import {
   mapFormToCreatePropertyListingInput,
   mapPropertyListingToFormValues,
-} from "../../utils/map-form-to-property-listing"
+} from "../../utils/map-form-to-property-listing";
 import {
   getNextStep,
   getPreviousStep,
@@ -44,7 +44,7 @@ import {
   PROPERTY_LISTING_FORM_STEPS,
   PROPERTY_LISTING_STEP_FIELDS,
   type PropertyListingFormStep,
-} from "../../utils/property-listing-form-steps"
+} from "../../utils/property-listing-form-steps";
 import {
   AREA_UNIT_FORM_OPTIONS,
   CONTACT_METHOD_FORM_OPTIONS,
@@ -54,28 +54,28 @@ import {
   LOCATION_VISIBILITY_OPTIONS,
   PRICE_PERIOD_FORM_OPTIONS,
   PROPERTY_TYPE_FORM_OPTIONS,
-} from "../../utils/form-options"
-import type { ResolvedLocation } from "@/lib/location-resolve"
-import { resolvePropertyMapCoordinates } from "../../utils/resolve-map-coordinates"
-import { PropertyListingAmenitiesField } from "./PropertyListingAmenitiesField"
-import { PropertyListingImagesUpload } from "./PropertyListingImagesUpload"
+} from "../../utils/form-options";
+import type { ResolvedLocation } from "@/lib/location-resolve";
+import { resolvePropertyMapCoordinates } from "../../utils/resolve-map-coordinates";
+import { PropertyListingAmenitiesField } from "./PropertyListingAmenitiesField";
+import { PropertyListingImagesUpload } from "./PropertyListingImagesUpload";
 
 type CreatePropertyListingDialogProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  editingListing?: PropertyListing | null
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  editingListing?: PropertyListing | null;
+};
 
-const INITIAL_STEP: PropertyListingFormStep = "basics"
+const INITIAL_STEP: PropertyListingFormStep = "basics";
 
 function publishSuccessMessage(status: PropertyListing["status"]): string {
   if (status === PropertyListingStatus.APPROVED) {
-    return "Listing updated and published"
+    return "Listing updated and published";
   }
   if (status === PropertyListingStatus.DRAFT) {
-    return "Draft saved"
+    return "Draft saved";
   }
-  return "Listing updated and submitted for review"
+  return "Listing updated and submitted for review";
 }
 
 export function CreatePropertyListingDialog({
@@ -83,152 +83,156 @@ export function CreatePropertyListingDialog({
   onOpenChange,
   editingListing = null,
 }: CreatePropertyListingDialogProps) {
-  const isEdit = editingListing != null
-  const [activeTab, setActiveTab] = useState<PropertyListingFormStep>(INITIAL_STEP)
+  const isEdit = editingListing != null;
+  const [activeTab, setActiveTab] =
+    useState<PropertyListingFormStep>(INITIAL_STEP);
   const [visitedTabs, setVisitedTabs] = useState<Set<PropertyListingFormStep>>(
-    () => new Set([INITIAL_STEP])
-  )
+    () => new Set([INITIAL_STEP]),
+  );
 
   const form = useForm<CreatePropertyListingFormValues>({
     resolver: zodResolver(createPropertyListingSchema),
     defaultValues: createPropertyListingDefaultValues,
     mode: "onTouched",
-  })
+  });
 
   const closeAndReset = useCallback(() => {
-    onOpenChange(false)
-    form.reset(createPropertyListingDefaultValues)
-    setActiveTab(INITIAL_STEP)
-    setVisitedTabs(new Set([INITIAL_STEP]))
-  }, [form, onOpenChange])
+    onOpenChange(false);
+    form.reset(createPropertyListingDefaultValues);
+    setActiveTab(INITIAL_STEP);
+    setVisitedTabs(new Set([INITIAL_STEP]));
+  }, [form, onOpenChange]);
 
   const createMutation = useCreatePropertyListing({
     showSuccessToast: false,
     onSuccess: (data) => {
-      toast.success(publishSuccessMessage(data.status))
-      closeAndReset()
+      toast.success(publishSuccessMessage(data.status));
+      closeAndReset();
     },
-  })
+  });
 
   const updateMutation = useUpdatePropertyListing({
     showSuccessToast: false,
     onSuccess: (data) => {
-      toast.success(publishSuccessMessage(data.status))
-      closeAndReset()
+      toast.success(publishSuccessMessage(data.status));
+      closeAndReset();
     },
-  })
+  });
 
-  const isSubmitting = createMutation.isPending || updateMutation.isPending
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const resetWizard = useCallback(() => {
-    form.reset(createPropertyListingDefaultValues)
-    setActiveTab(INITIAL_STEP)
-    setVisitedTabs(new Set([INITIAL_STEP]))
-  }, [form])
+    form.reset(createPropertyListingDefaultValues);
+    setActiveTab(INITIAL_STEP);
+    setVisitedTabs(new Set([INITIAL_STEP]));
+  }, [form]);
 
   const loadEditWizard = useCallback(
     (listing: PropertyListing) => {
-      form.reset(mapPropertyListingToFormValues(listing))
-      setActiveTab(INITIAL_STEP)
-      setVisitedTabs(new Set(PROPERTY_LISTING_FORM_STEPS))
+      form.reset(mapPropertyListingToFormValues(listing));
+      setActiveTab(INITIAL_STEP);
+      setVisitedTabs(new Set(PROPERTY_LISTING_FORM_STEPS));
     },
-    [form]
-  )
+    [form],
+  );
 
   useEffect(() => {
     if (!open) {
-      return
+      return;
     }
     if (editingListing) {
-      loadEditWizard(editingListing)
+      loadEditWizard(editingListing);
     } else {
-      resetWizard()
+      resetWizard();
     }
-  }, [open, editingListing, loadEditWizard, resetWizard])
+  }, [open, editingListing, loadEditWizard, resetWizard]);
 
   useEffect(() => {
     setVisitedTabs((prev) => {
       if (prev.has(activeTab)) {
-        return prev
+        return prev;
       }
-      const next = new Set(prev)
-      next.add(activeTab)
-      return next
-    })
-  }, [activeTab])
+      const next = new Set(prev);
+      next.add(activeTab);
+      return next;
+    });
+  }, [activeTab]);
 
-  const latitude = form.watch("latitude")
-  const longitude = form.watch("longitude")
-  const listingType = form.watch("listingType")
-  const priceInput = form.watch("price")
-  const requiredAdvanceMonthsInput = form.watch("requiredAdvanceMonths")
-  const securityDepositInput = form.watch("securityDeposit")
-  const officeDepositInput = form.watch("officeDeposit")
-  const selectedPricePeriod = form.watch("pricePeriod")
-  const resolvedGovernorate = form.watch("governorate")
-  const resolvedCity = form.watch("city")
+  const latitude = form.watch("latitude");
+  const longitude = form.watch("longitude");
+  const listingType = form.watch("listingType");
+  const priceInput = form.watch("price");
+  const requiredAdvanceMonthsInput = form.watch("requiredAdvanceMonths");
+  const securityDepositInput = form.watch("securityDeposit");
+  const officeDepositInput = form.watch("officeDeposit");
+  const selectedPricePeriod = form.watch("pricePeriod");
+  const resolvedGovernorate = form.watch("governorate");
+  const resolvedCity = form.watch("city");
 
   const requiresPeriodicPricing =
     listingType === "RENT" ||
     listingType === "ROOMMATE" ||
-    listingType === "TEMPORARY_HOUSING"
+    listingType === "TEMPORARY_HOUSING";
 
-  const parsedPrice = Number(priceInput || 0)
-  const parsedAdvanceMonths = Number(requiredAdvanceMonthsInput || 0)
-  const parsedSecurityDeposit = Number(securityDepositInput || 0)
-  const parsedOfficeDeposit = Number(officeDepositInput || 0)
+  const parsedPrice = Number(priceInput || 0);
+  const parsedAdvanceMonths = Number(requiredAdvanceMonthsInput || 0);
+  const parsedSecurityDeposit = Number(securityDepositInput || 0);
+  const parsedOfficeDeposit = Number(officeDepositInput || 0);
   const firstPayment =
     parsedPrice * Math.max(parsedAdvanceMonths, 0) +
     Math.max(parsedSecurityDeposit, 0) +
-    Math.max(parsedOfficeDeposit, 0)
+    Math.max(parsedOfficeDeposit, 0);
 
-  const submit = (values: CreatePropertyListingFormValues, asDraft: boolean) => {
+  const submit = (
+    values: CreatePropertyListingFormValues,
+    asDraft: boolean,
+  ) => {
     const input = mapFormToCreatePropertyListingInput({
       ...values,
       saveAsDraft: asDraft,
-    })
+    });
     const formData = buildPropertyListingFormData(input, {
       existingImages: values.imageUrls ?? [],
       newFiles: values.imageFiles ?? [],
-    })
+    });
 
     if (editingListing) {
-      updateMutation.mutate({ id: editingListing._id, formData })
-      return
+      updateMutation.mutate({ id: editingListing._id, formData });
+      return;
     }
 
-    createMutation.mutate(formData)
-  }
+    createMutation.mutate(formData);
+  };
 
   const applyResolvedLocation = useCallback(
     (resolved: ResolvedLocation) => {
-      const setOpts = { shouldDirty: true, shouldValidate: false } as const
+      const setOpts = { shouldDirty: true, shouldValidate: false } as const;
 
-      form.setValue("formattedAddress", resolved.formattedAddress, setOpts)
-      form.setValue("placeId", resolved.placeId ?? "", setOpts)
-      form.setValue("latitude", resolved.latitude.toFixed(6), setOpts)
-      form.setValue("longitude", resolved.longitude.toFixed(6), setOpts)
-      form.setValue("governorate", resolved.governorate, setOpts)
-      form.setValue("city", resolved.city, setOpts)
+      form.setValue("formattedAddress", resolved.formattedAddress, setOpts);
+      form.setValue("placeId", resolved.placeId ?? "", setOpts);
+      form.setValue("latitude", resolved.latitude.toFixed(6), setOpts);
+      form.setValue("longitude", resolved.longitude.toFixed(6), setOpts);
+      form.setValue("governorate", resolved.governorate, setOpts);
+      form.setValue("city", resolved.city, setOpts);
       if (resolved.street) {
-        form.setValue("street", resolved.street, setOpts)
+        form.setValue("street", resolved.street, setOpts);
       }
 
-      void form.trigger(["formattedAddress", "latitude", "longitude"])
+      void form.trigger(["formattedAddress", "latitude", "longitude"]);
     },
-    [form]
-  )
+    [form],
+  );
 
   const handleLocationResolved = (payload: {
-    latitude: string
-    longitude: string
-    governorate: string
-    city: string
-    street?: string
-    formattedAddress?: string
-    placeId?: string
+    latitude: string;
+    longitude: string;
+    governorate: string;
+    city: string;
+    street?: string;
+    formattedAddress?: string;
+    placeId?: string;
   }) => {
-    if (!payload.formattedAddress) return
+    if (!payload.formattedAddress) return;
 
     applyResolvedLocation({
       formattedAddress: payload.formattedAddress,
@@ -238,76 +242,78 @@ export function CreatePropertyListingDialog({
       governorate: payload.governorate,
       city: payload.city,
       street: payload.street,
-    })
-  }
+    });
+  };
 
   const validateCurrentStep = async (): Promise<boolean> => {
-    const fields = PROPERTY_LISTING_STEP_FIELDS[activeTab]
+    const fields = PROPERTY_LISTING_STEP_FIELDS[activeTab];
     if (fields.length === 0) {
-      return true
+      return true;
     }
-    return form.trigger(fields)
-  }
+    return form.trigger(fields);
+  };
 
   const handleNext = async () => {
-    const valid = await validateCurrentStep()
+    const valid = await validateCurrentStep();
     if (!valid) {
-      toast.error("Please complete all required fields in this section")
-      return
+      toast.error("Please complete all required fields in this section");
+      return;
     }
 
-    const next = getNextStep(activeTab)
+    const next = getNextStep(activeTab);
     if (!next) {
-      return
+      return;
     }
 
-    setVisitedTabs((prev) => new Set([...prev, next]))
-    setActiveTab(next)
-  }
+    setVisitedTabs((prev) => new Set([...prev, next]));
+    setActiveTab(next);
+  };
 
   const handleBack = () => {
-    const previous = getPreviousStep(activeTab)
+    const previous = getPreviousStep(activeTab);
     if (previous) {
-      setActiveTab(previous)
+      setActiveTab(previous);
     }
-  }
+  };
 
   const handlePublish = async () => {
     if (!isLastStep(activeTab)) {
-      return
+      return;
     }
 
     if (!hasVisitedAllSteps(visitedTabs)) {
-      toast.error("Please review every section before publishing")
-      return
+      toast.error("Please review every section before publishing");
+      return;
     }
 
-    const valid = await form.trigger()
+    const valid = await form.trigger();
     if (!valid) {
-      toast.error("Please complete all required fields, including your phone number")
-      return
+      toast.error(
+        "Please complete all required fields, including your phone number",
+      );
+      return;
     }
 
-    submit(form.getValues(), false)
-  }
+    submit(form.getValues(), false);
+  };
 
   const handleSaveDraft = () => {
-    submit({ ...form.getValues(), saveAsDraft: true }, true)
-  }
+    submit({ ...form.getValues(), saveAsDraft: true }, true);
+  };
 
   const handleTabChange = (value: string) => {
-    const step = value as PropertyListingFormStep
+    const step = value as PropertyListingFormStep;
     if (!PROPERTY_LISTING_FORM_STEPS.includes(step)) {
-      return
+      return;
     }
     if (isEdit || visitedTabs.has(step)) {
-      setActiveTab(step)
+      setActiveTab(step);
     }
-  }
+  };
 
   const booleanField = (
     name: keyof CreatePropertyListingFormValues,
-    label: string
+    label: string,
   ) => (
     <FormField
       key={name}
@@ -325,14 +331,13 @@ export function CreatePropertyListingDialog({
         </label>
       )}
     />
-  )
+  );
 
   const showPublish =
-    isLastStep(activeTab) &&
-    (isEdit || hasVisitedAllSteps(visitedTabs))
-  const showNext = !isLastStep(activeTab)
-  const showBack = getPreviousStep(activeTab) !== null
-  const currentStepIndex = PROPERTY_LISTING_FORM_STEPS.indexOf(activeTab)
+    isLastStep(activeTab) && (isEdit || hasVisitedAllSteps(visitedTabs));
+  const showNext = !isLastStep(activeTab);
+  const showBack = getPreviousStep(activeTab) !== null;
+  const currentStepIndex = PROPERTY_LISTING_FORM_STEPS.indexOf(activeTab);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -386,7 +391,11 @@ export function CreatePropertyListingDialog({
                         options={PROPERTY_TYPE_FORM_OPTIONS}
                       />
                     </div>
-                    <TextInput name="title" label="Title" placeholder="Short headline" />
+                    <TextInput
+                      name="title"
+                      label="Title"
+                      placeholder="Short headline"
+                    />
                     <TextareaInput
                       name="description"
                       label="Description"
@@ -451,7 +460,8 @@ export function CreatePropertyListingDialog({
                         name="bedrooms"
                         label="Bedrooms"
                         min={0}
-                        max={10}
+                        max={12}
+                        quickMax={4}
                         helpText="How many bedrooms does the property have?"
                       />
                       <RangeSelectGroup
@@ -459,6 +469,7 @@ export function CreatePropertyListingDialog({
                         label="Bathrooms"
                         min={0}
                         max={10}
+                        quickMax={4}
                         helpText="How many bathrooms are available?"
                       />
                       <RangeSelectGroup
@@ -468,12 +479,13 @@ export function CreatePropertyListingDialog({
                         max={6}
                         helpText="Reception/living spaces available in the unit."
                       />
-                      <RangeSelectGroup
+                      <TextInput
                         name="maxOccupancy"
                         label="Max occupancy"
+                        type="number"
                         min={1}
-                        max={20}
-                        helpText="Maximum number of people allowed."
+                        placeholder="e.g. 4"
+                        description="Maximum number of people allowed."
                       />
                       <RangeSelectGroup
                         name="parkingSpaces"
@@ -482,7 +494,11 @@ export function CreatePropertyListingDialog({
                         max={10}
                         helpText="Number of car spots available with the property."
                       />
-                      <TextInput name="floorNumber" label="Floor number" type="number" />
+                      <TextInput
+                        name="floorNumber"
+                        label="Floor number"
+                        type="number"
+                      />
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <TextInput name="area" label="Area" type="number" />
@@ -566,8 +582,16 @@ export function CreatePropertyListingDialog({
                       Optional preferences and availability.
                     </p>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <TextInput name="availableFrom" label="Available from" type="date" />
-                      <TextInput name="availableUntil" label="Available until" type="date" />
+                      <TextInput
+                        name="availableFrom"
+                        label="Available from"
+                        type="date"
+                      />
+                      <TextInput
+                        name="availableUntil"
+                        label="Available until"
+                        type="date"
+                      />
                       <RangeSelectGroup
                         name="totalBeds"
                         label="Total beds"
@@ -677,5 +701,5 @@ export function CreatePropertyListingDialog({
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
