@@ -16,13 +16,7 @@ export const PROPERTY_LISTING_STEP_FIELDS: Record<
   (keyof CreatePropertyListingFormValues)[]
 > = {
   basics: ["listingType", "propertyType", "title", "description"],
-  location: [
-    "country",
-    "governorate",
-    "district",
-    "city",
-    "locationVisibility",
-  ],
+  location: ["governorate", "district", "city", "locationVisibility"],
   details: [],
   access: [],
   media: ["phoneCode", "phoneNumber"],

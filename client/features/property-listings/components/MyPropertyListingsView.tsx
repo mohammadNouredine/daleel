@@ -1,68 +1,63 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Plus } from "lucide-react"
+import { ArrowLeft, Plus } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { InfiniteScrollSentinel } from "@/components/data/InfiniteScrollSentinel"
 import { useInfiniteScrollTrigger } from "@/lib/hooks/use-infinite-scroll-trigger"
-import { useIsAuthenticated } from "@/features/auth/hooks/use-is-authenticated"
+import { useAuthState } from "@/features/auth/hooks/use-is-authenticated"
 import { HomeFooter } from "@/features/home/components/HomeFooter"
 import { HomeHeader } from "@/features/home/components/HomeHeader"
 import { SectionHeader } from "@/features/home/components/SectionHeader"
-import { usePropertyListingsInfinite } from "../hooks/use-property-listings-infinite"
+import { useMyPropertyListingsInfinite } from "../hooks/use-my-property-listings-infinite"
 import type { PropertyListing } from "../types"
-import { MyListingsNavLink } from "./MyListingsNavLink"
-import {
-  DEFAULT_PROPERTY_LISTING_UI_FILTERS,
-  extractGovernoratesFromListings,
-  toListFilters,
-  type PropertyListingUiFilters,
-} from "../utils/property-listing-filters"
-import { PropertyListingCard } from "./PropertyListingCard"
-import { PropertyListingCardSkeleton } from "./PropertyListingCardSkeleton"
-import { PropertyListingFiltersBar } from "./PropertyListingFiltersBar"
 import { CreatePropertyListingDialog } from "./CreatePropertyListingDialog"
+import { MyPropertyListingCard } from "./MyPropertyListingCard"
+import { PropertyListingCardSkeleton } from "./PropertyListingCardSkeleton"
 
-export function PropertyListingsView() {
+export function MyPropertyListingsView() {
   const router = useRouter()
-  const isAuthenticated = useIsAuthenticated()
-  const [filters, setFilters] = useState<PropertyListingUiFilters>(
-    DEFAULT_PROPERTY_LISTING_UI_FILTERS
-  )
+  const { isAuthenticated, isReady: isAuthReady } = useAuthState()
   const [createOpen, setCreateOpen] = useState(false)
   const [editingListing, setEditingListing] = useState<PropertyListing | null>(
     null
   )
 
-  const listFilters = useMemo(() => toListFilters(filters), [filters])
-
-  const query = usePropertyListingsInfinite({ filters: listFilters })
+  const query = useMyPropertyListingsInfinite({
+    enabled: isAuthenticated,
+  })
 
   const items = useMemo(
     () => query.data?.pages.flatMap((page) => page.items) ?? [],
     [query.data]
   )
 
-  const governorates = useMemo(
-    () => extractGovernoratesFromListings(items),
-    [items]
-  )
-
   const { sentinelRef } = useInfiniteScrollTrigger({
     hasNextPage: query.hasNextPage ?? false,
     isFetchingNextPage: query.isFetchingNextPage,
     fetchNextPage: query.fetchNextPage,
-    enabled: !query.isLoading && !query.isError,
+    enabled: isAuthenticated && !query.isLoading && !query.isError,
   })
 
-  const openCreate = () => {
-    if (!isAuthenticated) {
-      router.push("/auth")
+  useEffect(() => {
+    if (!isAuthReady) {
       return
     }
+    if (!isAuthenticated) {
+      router.replace("/auth")
+    }
+  }, [isAuthReady, isAuthenticated, router])
+
+  const openCreate = () => {
     setEditingListing(null)
+    setCreateOpen(true)
+  }
+
+  const openEdit = (listing: PropertyListing) => {
+    setEditingListing(listing)
     setCreateOpen(true)
   }
 
@@ -73,38 +68,43 @@ export function PropertyListingsView() {
     }
   }
 
+  if (!isAuthReady) {
+    return (
+      <div className="flex min-h-screen flex-col bg-background">
+        <HomeHeader />
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
+          <PropertyListingCardSkeleton count={3} />
+        </main>
+        <HomeFooter />
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <HomeHeader />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+        <Link
+          href="/properties"
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "sm" }),
+            "mb-4 inline-flex gap-1.5"
+          )}
+        >
+          <ArrowLeft className="size-4" />
+          Back to browse
+        </Link>
+
         <SectionHeader
-          title="Available Housing & Shelters"
-          subtitle="Browse verified rentals, sales, and emergency shelter listings across Lebanon."
-          badge="Live"
+          title="My property listings"
+          subtitle="Manage drafts, pending, and published listings you created."
         />
 
-        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <PropertyListingFiltersBar
-            filters={filters}
-            governorates={governorates}
-            onChange={setFilters}
-            className="flex-1"
-          />
-          <div className="flex shrink-0 flex-wrap items-center gap-2 self-start sm:self-auto">
-            <MyListingsNavLink
-              className={cn(
-                buttonVariants({ variant: "outline", size: "sm" })
-              )}
-            />
-            <Button
-              type="button"
-              className="gap-1.5"
-              onClick={openCreate}
-            >
-              <Plus className="size-4" />
-              Add property
-            </Button>
-          </div>
+        <div className="mt-6 flex justify-end">
+          <Button type="button" className="gap-1.5" onClick={openCreate}>
+            <Plus className="size-4" />
+            Add property
+          </Button>
         </div>
 
         <div className="mt-8">
@@ -113,7 +113,7 @@ export function PropertyListingsView() {
           ) : query.isError ? (
             <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center">
               <p className="text-sm text-destructive">
-                Could not load listings. Please try again.
+                Could not load your listings.
               </p>
               <Button
                 type="button"
@@ -127,22 +127,25 @@ export function PropertyListingsView() {
             </div>
           ) : items.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
-              <p className="text-sm font-medium">No listings to show yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Only approved, available listings appear here. Publish a new
-                listing or ask an admin to approve pending ones.
-              </p>
-              <Button type="button" className="mt-4 gap-1.5" onClick={openCreate}>
+              <p className="text-sm font-medium">You have no listings yet</p>
+              <Button
+                type="button"
+                className="mt-4 gap-1.5"
+                onClick={openCreate}
+              >
                 <Plus className="size-4" />
-                Add property
+                Add your first property
               </Button>
             </div>
           ) : (
             <>
               <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {items.map((listing, index) => (
+                {items.map((listing) => (
                   <li key={listing._id}>
-                    <PropertyListingCard listing={listing} index={index} />
+                    <MyPropertyListingCard
+                      listing={listing}
+                      onEdit={openEdit}
+                    />
                   </li>
                 ))}
               </ul>

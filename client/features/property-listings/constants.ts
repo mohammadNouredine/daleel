@@ -1,3 +1,5 @@
+export const DEFAULT_LISTING_COUNTRY = "Lebanon"
+
 export const DEFAULT_PROPERTY_LISTING_PAGE_SIZE = 20
 
 export const MAX_PROPERTY_LISTING_PAGE_SIZE = 50

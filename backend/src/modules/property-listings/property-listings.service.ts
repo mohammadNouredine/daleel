@@ -278,17 +278,24 @@ export class PropertyListingsService {
     doc.contactPhone = dto.contactPhone?.trim();
     doc.contactWhatsapp = dto.contactWhatsapp?.trim();
 
+    const isAdmin = await this.isAdmin(userId);
+
     if (dto.saveAsDraft) {
       doc.status = PropertyListingStatus.DRAFT;
-    } else if (wasApproved) {
+    } else if (isAdmin) {
+      doc.status = PropertyListingStatus.APPROVED;
+      doc.rejectionReason = undefined;
+      if (!wasApproved || !doc.publishedAt) {
+        Object.assign(doc, this.buildApprovalMetadata(userId));
+      }
+    } else {
       doc.status = PropertyListingStatus.PENDING_APPROVAL;
       doc.publishedAt = undefined;
       doc.expiresAt = undefined;
+      doc.rejectionReason = undefined;
     }
 
     await doc.save();
-
-    const isAdmin = await this.isAdmin(userId);
     return mapPropertyListingToResponse(doc, {
       isOwner: doc.ownerId.toHexString() === userId,
       isAdmin,

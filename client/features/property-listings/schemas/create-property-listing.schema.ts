@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { phoneFormFields } from "@/lib/validation/phone-fields"
+import { DEFAULT_LISTING_COUNTRY } from "../constants"
 import {
   Currency,
   FurnishingStatus,
@@ -100,7 +101,7 @@ export const createPropertyListingDefaultValues: CreatePropertyListingFormValues
     propertyType: PropertyType.APARTMENT,
     title: "",
     description: "",
-    country: "Lebanon",
+    country: DEFAULT_LISTING_COUNTRY,
     governorate: "",
     district: "",
     city: "",

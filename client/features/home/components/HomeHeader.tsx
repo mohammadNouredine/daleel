@@ -4,6 +4,7 @@ import Link from "next/link"
 import { ChevronDown, MapPin, Plus } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { MyListingsNavLink } from "@/features/property-listings/components/MyListingsNavLink"
 import { DaleelLogo } from "./DaleelLogo"
 
 const NAV_LINKS = [
@@ -31,6 +32,7 @@ export function HomeHeader() {
               {link.label}
             </Link>
           ))}
+          <MyListingsNavLink className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" />
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">

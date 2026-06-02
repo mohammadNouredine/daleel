@@ -1,5 +1,19 @@
 import { ListingContactMethod, LocationVisibility } from '../../common/enums';
-import type { PropertyListingDocument } from './schemas/property-listing.schema';
+import type {
+  ListingImage,
+  ListingLocation,
+  PropertyListingDocument,
+} from './schemas/property-listing.schema';
+
+export type PropertyListingLocationResponse = {
+  country: string;
+  governorate: string;
+  district: string;
+  city: string;
+  street?: string;
+  coordinates?: { lat: number; lng: number };
+  locationVisibility: string;
+};
 
 export type PropertyListingResponse = {
   _id: string;
@@ -40,7 +54,7 @@ export type PropertyListingResponse = {
   availableBeds?: number;
   totalBeds?: number;
   amenityIds: string[];
-  location: PropertyListingDocument['location'];
+  location: PropertyListingLocationResponse;
   isAvailable: boolean;
   availableFrom?: string;
   availableUntil?: string;
@@ -61,6 +75,67 @@ export type MapPropertyListingOptions = {
   isAdmin?: boolean;
 };
 
+function toPlainSubdocument<T>(value: T): T {
+  if (
+    value != null &&
+    typeof value === 'object' &&
+    'toObject' in value &&
+    typeof (value as { toObject: () => T }).toObject === 'function'
+  ) {
+    return (value as { toObject: () => T }).toObject();
+  }
+  return value;
+}
+
+function mapListingImages(
+  images: ListingImage[] | undefined,
+): PropertyListingDocument['images'] {
+  return (images ?? []).map((image) => {
+    const plain = toPlainSubdocument(image);
+    return {
+      url: plain.url,
+      order: plain.order,
+    };
+  });
+}
+
+function mapListingLocation(
+  location: ListingLocation,
+  canSeePrivate: boolean,
+): PropertyListingLocationResponse {
+  const plain = toPlainSubdocument(location);
+
+  const mapped: PropertyListingLocationResponse = {
+    country: plain.country,
+    governorate: plain.governorate,
+    district: plain.district,
+    city: plain.city,
+    street: plain.street,
+    coordinates:
+      plain.coordinates != null
+        ? {
+            lat: plain.coordinates.lat,
+            lng: plain.coordinates.lng,
+          }
+        : undefined,
+    locationVisibility: plain.locationVisibility,
+  };
+
+  if (!canSeePrivate) {
+    if (
+      mapped.locationVisibility === LocationVisibility.HIDDEN ||
+      mapped.locationVisibility === LocationVisibility.APPROXIMATE
+    ) {
+      delete mapped.coordinates;
+    }
+    if (mapped.locationVisibility === LocationVisibility.HIDDEN) {
+      delete mapped.street;
+    }
+  }
+
+  return mapped;
+}
+
 export function mapPropertyListingToResponse(
   doc: PropertyListingDocument,
   options: MapPropertyListingOptions = {},
@@ -68,19 +143,6 @@ export function mapPropertyListingToResponse(
   const isOwner = options.isOwner ?? false;
   const isAdmin = options.isAdmin ?? false;
   const canSeePrivate = isOwner || isAdmin;
-
-  const location = { ...doc.location };
-  if (!canSeePrivate) {
-    if (
-      location.locationVisibility === LocationVisibility.HIDDEN ||
-      location.locationVisibility === LocationVisibility.APPROXIMATE
-    ) {
-      delete location.coordinates;
-    }
-    if (location.locationVisibility === LocationVisibility.HIDDEN) {
-      delete location.street;
-    }
-  }
 
   let contactPhone = doc.contactPhone;
   let contactWhatsapp = doc.contactWhatsapp;
@@ -100,7 +162,7 @@ export function mapPropertyListingToResponse(
     propertyType: doc.propertyType,
     title: doc.title,
     description: doc.description,
-    images: doc.images ?? [],
+    images: mapListingImages(doc.images),
     coverImage: doc.coverImage,
     maxOccupancy: doc.maxOccupancy,
     bedrooms: doc.bedrooms,
@@ -128,7 +190,7 @@ export function mapPropertyListingToResponse(
     availableBeds: doc.availableBeds,
     totalBeds: doc.totalBeds,
     amenityIds: (doc.amenityIds ?? []).map((id) => id.toHexString()),
-    location,
+    location: mapListingLocation(doc.location, canSeePrivate),
     isAvailable: doc.isAvailable,
     availableFrom: doc.availableFrom?.toISOString(),
     availableUntil: doc.availableUntil?.toISOString(),

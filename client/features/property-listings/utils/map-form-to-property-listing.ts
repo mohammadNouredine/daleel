@@ -15,6 +15,7 @@ import {
   formatContactPhone,
   splitContactPhone,
 } from "@/components/forms/Phone/phone-utils"
+import { DEFAULT_LISTING_COUNTRY } from "../constants"
 import type { CreatePropertyListingFormValues } from "../schemas/create-property-listing.schema"
 
 function parseOptionalInt(value?: string): number | undefined {
@@ -36,7 +37,7 @@ function buildLocationFromForm(
   const lng = parseOptionalFloat(values.longitude)
 
   return {
-    country: values.country.trim(),
+    country: DEFAULT_LISTING_COUNTRY,
     governorate: values.governorate.trim(),
     district: values.district.trim(),
     city: values.city.trim(),

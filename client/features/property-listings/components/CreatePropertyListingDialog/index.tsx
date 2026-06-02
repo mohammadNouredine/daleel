@@ -22,13 +22,18 @@ import { Form, FormField } from "@/components/ui/form"
 import { LocationMapPicker } from "@/features/help-requests/components/LocationMapPicker/LocationMapPickerLazy"
 import toast from "react-hot-toast"
 import { useCreatePropertyListing } from "../../hooks/use-create-property-listing"
+import { useUpdatePropertyListing } from "../../hooks/use-update-property-listing"
 import {
   createPropertyListingDefaultValues,
   createPropertyListingSchema,
   type CreatePropertyListingFormValues,
 } from "../../schemas/create-property-listing.schema"
+import { PropertyListingStatus, type PropertyListing } from "../../types"
 import { buildPropertyListingFormData } from "../../utils/build-property-listing-form-data"
-import { mapFormToCreatePropertyListingInput } from "../../utils/map-form-to-property-listing"
+import {
+  mapFormToCreatePropertyListingInput,
+  mapPropertyListingToFormValues,
+} from "../../utils/map-form-to-property-listing"
 import {
   getNextStep,
   getPreviousStep,
@@ -54,14 +59,27 @@ import { PropertyListingImagesUpload } from "./PropertyListingImagesUpload"
 type CreatePropertyListingDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
+  editingListing?: PropertyListing | null
 }
 
 const INITIAL_STEP: PropertyListingFormStep = "basics"
 
+function publishSuccessMessage(status: PropertyListing["status"]): string {
+  if (status === PropertyListingStatus.APPROVED) {
+    return "Listing updated and published"
+  }
+  if (status === PropertyListingStatus.DRAFT) {
+    return "Draft saved"
+  }
+  return "Listing updated and submitted for review"
+}
+
 export function CreatePropertyListingDialog({
   open,
   onOpenChange,
+  editingListing = null,
 }: CreatePropertyListingDialogProps) {
+  const isEdit = editingListing != null
   const [activeTab, setActiveTab] = useState<PropertyListingFormStep>(INITIAL_STEP)
   const [visitedTabs, setVisitedTabs] = useState<Set<PropertyListingFormStep>>(
     () => new Set([INITIAL_STEP])
@@ -73,14 +91,30 @@ export function CreatePropertyListingDialog({
     mode: "onTouched",
   })
 
+  const closeAndReset = useCallback(() => {
+    onOpenChange(false)
+    form.reset(createPropertyListingDefaultValues)
+    setActiveTab(INITIAL_STEP)
+    setVisitedTabs(new Set([INITIAL_STEP]))
+  }, [form, onOpenChange])
+
   const createMutation = useCreatePropertyListing({
     showSuccessToast: false,
-    onSuccess: () => {
-      toast.success("Property listing submitted for review")
-      onOpenChange(false)
-      resetWizard()
+    onSuccess: (data) => {
+      toast.success(publishSuccessMessage(data.status))
+      closeAndReset()
     },
   })
+
+  const updateMutation = useUpdatePropertyListing({
+    showSuccessToast: false,
+    onSuccess: (data) => {
+      toast.success(publishSuccessMessage(data.status))
+      closeAndReset()
+    },
+  })
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending
 
   const resetWizard = useCallback(() => {
     form.reset(createPropertyListingDefaultValues)
@@ -88,12 +122,25 @@ export function CreatePropertyListingDialog({
     setVisitedTabs(new Set([INITIAL_STEP]))
   }, [form])
 
+  const loadEditWizard = useCallback(
+    (listing: PropertyListing) => {
+      form.reset(mapPropertyListingToFormValues(listing))
+      setActiveTab(INITIAL_STEP)
+      setVisitedTabs(new Set(PROPERTY_LISTING_FORM_STEPS))
+    },
+    [form]
+  )
+
   useEffect(() => {
     if (!open) {
       return
     }
-    resetWizard()
-  }, [open, resetWizard])
+    if (editingListing) {
+      loadEditWizard(editingListing)
+    } else {
+      resetWizard()
+    }
+  }, [open, editingListing, loadEditWizard, resetWizard])
 
   useEffect(() => {
     setVisitedTabs((prev) => {
@@ -114,12 +161,17 @@ export function CreatePropertyListingDialog({
       ...values,
       saveAsDraft: asDraft,
     })
-    createMutation.mutate(
-      buildPropertyListingFormData(input, {
-        existingImages: values.imageUrls ?? [],
-        newFiles: values.imageFiles ?? [],
-      })
-    )
+    const formData = buildPropertyListingFormData(input, {
+      existingImages: values.imageUrls ?? [],
+      newFiles: values.imageFiles ?? [],
+    })
+
+    if (editingListing) {
+      updateMutation.mutate({ id: editingListing._id, formData })
+      return
+    }
+
+    createMutation.mutate(formData)
   }
 
   const handleLocationResolved = (payload: {
@@ -199,7 +251,7 @@ export function CreatePropertyListingDialog({
     if (!PROPERTY_LISTING_FORM_STEPS.includes(step)) {
       return
     }
-    if (visitedTabs.has(step)) {
+    if (isEdit || visitedTabs.has(step)) {
       setActiveTab(step)
     }
   }
@@ -227,7 +279,8 @@ export function CreatePropertyListingDialog({
   )
 
   const showPublish =
-    isLastStep(activeTab) && hasVisitedAllSteps(visitedTabs)
+    isLastStep(activeTab) &&
+    (isEdit || hasVisitedAllSteps(visitedTabs))
   const showNext = !isLastStep(activeTab)
   const showBack = getPreviousStep(activeTab) !== null
   const currentStepIndex = PROPERTY_LISTING_FORM_STEPS.indexOf(activeTab)
@@ -236,10 +289,13 @@ export function CreatePropertyListingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[min(90vh,800px)] w-[calc(100%-2rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
         <DialogHeader className="shrink-0 space-y-1 px-6 pt-6 pb-2">
-          <DialogTitle>Add property listing</DialogTitle>
+          <DialogTitle>
+            {isEdit ? "Edit property listing" : "Add property listing"}
+          </DialogTitle>
           <DialogDescription>
-            Complete each section. You can publish after reviewing contact
-            details and photos.
+            {isEdit
+              ? "Changes are saved when you submit. Non-admin updates to approved listings require review again."
+              : "Complete each section. You can publish after reviewing contact details and photos."}
           </DialogDescription>
           <p className="text-xs text-muted-foreground">
             Step {currentStepIndex + 1} of {PROPERTY_LISTING_FORM_STEPS.length}
@@ -258,7 +314,7 @@ export function CreatePropertyListingDialog({
                   <TabsTrigger
                     key={step}
                     value={step}
-                    disabled={!visitedTabs.has(step)}
+                    disabled={!isEdit && !visitedTabs.has(step)}
                     className="capitalize disabled:opacity-40"
                   >
                     {step === "media" ? "Contact" : step}
@@ -294,7 +350,7 @@ export function CreatePropertyListingDialog({
                 <TabsContent value="location" className="mt-0 space-y-4">
                   <FormSection
                     title="Location"
-                    description="Where the property is located."
+                    description="Where the property is located in Lebanon."
                   >
                     {open ? (
                       <LocationMapPicker
@@ -303,7 +359,6 @@ export function CreatePropertyListingDialog({
                         onLocationResolved={handleLocationResolved}
                       />
                     ) : null}
-                    <TextInput name="country" label="Country" />
                     <div className="grid gap-4 sm:grid-cols-2">
                       <TextInput name="governorate" label="Governorate" />
                       <TextInput name="district" label="District" />
@@ -428,14 +483,14 @@ export function CreatePropertyListingDialog({
                   type="button"
                   variant="outline"
                   onClick={() => onOpenChange(false)}
-                  disabled={createMutation.isPending}
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="button"
                   variant="secondary"
-                  disabled={createMutation.isPending}
+                  disabled={isSubmitting}
                   onClick={handleSaveDraft}
                 >
                   Save draft
@@ -446,7 +501,7 @@ export function CreatePropertyListingDialog({
                   <Button
                     type="button"
                     variant="outline"
-                    disabled={createMutation.isPending}
+                    disabled={isSubmitting}
                     onClick={handleBack}
                   >
                     Back
@@ -455,7 +510,7 @@ export function CreatePropertyListingDialog({
                 {showNext ? (
                   <Button
                     type="button"
-                    disabled={createMutation.isPending}
+                    disabled={isSubmitting}
                     onClick={handleNext}
                   >
                     Next
@@ -464,10 +519,14 @@ export function CreatePropertyListingDialog({
                 {showPublish ? (
                   <Button
                     type="button"
-                    disabled={createMutation.isPending}
+                    disabled={isSubmitting}
                     onClick={handlePublish}
                   >
-                    {createMutation.isPending ? "Submitting…" : "Publish"}
+                    {isSubmitting
+                      ? "Submitting…"
+                      : isEdit
+                        ? "Save changes"
+                        : "Publish"}
                   </Button>
                 ) : null}
               </div>

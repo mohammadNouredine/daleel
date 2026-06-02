@@ -17,6 +17,7 @@ import type { PropertyListing } from "../types"
 
 export function useUpdatePropertyListing(options?: {
   onSuccess?: (data: PropertyListing) => void
+  showSuccessToast?: boolean
 }) {
   const queryClient = useQueryClient()
   const queryKeysToInvalidate: QueryKey[] = [
@@ -42,7 +43,9 @@ export function useUpdatePropertyListing(options?: {
       queryKeysToInvalidate.forEach((key) =>
         queryClient.invalidateQueries({ queryKey: key })
       )
-      toast.success("Saved successfully")
+      if (options?.showSuccessToast !== false) {
+        toast.success("Saved successfully")
+      }
       options?.onSuccess?.(data)
     },
     onError: (err: Error) => {
