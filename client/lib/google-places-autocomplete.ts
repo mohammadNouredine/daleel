@@ -2,6 +2,16 @@
 
 import { loadGooglePlacesApi } from "./google-places-loader"
 
+export type ResolvedLocation = {
+  formattedAddress: string
+  placeId?: string
+  latitude: number
+  longitude: number
+  governorate: string
+  city: string
+  street?: string
+}
+
 export type PlaceSuggestion = {
   placeId: string
   description: string
@@ -9,6 +19,7 @@ export type PlaceSuggestion = {
 
 export type PlaceSelection = {
   placeId: string
+  formattedAddress: string
   latitude: number
   longitude: number
   address: {
@@ -19,22 +30,178 @@ export type PlaceSelection = {
   }
 }
 
-function extractAddress(details: any) {
-  const components = details.address_components ?? []
+type GoogleAddressComponent = {
+  types?: string[]
+  long_name?: string
+}
+
+type GooglePlaceResult = {
+  place_id?: string
+  formatted_address?: string
+  types?: string[]
+  geometry?: {
+    location?: { lat: () => number; lng: () => number }
+    location_type?: string
+  }
+  address_components?: GoogleAddressComponent[]
+}
+
+function isCountryOnlyGeocodeResult(result: GooglePlaceResult): boolean {
+  const types = result.types ?? []
+  return (
+    types.length > 0 &&
+    types.every((type) => type === "country" || type === "political")
+  )
+}
+
+function resolveCityFromComponents(
+  address: ReturnType<typeof extractAddressComponents>,
+  formattedAddress: string
+): string {
+  const direct =
+    address.city?.trim() ??
+    address.district?.trim() ??
+    ""
+  if (direct) return direct
+
+  const parts = formattedAddress
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0 && part.toLowerCase() !== "lebanon")
+
+  return parts[0] ?? ""
+}
+
+function resolveGovernorateFromComponents(
+  address: ReturnType<typeof extractAddressComponents>,
+  formattedAddress: string
+): string {
+  const direct = address.governorate?.trim() ?? ""
+  if (direct) return direct
+
+  const parts = formattedAddress
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0 && part.toLowerCase() !== "lebanon")
+
+  return parts.find((part) => /governorate/i.test(part)) ?? parts[parts.length - 1] ?? ""
+}
+
+function scoreGeocodeResult(result: GooglePlaceResult): number {
+  if (isCountryOnlyGeocodeResult(result)) {
+    return -1
+  }
+
+  const address = extractAddressComponents(result.address_components ?? [])
+  const formattedAddress = result.formatted_address?.trim() ?? ""
+  const governorate = resolveGovernorateFromComponents(address, formattedAddress)
+  const city = resolveCityFromComponents(address, formattedAddress)
+
+  let score = 0
+  if (governorate) score += 20
+  if (city) score += 20
+  if (address.street) score += 10
+
+  const types = result.types ?? []
+  if (types.some((t) => t === "street_address" || t === "premise")) score += 15
+  if (types.some((t) => t === "route" || t === "neighborhood")) score += 10
+  if (types.some((t) => t === "locality" || t === "sublocality")) score += 8
+  if (types.some((t) => t === "administrative_area_level_2")) score += 5
+
+  const locationType = result.geometry?.location_type
+  if (locationType === "ROOFTOP" || locationType === "RANGE_INTERPOLATED") {
+    score += 5
+  }
+
+  return score
+}
+
+function pickBestGeocodeResult(
+  results: GooglePlaceResult[] | null | undefined
+): GooglePlaceResult | null {
+  if (!results?.length) return null
+
+  let best: GooglePlaceResult | null = null
+  let bestScore = -1
+
+  for (const result of results) {
+    const score = scoreGeocodeResult(result)
+    if (score > bestScore) {
+      bestScore = score
+      best = result
+    }
+  }
+
+  return bestScore >= 0 ? best : null
+}
+
+function mapGeocodeResultToResolved(
+  result: GooglePlaceResult,
+  lat: number,
+  lng: number
+): ResolvedLocation | null {
+  const formattedAddress = result.formatted_address?.trim()
+  if (!formattedAddress || isCountryOnlyGeocodeResult(result)) {
+    return null
+  }
+
+  const address = extractAddressComponents(result.address_components ?? [])
+  const governorate = resolveGovernorateFromComponents(address, formattedAddress)
+  const city = resolveCityFromComponents(address, formattedAddress)
+
+  if (!governorate || !city) {
+    return null
+  }
+
+  return {
+    formattedAddress,
+    placeId: result.place_id,
+    latitude: lat,
+    longitude: lng,
+    governorate,
+    city,
+    street: address.street || undefined,
+  }
+}
+
+export function extractAddressComponents(components: GoogleAddressComponent[]) {
   const byType = (type: string) =>
-    components.find((c: { types?: string[]; long_name?: string }) =>
-      (c.types ?? []).includes(type)
-    )?.long_name
+    components.find((c) => (c.types ?? []).includes(type))?.long_name
+
+  const city =
+    byType("locality") ??
+    byType("sublocality") ??
+    byType("administrative_area_level_3") ??
+    byType("administrative_area_level_2")
 
   return {
     governorate: byType("administrative_area_level_1"),
     district: byType("administrative_area_level_2"),
-    city: byType("locality") ?? byType("administrative_area_level_3"),
+    city,
     street: [byType("route"), byType("street_number")].filter(Boolean).join(" "),
   }
 }
 
-export async function fetchPlaceSuggestions(
+function mapPlaceResultToSelection(
+  placeId: string,
+  result: GooglePlaceResult
+): PlaceSelection | null {
+  const location = result.geometry?.location
+  if (!location) return null
+
+  const formattedAddress = result.formatted_address?.trim()
+  if (!formattedAddress) return null
+
+  return {
+    placeId,
+    formattedAddress,
+    latitude: location.lat(),
+    longitude: location.lng(),
+    address: extractAddressComponents(result.address_components ?? []),
+  }
+}
+
+export async function fetchAddressPlaceSuggestions(
   input: string
 ): Promise<PlaceSuggestion[]> {
   if (!input.trim()) return []
@@ -46,9 +213,9 @@ export async function fetchPlaceSuggestions(
       {
         input,
         componentRestrictions: { country: "lb" },
-        types: ["(regions)"],
+        types: ["geocode"],
       },
-      (predictions: any[] | null, status: string) => {
+      (predictions: { place_id: string; description: string }[] | null, status: string) => {
         if (
           status !== google.maps.places.PlacesServiceStatus.OK ||
           !predictions
@@ -79,24 +246,79 @@ export async function fetchPlaceDetails(
     service.getDetails(
       {
         placeId,
-        fields: ["geometry.location", "address_component"],
+        fields: ["formatted_address", "geometry", "address_components"],
       },
-      (result: any, status: string) => {
-        if (
-          status !== google.maps.places.PlacesServiceStatus.OK ||
-          !result?.geometry?.location
-        ) {
+      (result: GooglePlaceResult | null, status: string) => {
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !result) {
           resolve(null)
           return
         }
-
-        resolve({
-          placeId,
-          latitude: result.geometry.location.lat(),
-          longitude: result.geometry.location.lng(),
-          address: extractAddress(result),
-        })
+        resolve(mapPlaceResultToSelection(placeId, result))
       }
     )
   })
+}
+
+function geocodeAtCoordinates(
+  geocoder: { geocode: (...args: unknown[]) => void },
+  google: { maps: { GeocoderStatus: { OK: string } } },
+  lat: number,
+  lng: number,
+  request: Record<string, unknown>
+): Promise<GooglePlaceResult[] | null> {
+  return new Promise((resolve) => {
+    geocoder.geocode(
+      { location: { lat, lng }, ...request },
+      (results: GooglePlaceResult[] | null, status: string) => {
+        if (status !== google.maps.GeocoderStatus.OK || !results?.length) {
+          resolve(null)
+          return
+        }
+        resolve(results)
+      }
+    )
+  })
+}
+
+export async function reverseGeocodeCoordinates(
+  lat: number,
+  lng: number
+): Promise<ResolvedLocation | null> {
+  const google = await loadGooglePlacesApi()
+  const geocoder = new google.maps.Geocoder()
+
+  const attempts: Record<string, unknown>[] = [
+    { language: "en", region: "lb" },
+    {
+      language: "en",
+      region: "lb",
+      result_type: [
+        "street_address",
+        "route",
+        "neighborhood",
+        "locality",
+        "administrative_area_level_3",
+        "administrative_area_level_2",
+        "administrative_area_level_1",
+      ],
+    },
+  ]
+
+  for (const request of attempts) {
+    const results = await geocodeAtCoordinates(geocoder, google, lat, lng, request)
+    const best = pickBestGeocodeResult(results)
+    if (!best) continue
+
+    const resolved = mapGeocodeResultToResolved(best, lat, lng)
+    if (resolved) return resolved
+  }
+
+  return null
+}
+
+/** @deprecated Use fetchAddressPlaceSuggestions for property listings */
+export async function fetchPlaceSuggestions(
+  input: string
+): Promise<PlaceSuggestion[]> {
+  return fetchAddressPlaceSuggestions(input)
 }

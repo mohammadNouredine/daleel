@@ -2,7 +2,6 @@ import type {
   CurrencyValue,
   FurnishingStatusValue,
   ListingTypeValue,
-  PropertyListing,
   PropertyTypeValue,
 } from "../types"
 
@@ -11,7 +10,6 @@ export type PropertyListingListFilters = {
   propertyType?: PropertyTypeValue
   governorate?: string
   city?: string
-  district?: string
   priceMin?: number
   priceMax?: number
   currency?: CurrencyValue
@@ -34,17 +32,15 @@ export type PropertyListingListFilters = {
 
 export type PropertyListingUiFilters = Omit<
   PropertyListingListFilters,
-  "governorate" | "city" | "district"
+  "governorate" | "city"
 > & {
   governorate?: string
   city?: string
-  district?: string
 }
 
 export const DEFAULT_PROPERTY_LISTING_UI_FILTERS: PropertyListingUiFilters = {
   governorate: "all",
   city: "all",
-  district: "all",
 }
 
 export function buildPropertyListingListParams(
@@ -59,10 +55,6 @@ export function buildPropertyListingListParams(
         : undefined,
     city:
       filters.city && filters.city !== "all" ? filters.city : undefined,
-    district:
-      filters.district && filters.district !== "all"
-        ? filters.district
-        : undefined,
     priceMin: filters.priceMin,
     priceMax: filters.priceMax,
     currency: filters.currency,
@@ -85,18 +77,6 @@ export function buildPropertyListingListParams(
   }
 }
 
-export function extractGovernoratesFromListings(
-  items: PropertyListing[]
-): string[] {
-  const set = new Set<string>()
-  for (const item of items) {
-    if (item.location.governorate) {
-      set.add(item.location.governorate)
-    }
-  }
-  return Array.from(set).sort((a, b) => a.localeCompare(b))
-}
-
 export function hasActivePropertyListingFilters(
   filters: PropertyListingUiFilters
 ): boolean {
@@ -105,7 +85,6 @@ export function hasActivePropertyListingFilters(
     filters.propertyType !== undefined ||
     (filters.governorate !== undefined && filters.governorate !== "all") ||
     (filters.city !== undefined && filters.city !== "all") ||
-    (filters.district !== undefined && filters.district !== "all") ||
     filters.priceMin !== undefined ||
     filters.priceMax !== undefined ||
     filters.currency !== undefined ||
@@ -129,11 +108,10 @@ export function hasActivePropertyListingFilters(
 export function toListFilters(
   ui: PropertyListingUiFilters
 ): PropertyListingListFilters {
-  const { governorate, city, district, ...rest } = ui
+  const { governorate, city, ...rest } = ui
   return {
     ...rest,
     governorate: governorate === "all" ? undefined : governorate,
     city: city === "all" ? undefined : city,
-    district: district === "all" ? undefined : district,
   }
 }

@@ -16,10 +16,10 @@ import type { PropertyListing } from "../types";
 import { MyListingsNavLink } from "./MyListingsNavLink";
 import {
   DEFAULT_PROPERTY_LISTING_UI_FILTERS,
-  extractGovernoratesFromListings,
   toListFilters,
   type PropertyListingUiFilters,
 } from "../utils/property-listing-filters";
+import { usePropertyListingLocationFacets } from "../hooks/use-property-listing-location-facets";
 import { PropertyListingCard } from "./PropertyListingCard";
 import { PropertyListingCardSkeleton } from "./PropertyListingCardSkeleton";
 import { PropertyListingFiltersBar } from "./PropertyListingFiltersBar";
@@ -39,15 +39,11 @@ export function PropertyListingsView() {
   const listFilters = useMemo(() => toListFilters(filters), [filters]);
 
   const query = usePropertyListingsInfinite({ filters: listFilters });
+  const facetsQuery = usePropertyListingLocationFacets();
 
   const items = useMemo(
     () => query.data?.pages.flatMap((page) => page.items) ?? [],
     [query.data],
-  );
-
-  const governorates = useMemo(
-    () => extractGovernoratesFromListings(items),
-    [items],
   );
 
   const { sentinelRef } = useInfiniteScrollTrigger({
@@ -94,7 +90,7 @@ export function PropertyListingsView() {
         <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <PropertyListingFiltersBar
             filters={filters}
-            governorates={governorates}
+            facets={facetsQuery.data}
             onChange={setFilters}
             className="flex-1"
           />

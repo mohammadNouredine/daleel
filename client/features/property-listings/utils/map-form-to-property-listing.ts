@@ -39,8 +39,9 @@ function buildLocationFromForm(
   return {
     country: DEFAULT_LISTING_COUNTRY,
     governorate: values.governorate.trim(),
-    district: values.district.trim(),
     city: values.city.trim(),
+    formattedAddress: values.formattedAddress.trim() || undefined,
+    placeId: values.placeId?.trim() || undefined,
     street: values.street?.trim() || undefined,
     coordinates:
       lat !== undefined && lng !== undefined ? { lat, lng } : undefined,
@@ -107,8 +108,9 @@ export function mapPropertyListingToFormValues(
     title: listing.title,
     description: listing.description,
     country: listing.location.country,
+    formattedAddress: listing.location.formattedAddress ?? "",
+    placeId: listing.location.placeId ?? "",
     governorate: listing.location.governorate,
-    district: listing.location.district,
     city: listing.location.city,
     street: listing.location.street ?? "",
     latitude: listing.location.coordinates?.lat

@@ -33,7 +33,6 @@ export function usePropertyListingsInfinite({
         filters.propertyType,
         filters.governorate,
         filters.city,
-        filters.district,
         filters.priceMin,
         filters.priceMax,
         filters.currency,

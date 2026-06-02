@@ -8,8 +8,10 @@ import type {
 export type PropertyListingLocationResponse = {
   country: string;
   governorate: string;
-  district: string;
+  district?: string;
   city: string;
+  formattedAddress?: string;
+  placeId?: string;
   street?: string;
   coordinates?: { lat: number; lng: number };
   locationVisibility: string;
@@ -111,6 +113,8 @@ function mapListingLocation(
     governorate: plain.governorate,
     district: plain.district,
     city: plain.city,
+    formattedAddress: plain.formattedAddress,
+    placeId: plain.placeId,
     street: plain.street,
     coordinates:
       plain.coordinates != null

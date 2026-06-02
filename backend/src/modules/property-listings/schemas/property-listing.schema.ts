@@ -29,14 +29,20 @@ export class ListingLocation {
   @Prop({ required: true, trim: true })
   country: string;
 
-  @Prop({ required: true, trim: true })
+  @Prop({ trim: true, default: '' })
   governorate: string;
 
-  @Prop({ required: true, trim: true })
-  district: string;
+  @Prop({ trim: true })
+  district?: string;
 
-  @Prop({ required: true, trim: true })
+  @Prop({ trim: true, default: '' })
   city: string;
+
+  @Prop({ trim: true })
+  formattedAddress?: string;
+
+  @Prop({ trim: true })
+  placeId?: string;
 
   @Prop({ trim: true })
   street?: string;

@@ -3,12 +3,12 @@
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { LEBANON_GOVERNORATES } from "../constants"
 import {
   DEFAULT_PROPERTY_LISTING_UI_FILTERS,
   hasActivePropertyListingFilters,
   type PropertyListingUiFilters,
 } from "../utils/property-listing-filters"
+import type { PropertyListingLocationFacets } from "../types"
 import {
   BEDROOM_FILTER_OPTIONS,
   CURRENCY_FILTER_OPTIONS,
@@ -31,22 +31,35 @@ const selectClassName = cn(
 
 type PropertyListingFiltersBarProps = {
   filters: PropertyListingUiFilters
-  governorates: string[]
+  facets?: PropertyListingLocationFacets
   onChange: (filters: PropertyListingUiFilters) => void
   className?: string
 }
 
 export function PropertyListingFiltersBar({
   filters,
-  governorates,
+  facets,
   onChange,
   className,
 }: PropertyListingFiltersBarProps) {
   const governorateOptions = [
     { value: "all", label: "All governorates" },
-    ...(
-      governorates.length > 0 ? governorates : [...LEBANON_GOVERNORATES]
-    ).map((g) => ({ value: g, label: g })),
+    ...(facets?.governorates ?? []).map((g) => ({
+      value: g.value,
+      label: g.value,
+    })),
+  ]
+
+  const cityOptions = [
+    { value: "all", label: "All cities" },
+    ...(facets?.cities ?? [])
+      .filter(
+        (c) =>
+          filters.governorate === "all" ||
+          !filters.governorate ||
+          c.governorate === filters.governorate
+      )
+      .map((c) => ({ value: c.value, label: c.value })),
   ]
 
   const showClear = hasActivePropertyListingFilters(filters)
@@ -127,11 +140,38 @@ export function PropertyListingFiltersBar({
             className={selectClassName}
             value={filters.governorate ?? "all"}
             onChange={(e) =>
-              onChange({ ...filters, governorate: e.target.value })
+              onChange({
+                ...filters,
+                governorate: e.target.value,
+                city: "all",
+              })
             }
           >
             {governorateOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="grid gap-1.5 text-xs font-medium text-muted-foreground">
+          City
+          <select
+            className={selectClassName}
+            value={filters.city ?? "all"}
+            disabled={
+              governorateOptions.length <= 1 ||
+              (filters.governorate !== "all" &&
+                filters.governorate !== undefined &&
+                cityOptions.length <= 1)
+            }
+            onChange={(e) =>
+              onChange({ ...filters, city: e.target.value })
+            }
+          >
+            {cityOptions.map((opt) => (
+              <option key={`${opt.value}-${opt.label}`} value={opt.value}>
                 {opt.label}
               </option>
             ))}

@@ -95,11 +95,29 @@ export type ListingCoordinates = {
 export type ListingLocation = {
   country: string
   governorate: string
-  district: string
+  district?: string
   city: string
+  formattedAddress?: string
+  placeId?: string
   street?: string
   coordinates?: ListingCoordinates
   locationVisibility: LocationVisibilityValue
+}
+
+export type PropertyListingLocationFacetGovernorate = {
+  value: string
+  count: number
+}
+
+export type PropertyListingLocationFacetCity = {
+  value: string
+  governorate: string
+  count: number
+}
+
+export type PropertyListingLocationFacets = {
+  governorates: PropertyListingLocationFacetGovernorate[]
+  cities: PropertyListingLocationFacetCity[]
 }
 
 export type ListingImage = {

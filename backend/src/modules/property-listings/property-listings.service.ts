@@ -44,8 +44,25 @@ import {
   type PropertyReportDocument,
 } from './schemas/property-report.schema';
 import { buildPropertyListingFilter } from './utils/property-listing-filters.util';
+import { assertCoordinatesInLebanon } from './utils/lebanon-coordinates.util';
 import { paginatePropertyListings } from './utils/property-listing-pagination.util';
 import type { ListingLocationDto } from './dto/listing-location.dto';
+
+export type PropertyListingLocationFacetGovernorate = {
+  value: string;
+  count: number;
+};
+
+export type PropertyListingLocationFacetCity = {
+  value: string;
+  governorate: string;
+  count: number;
+};
+
+export type PropertyListingLocationFacetsResponse = {
+  governorates: PropertyListingLocationFacetGovernorate[];
+  cities: PropertyListingLocationFacetCity[];
+};
 
 export type PropertyListingPaginatedResponse = {
   items: PropertyListingResponse[];
@@ -197,7 +214,7 @@ export class PropertyListingsService {
       availableBeds: dto.availableBeds,
       totalBeds: dto.totalBeds,
       amenityIds: (dto.amenityIds ?? []).map((id) => toObjectId(id)),
-      location: this.resolveLocation(dto.location),
+      location: this.resolveLocation(dto.location, !dto.saveAsDraft),
       isAvailable: dto.isAvailable ?? true,
       availableFrom: dto.availableFrom ? new Date(dto.availableFrom) : undefined,
       availableUntil: dto.availableUntil
@@ -266,7 +283,7 @@ export class PropertyListingsService {
     if (dto.amenityIds) {
       doc.amenityIds = dto.amenityIds.map((amenityId) => toObjectId(amenityId));
     }
-    doc.location = this.resolveLocation(dto.location);
+    doc.location = this.resolveLocation(dto.location, !dto.saveAsDraft);
     if (dto.isAvailable !== undefined) {
       doc.isAvailable = dto.isAvailable;
     }
@@ -463,19 +480,109 @@ export class PropertyListingsService {
     );
   }
 
-  private resolveLocation(location: ListingLocationDto): ListingLocation {
+  async getLocationFacets(): Promise<PropertyListingLocationFacetsResponse> {
+    const match = {
+      deletedAt: null,
+      status: PropertyListingStatus.APPROVED,
+      isAvailable: true,
+    };
+
+    const [governorates, cities] = await Promise.all([
+      this.propertyListingModel
+        .aggregate<PropertyListingLocationFacetGovernorate>([
+          {
+            $match: {
+              ...match,
+              'location.governorate': { $exists: true, $nin: [null, ''] },
+            },
+          },
+          { $group: { _id: '$location.governorate', count: { $sum: 1 } } },
+          { $sort: { _id: 1 } },
+          { $project: { _id: 0, value: '$_id', count: 1 } },
+        ])
+        .exec(),
+      this.propertyListingModel
+        .aggregate<PropertyListingLocationFacetCity>([
+          {
+            $match: {
+              ...match,
+              'location.governorate': { $exists: true, $nin: [null, ''] },
+              'location.city': { $exists: true, $nin: [null, ''] },
+            },
+          },
+          {
+            $group: {
+              _id: {
+                governorate: '$location.governorate',
+                city: '$location.city',
+              },
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { '_id.governorate': 1, '_id.city': 1 } },
+          {
+            $project: {
+              _id: 0,
+              governorate: '$_id.governorate',
+              value: '$_id.city',
+              count: 1,
+            },
+          },
+        ])
+        .exec(),
+    ]);
+
+    return { governorates, cities };
+  }
+
+  private resolveLocation(
+    location: ListingLocationDto,
+    requireFullLocation: boolean,
+  ): ListingLocation {
+    const country = location.country?.trim() || 'Lebanon';
+    const governorate = location.governorate?.trim() ?? '';
+    const city = location.city?.trim() ?? '';
+    const formattedAddress = location.formattedAddress?.trim();
+    const coordinates = location.coordinates
+      ? {
+          lat: location.coordinates.lat,
+          lng: location.coordinates.lng,
+        }
+      : undefined;
+
+    if (requireFullLocation) {
+      if (!formattedAddress) {
+        throw new BadRequestException(
+          'Address is required. Search for an address or pick a point on the map.',
+        );
+      }
+      if (!coordinates) {
+        throw new BadRequestException(
+          'Map location is required. Search for an address or pick a point on the map.',
+        );
+      }
+      if (!governorate) {
+        throw new BadRequestException(
+          'Governorate could not be resolved from the address.',
+        );
+      }
+      if (!city) {
+        throw new BadRequestException(
+          'City could not be resolved from the address.',
+        );
+      }
+      assertCoordinatesInLebanon(coordinates.lat, coordinates.lng);
+    }
+
     return {
-      country: location.country.trim(),
-      governorate: location.governorate.trim(),
-      district: location.district.trim(),
-      city: location.city.trim(),
-      street: location.street?.trim(),
-      coordinates: location.coordinates
-        ? {
-            lat: location.coordinates.lat,
-            lng: location.coordinates.lng,
-          }
-        : undefined,
+      country,
+      governorate,
+      district: location.district?.trim() || undefined,
+      city,
+      formattedAddress,
+      placeId: location.placeId?.trim() || undefined,
+      street: location.street?.trim() || undefined,
+      coordinates,
       locationVisibility:
         location.locationVisibility ?? LocationVisibility.APPROXIMATE,
     };

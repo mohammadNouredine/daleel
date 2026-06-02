@@ -3,6 +3,7 @@ const AMENITIES_BASE = "/api/v1/amenities"
 const PROPERTY_REPORTS_BASE = "/api/v1/property-reports"
 
 export const PROPERTY_LISTINGS_LIST = PROPERTY_LISTINGS_BASE
+export const PROPERTY_LISTINGS_LOCATION_FACETS = `${PROPERTY_LISTINGS_BASE}/location-facets`
 export const PROPERTY_LISTINGS_MINE = `${PROPERTY_LISTINGS_BASE}/mine`
 export const PROPERTY_LISTINGS_PENDING = `${PROPERTY_LISTINGS_BASE}/moderation/pending`
 export const PROPERTY_LISTINGS_CREATE = PROPERTY_LISTINGS_BASE
@@ -11,6 +12,10 @@ export const AMENITIES_LIST = AMENITIES_BASE
 export const PROPERTY_REPORTS_CREATE = PROPERTY_REPORTS_BASE
 
 export const PROPERTY_LISTINGS_QUERY_KEY = ["property-listings"] as const
+export const PROPERTY_LISTINGS_LOCATION_FACETS_QUERY_KEY = [
+  "property-listings",
+  "location-facets",
+] as const
 export const MY_PROPERTY_LISTINGS_QUERY_KEY = [
   "property-listings",
   "mine",

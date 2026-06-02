@@ -35,12 +35,21 @@ export type ResolvedLocationPayload = {
   district: string
   city: string
   street?: string
+  formattedAddress?: string
+  placeId?: string
 }
+
+export type ResolveCoordinatesFn = (
+  lat: number,
+  lng: number
+) => Promise<Omit<ResolvedLocationPayload, "latitude" | "longitude">>
 
 type LocationMapPickerProps = {
   latitude?: string
   longitude?: string
   onLocationResolved: (payload: ResolvedLocationPayload) => void
+  /** When set, used instead of Nominatim (e.g. Google Geocoder for property listings). */
+  geocodeCoordinates?: ResolveCoordinatesFn
   className?: string
 }
 
@@ -78,6 +87,7 @@ export function LocationMapPicker({
   latitude,
   longitude,
   onLocationResolved,
+  geocodeCoordinates,
   className,
 }: LocationMapPickerProps) {
   const [pin, setPin] = useState<[number, number] | null>(() => {
@@ -105,15 +115,29 @@ export function LocationMapPicker({
       setError(null)
 
       try {
-        const address = await reverseGeocode(lat, lng)
-        onLocationResolved({
-          latitude: lat.toFixed(6),
-          longitude: lng.toFixed(6),
-          governorate: address.governorate,
-          district: address.district,
-          city: address.city,
-          street: address.street,
-        })
+        if (geocodeCoordinates) {
+          const resolved = await geocodeCoordinates(lat, lng)
+          onLocationResolved({
+            latitude: lat.toFixed(6),
+            longitude: lng.toFixed(6),
+            governorate: resolved.governorate,
+            district: resolved.district,
+            city: resolved.city,
+            street: resolved.street,
+            formattedAddress: resolved.formattedAddress,
+            placeId: resolved.placeId,
+          })
+        } else {
+          const address = await reverseGeocode(lat, lng)
+          onLocationResolved({
+            latitude: lat.toFixed(6),
+            longitude: lng.toFixed(6),
+            governorate: address.governorate,
+            district: address.district,
+            city: address.city,
+            street: address.street,
+          })
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to resolve location"
@@ -129,7 +153,7 @@ export function LocationMapPicker({
         setIsResolving(false)
       }
     },
-    [onLocationResolved]
+    [onLocationResolved, geocodeCoordinates]
   )
 
   const handlePick = (coords: LatLng) => {

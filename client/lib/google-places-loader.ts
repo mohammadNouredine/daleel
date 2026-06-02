@@ -21,6 +21,7 @@ export function loadGooglePlacesApi(): Promise<any> {
     return loadPromise
   }
 
+  // Requires Maps JavaScript API with Places + Geocoding enabled.
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
   if (!apiKey) {
     return Promise.reject(

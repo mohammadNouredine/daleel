@@ -69,6 +69,9 @@ export function getPropertyListingCoverUrl(
 }
 
 export function formatListingLocation(listing: PropertyListing): string {
+  if (listing.location.formattedAddress?.trim()) {
+    return listing.location.formattedAddress.trim()
+  }
   const parts = [listing.location.city, listing.location.governorate].filter(
     Boolean
   )

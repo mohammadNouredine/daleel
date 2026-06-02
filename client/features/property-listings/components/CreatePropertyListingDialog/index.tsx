@@ -14,13 +14,13 @@ import {
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FormSection } from "@/components/forms/FormSection"
-import { LocationAutocomplete } from "@/components/forms/LocationAutocomplete"
+import { AddressAutocomplete } from "@/components/forms/AddressAutocomplete"
 import { PhoneInput } from "@/components/forms/Phone/PhoneInput"
 import { RangeSelectGroup } from "@/components/forms/RangeSelectGroup"
 import { SelectInput } from "@/components/forms/SelectInput"
 import { TextInput } from "@/components/forms/TextInput"
 import { TextareaInput } from "@/components/forms/TextareaInput"
-import { Form, FormField } from "@/components/ui/form"
+import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { LocationMapPicker } from "@/features/help-requests/components/LocationMapPicker/LocationMapPickerLazy"
 import toast from "react-hot-toast"
 import { useCreatePropertyListing } from "../../hooks/use-create-property-listing"
@@ -55,14 +55,8 @@ import {
   PRICE_PERIOD_FORM_OPTIONS,
   PROPERTY_TYPE_FORM_OPTIONS,
 } from "../../utils/form-options"
-import {
-  LEBANON_DISTRICTS_BY_GOVERNORATE,
-  LEBANON_GOVERNORATES,
-} from "../../constants"
-import {
-  isCanonicalLebanonGovernorate,
-  normalizeLebanonLocationFields,
-} from "@/lib/lebanon-location-normalize"
+import type { ResolvedLocation } from "@/lib/location-resolve"
+import { resolvePropertyMapCoordinates } from "../../utils/resolve-map-coordinates"
 import { PropertyListingAmenitiesField } from "./PropertyListingAmenitiesField"
 import { PropertyListingImagesUpload } from "./PropertyListingImagesUpload"
 
@@ -171,20 +165,8 @@ export function CreatePropertyListingDialog({
   const securityDepositInput = form.watch("securityDeposit")
   const officeDepositInput = form.watch("officeDeposit")
   const selectedPricePeriod = form.watch("pricePeriod")
-  const selectedGovernorate = form.watch("governorate")
-
-  const districtOptions = [
-    {
-      value: "",
-      label: selectedGovernorate ? "Choose district" : "Choose governorate first",
-    },
-    ...((selectedGovernorate
-      ? LEBANON_DISTRICTS_BY_GOVERNORATE[selectedGovernorate] ?? []
-      : []) as string[]).map((district) => ({
-      value: district,
-      label: district,
-    })),
-  ]
+  const resolvedGovernorate = form.watch("governorate")
+  const resolvedCity = form.watch("city")
 
   const requiresPeriodicPricing =
     listingType === "RENT" ||
@@ -218,66 +200,44 @@ export function CreatePropertyListingDialog({
     createMutation.mutate(formData)
   }
 
-  const applyNormalizedLocation = (fields: {
-    governorate?: string
-    district?: string
-    city?: string
-    street?: string
-    latitude?: string
-    longitude?: string
-  }) => {
-    const normalized = normalizeLebanonLocationFields({
-      governorate: fields.governorate,
-      district: fields.district,
-      city: fields.city,
-    })
-
-    if (fields.latitude) {
-      form.setValue("latitude", fields.latitude, { shouldValidate: true })
-    }
-    if (fields.longitude) {
-      form.setValue("longitude", fields.longitude, { shouldValidate: true })
-    }
-    if (isCanonicalLebanonGovernorate(normalized.governorate)) {
-      form.setValue("governorate", normalized.governorate, {
+  const applyResolvedLocation = useCallback(
+    (resolved: ResolvedLocation) => {
+      form.setValue("formattedAddress", resolved.formattedAddress, {
         shouldValidate: true,
       })
-    }
-    if (normalized.district) {
-      form.setValue("district", normalized.district, { shouldValidate: true })
-    }
-    if (normalized.city) {
-      form.setValue("city", normalized.city, { shouldValidate: true })
-    }
-    if (fields.street) {
-      form.setValue("street", fields.street, { shouldValidate: true })
-    }
-  }
+      form.setValue("placeId", resolved.placeId ?? "", { shouldValidate: true })
+      form.setValue("latitude", resolved.latitude.toFixed(6), {
+        shouldValidate: true,
+      })
+      form.setValue("longitude", resolved.longitude.toFixed(6), {
+        shouldValidate: true,
+      })
+      form.setValue("governorate", resolved.governorate, { shouldValidate: true })
+      form.setValue("city", resolved.city, { shouldValidate: true })
+      if (resolved.street) {
+        form.setValue("street", resolved.street, { shouldValidate: true })
+      }
+    },
+    [form]
+  )
 
   const handleLocationResolved = (payload: {
     latitude: string
     longitude: string
     governorate: string
-    district: string
     city: string
     street?: string
+    formattedAddress?: string
+    placeId?: string
   }) => {
-    applyNormalizedLocation(payload)
-  }
+    if (!payload.formattedAddress) return
 
-  const handlePlaceSelected = (payload: {
-    latitude: number
-    longitude: number
-    city?: string
-    district?: string
-    governorate?: string
-    street?: string
-  }) => {
-    applyNormalizedLocation({
-      latitude: payload.latitude.toFixed(6),
-      longitude: payload.longitude.toFixed(6),
+    applyResolvedLocation({
+      formattedAddress: payload.formattedAddress,
+      placeId: payload.placeId,
+      latitude: Number(payload.latitude),
+      longitude: Number(payload.longitude),
       governorate: payload.governorate,
-      district: payload.district,
       city: payload.city,
       street: payload.street,
     })
@@ -443,49 +403,35 @@ export function CreatePropertyListingDialog({
                     title="Location"
                     description="Where the property is located in Lebanon."
                   >
+                    <FormField
+                      control={form.control}
+                      name="formattedAddress"
+                      render={({ field }) => (
+                        <FormItem>
+                          <AddressAutocomplete
+                            label="Address"
+                            value={field.value}
+                            placeholder="Search for a street or area in Lebanon"
+                            onChange={field.onChange}
+                            onResolved={applyResolvedLocation}
+                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     {open ? (
                       <LocationMapPicker
                         latitude={latitude}
                         longitude={longitude}
+                        geocodeCoordinates={resolvePropertyMapCoordinates}
                         onLocationResolved={handleLocationResolved}
                       />
                     ) : null}
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <SelectInput
-                        name="governorate"
-                        label="Governorate"
-                        options={[
-                          { value: "", label: "Choose governorate" },
-                          ...LEBANON_GOVERNORATES.map((gov) => ({
-                            value: gov,
-                            label: gov,
-                          })),
-                        ]}
-                      />
-                      <SelectInput
-                        name="district"
-                        label="District"
-                        options={districtOptions}
-                      />
-                    </div>
-                    <LocationAutocomplete
-                      label="City"
-                      value={form.watch("city")}
-                      placeholder="Search Lebanese cities"
-                      onChange={(val) =>
-                        form.setValue("city", val, { shouldValidate: true })
-                      }
-                      onPlaceSelected={handlePlaceSelected}
-                    />
-                    <LocationAutocomplete
-                      label="Street (optional)"
-                      value={form.watch("street") ?? ""}
-                      placeholder="Search street"
-                      onChange={(val) =>
-                        form.setValue("street", val, { shouldValidate: true })
-                      }
-                      onPlaceSelected={handlePlaceSelected}
-                    />
+                    {resolvedGovernorate && resolvedCity ? (
+                      <p className="text-sm text-muted-foreground">
+                        {resolvedCity}, {resolvedGovernorate}
+                      </p>
+                    ) : null}
                     <p className="text-xs text-muted-foreground tabular-nums">
                       Coordinates: {latitude || "—"}, {longitude || "—"}
                     </p>

@@ -8,9 +8,9 @@ const locationVisibilityValues = Object.values(LocationVisibility) as [
 
 export const listingLocationFormSchema = z.object({
   country: z.string().min(1, "Country is required"),
-  governorate: z.string().min(1, "Governorate is required"),
-  district: z.string().min(1, "District is required"),
-  city: z.string().min(1, "City is required"),
+  formattedAddress: z.string().optional(),
+  governorate: z.string().optional(),
+  city: z.string().optional(),
   street: z.string().optional(),
   latitude: z.string().optional(),
   longitude: z.string().optional(),

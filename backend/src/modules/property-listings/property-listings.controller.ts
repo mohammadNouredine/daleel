@@ -77,6 +77,16 @@ export class PropertyListingsController {
     return this.propertyListingsService.listPublic(query);
   }
 
+  @Get('location-facets')
+  @AllowAnonymous()
+  @ApiOperation({
+    summary:
+      'Governorate and city filter options derived from approved listings',
+  })
+  getLocationFacets() {
+    return this.propertyListingsService.getLocationFacets();
+  }
+
   @Get('mine')
   @ApiBearerAuth('bearer')
   @ApiOperation({

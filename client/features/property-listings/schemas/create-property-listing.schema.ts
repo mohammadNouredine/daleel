@@ -1,9 +1,6 @@
 import { z } from "zod"
 import { phoneFormFields } from "@/lib/validation/phone-fields"
-import {
-  DEFAULT_LISTING_COUNTRY,
-  LEBANON_GOVERNORATES,
-} from "../constants"
+import { DEFAULT_LISTING_COUNTRY } from "../constants"
 import {
   Currency,
   FurnishingStatus,
@@ -24,7 +21,6 @@ const contactMethodValues = Object.values(ListingContactMethod) as [
   string,
   ...string[],
 ]
-const governorateValues = [...LEBANON_GOVERNORATES] as [string, ...string[]]
 const locationVisibilityValues = Object.values(LocationVisibility) as [
   string,
   ...string[],
@@ -48,9 +44,10 @@ export const createPropertyListingSchema = z.object({
     .string()
     .min(10, "Description must be at least 10 characters"),
   country: listingLocationFormSchema.shape.country,
-  governorate: z.enum(governorateValues, "Choose a Lebanese governorate"),
-  district: z.string().min(1, "District is required"),
-  city: listingLocationFormSchema.shape.city,
+  formattedAddress: z.string(),
+  placeId: z.string().optional(),
+  governorate: z.string(),
+  city: z.string(),
   street: z.string().optional(),
   latitude: z.string().optional(),
   longitude: z.string().optional(),
@@ -111,6 +108,37 @@ export const createPropertyListingSchema = z.object({
       path: ["pricePeriod"],
     })
   }
+
+  if (!values.saveAsDraft) {
+    if (!values.formattedAddress.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Search for an address or pick a point on the map",
+        path: ["formattedAddress"],
+      })
+    }
+    if (!values.latitude?.trim() || !values.longitude?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Map location is required",
+        path: ["latitude"],
+      })
+    }
+    if (!values.governorate.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Location could not be resolved",
+        path: ["formattedAddress"],
+      })
+    }
+    if (!values.city.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Location could not be resolved",
+        path: ["formattedAddress"],
+      })
+    }
+  }
 })
 
 export type CreatePropertyListingFormValues = z.infer<
@@ -124,8 +152,9 @@ export const createPropertyListingDefaultValues: CreatePropertyListingFormValues
     title: "",
     description: "",
     country: DEFAULT_LISTING_COUNTRY,
-    governorate: LEBANON_GOVERNORATES[4],
-    district: "",
+    formattedAddress: "",
+    placeId: "",
+    governorate: "",
     city: "",
     street: "",
     latitude: "",
