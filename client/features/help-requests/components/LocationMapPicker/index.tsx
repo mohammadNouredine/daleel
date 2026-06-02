@@ -142,13 +142,6 @@ export function LocationMapPicker({
         setError(
           err instanceof Error ? err.message : "Failed to resolve location"
         )
-        onLocationResolved({
-          latitude: lat.toFixed(6),
-          longitude: lng.toFixed(6),
-          governorate: "",
-          district: "",
-          city: "",
-        })
       } finally {
         setIsResolving(false)
       }

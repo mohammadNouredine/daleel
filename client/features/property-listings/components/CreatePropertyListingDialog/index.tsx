@@ -202,21 +202,19 @@ export function CreatePropertyListingDialog({
 
   const applyResolvedLocation = useCallback(
     (resolved: ResolvedLocation) => {
-      form.setValue("formattedAddress", resolved.formattedAddress, {
-        shouldValidate: true,
-      })
-      form.setValue("placeId", resolved.placeId ?? "", { shouldValidate: true })
-      form.setValue("latitude", resolved.latitude.toFixed(6), {
-        shouldValidate: true,
-      })
-      form.setValue("longitude", resolved.longitude.toFixed(6), {
-        shouldValidate: true,
-      })
-      form.setValue("governorate", resolved.governorate, { shouldValidate: true })
-      form.setValue("city", resolved.city, { shouldValidate: true })
+      const setOpts = { shouldDirty: true, shouldValidate: false } as const
+
+      form.setValue("formattedAddress", resolved.formattedAddress, setOpts)
+      form.setValue("placeId", resolved.placeId ?? "", setOpts)
+      form.setValue("latitude", resolved.latitude.toFixed(6), setOpts)
+      form.setValue("longitude", resolved.longitude.toFixed(6), setOpts)
+      form.setValue("governorate", resolved.governorate, setOpts)
+      form.setValue("city", resolved.city, setOpts)
       if (resolved.street) {
-        form.setValue("street", resolved.street, { shouldValidate: true })
+        form.setValue("street", resolved.street, setOpts)
       }
+
+      void form.trigger(["formattedAddress", "latitude", "longitude"])
     },
     [form]
   )

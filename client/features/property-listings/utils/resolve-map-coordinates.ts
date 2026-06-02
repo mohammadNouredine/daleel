@@ -5,7 +5,13 @@ export const resolvePropertyMapCoordinates: ResolveCoordinatesFn = async (
   lat,
   lng
 ) => {
-  const resolved = await resolveFromCoordinates(lat, lng)
+  let resolved = await resolveFromCoordinates(lat, lng)
+
+  if (!resolved) {
+    await new Promise((resolve) => window.setTimeout(resolve, 400))
+    resolved = await resolveFromCoordinates(lat, lng)
+  }
+
   if (!resolved) {
     throw new Error(
       "Could not resolve this location. Try another point or search by address."
