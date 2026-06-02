@@ -152,6 +152,9 @@ export class PropertyListing {
   securityDeposit?: number;
 
   @Prop({ min: 0 })
+  officeDeposit?: number;
+
+  @Prop({ min: 0 })
   commissionAmount?: number;
 
   @Prop({ default: false })

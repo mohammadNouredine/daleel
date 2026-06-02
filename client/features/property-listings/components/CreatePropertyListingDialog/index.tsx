@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FormSection } from "@/components/forms/FormSection"
+import { LocationAutocomplete } from "@/components/forms/LocationAutocomplete"
 import { PhoneInput } from "@/components/forms/Phone/PhoneInput"
+import { RangeSelectGroup } from "@/components/forms/RangeSelectGroup"
 import { SelectInput } from "@/components/forms/SelectInput"
 import { TextInput } from "@/components/forms/TextInput"
 import { TextareaInput } from "@/components/forms/TextareaInput"
@@ -53,6 +55,14 @@ import {
   PRICE_PERIOD_FORM_OPTIONS,
   PROPERTY_TYPE_FORM_OPTIONS,
 } from "../../utils/form-options"
+import {
+  LEBANON_DISTRICTS_BY_GOVERNORATE,
+  LEBANON_GOVERNORATES,
+} from "../../constants"
+import {
+  isCanonicalLebanonGovernorate,
+  normalizeLebanonLocationFields,
+} from "@/lib/lebanon-location-normalize"
 import { PropertyListingAmenitiesField } from "./PropertyListingAmenitiesField"
 import { PropertyListingImagesUpload } from "./PropertyListingImagesUpload"
 
@@ -155,6 +165,40 @@ export function CreatePropertyListingDialog({
 
   const latitude = form.watch("latitude")
   const longitude = form.watch("longitude")
+  const listingType = form.watch("listingType")
+  const priceInput = form.watch("price")
+  const requiredAdvanceMonthsInput = form.watch("requiredAdvanceMonths")
+  const securityDepositInput = form.watch("securityDeposit")
+  const officeDepositInput = form.watch("officeDeposit")
+  const selectedPricePeriod = form.watch("pricePeriod")
+  const selectedGovernorate = form.watch("governorate")
+
+  const districtOptions = [
+    {
+      value: "",
+      label: selectedGovernorate ? "Choose district" : "Choose governorate first",
+    },
+    ...((selectedGovernorate
+      ? LEBANON_DISTRICTS_BY_GOVERNORATE[selectedGovernorate] ?? []
+      : []) as string[]).map((district) => ({
+      value: district,
+      label: district,
+    })),
+  ]
+
+  const requiresPeriodicPricing =
+    listingType === "RENT" ||
+    listingType === "ROOMMATE" ||
+    listingType === "TEMPORARY_HOUSING"
+
+  const parsedPrice = Number(priceInput || 0)
+  const parsedAdvanceMonths = Number(requiredAdvanceMonthsInput || 0)
+  const parsedSecurityDeposit = Number(securityDepositInput || 0)
+  const parsedOfficeDeposit = Number(officeDepositInput || 0)
+  const firstPayment =
+    parsedPrice * Math.max(parsedAdvanceMonths, 0) +
+    Math.max(parsedSecurityDeposit, 0) +
+    Math.max(parsedOfficeDeposit, 0)
 
   const submit = (values: CreatePropertyListingFormValues, asDraft: boolean) => {
     const input = mapFormToCreatePropertyListingInput({
@@ -174,6 +218,42 @@ export function CreatePropertyListingDialog({
     createMutation.mutate(formData)
   }
 
+  const applyNormalizedLocation = (fields: {
+    governorate?: string
+    district?: string
+    city?: string
+    street?: string
+    latitude?: string
+    longitude?: string
+  }) => {
+    const normalized = normalizeLebanonLocationFields({
+      governorate: fields.governorate,
+      district: fields.district,
+      city: fields.city,
+    })
+
+    if (fields.latitude) {
+      form.setValue("latitude", fields.latitude, { shouldValidate: true })
+    }
+    if (fields.longitude) {
+      form.setValue("longitude", fields.longitude, { shouldValidate: true })
+    }
+    if (isCanonicalLebanonGovernorate(normalized.governorate)) {
+      form.setValue("governorate", normalized.governorate, {
+        shouldValidate: true,
+      })
+    }
+    if (normalized.district) {
+      form.setValue("district", normalized.district, { shouldValidate: true })
+    }
+    if (normalized.city) {
+      form.setValue("city", normalized.city, { shouldValidate: true })
+    }
+    if (fields.street) {
+      form.setValue("street", fields.street, { shouldValidate: true })
+    }
+  }
+
   const handleLocationResolved = (payload: {
     latitude: string
     longitude: string
@@ -182,14 +262,25 @@ export function CreatePropertyListingDialog({
     city: string
     street?: string
   }) => {
-    form.setValue("latitude", payload.latitude, { shouldValidate: true })
-    form.setValue("longitude", payload.longitude, { shouldValidate: true })
-    form.setValue("governorate", payload.governorate, { shouldValidate: true })
-    form.setValue("district", payload.district, { shouldValidate: true })
-    form.setValue("city", payload.city, { shouldValidate: true })
-    if (payload.street) {
-      form.setValue("street", payload.street, { shouldValidate: true })
-    }
+    applyNormalizedLocation(payload)
+  }
+
+  const handlePlaceSelected = (payload: {
+    latitude: number
+    longitude: number
+    city?: string
+    district?: string
+    governorate?: string
+    street?: string
+  }) => {
+    applyNormalizedLocation({
+      latitude: payload.latitude.toFixed(6),
+      longitude: payload.longitude.toFixed(6),
+      governorate: payload.governorate,
+      district: payload.district,
+      city: payload.city,
+      street: payload.street,
+    })
   }
 
   const validateCurrentStep = async (): Promise<boolean> => {
@@ -360,15 +451,44 @@ export function CreatePropertyListingDialog({
                       />
                     ) : null}
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <TextInput name="governorate" label="Governorate" />
-                      <TextInput name="district" label="District" />
+                      <SelectInput
+                        name="governorate"
+                        label="Governorate"
+                        options={[
+                          { value: "", label: "Choose governorate" },
+                          ...LEBANON_GOVERNORATES.map((gov) => ({
+                            value: gov,
+                            label: gov,
+                          })),
+                        ]}
+                      />
+                      <SelectInput
+                        name="district"
+                        label="District"
+                        options={districtOptions}
+                      />
                     </div>
-                    <TextInput name="city" label="City" />
-                    <TextInput name="street" label="Street (optional)" />
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <TextInput name="latitude" label="Latitude (optional)" />
-                      <TextInput name="longitude" label="Longitude (optional)" />
-                    </div>
+                    <LocationAutocomplete
+                      label="City"
+                      value={form.watch("city")}
+                      placeholder="Search Lebanese cities"
+                      onChange={(val) =>
+                        form.setValue("city", val, { shouldValidate: true })
+                      }
+                      onPlaceSelected={handlePlaceSelected}
+                    />
+                    <LocationAutocomplete
+                      label="Street (optional)"
+                      value={form.watch("street") ?? ""}
+                      placeholder="Search street"
+                      onChange={(val) =>
+                        form.setValue("street", val, { shouldValidate: true })
+                      }
+                      onPlaceSelected={handlePlaceSelected}
+                    />
+                    <p className="text-xs text-muted-foreground tabular-nums">
+                      Coordinates: {latitude || "—"}, {longitude || "—"}
+                    </p>
                     <SelectInput
                       name="locationVisibility"
                       label="Location visibility"
@@ -383,12 +503,42 @@ export function CreatePropertyListingDialog({
                       All fields in this section are optional.
                     </p>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <TextInput name="bedrooms" label="Bedrooms" type="number" />
-                      <TextInput name="bathrooms" label="Bathrooms" type="number" />
-                      <TextInput name="livingRooms" label="Living rooms" type="number" />
-                      <TextInput name="maxOccupancy" label="Max occupancy" type="number" />
-                      <TextInput name="parkingSpaces" label="Parking" type="number" />
-                      <TextInput name="floorNumber" label="Floor" type="number" />
+                      <RangeSelectGroup
+                        name="bedrooms"
+                        label="Bedrooms"
+                        min={0}
+                        max={10}
+                        helpText="How many bedrooms does the property have?"
+                      />
+                      <RangeSelectGroup
+                        name="bathrooms"
+                        label="Bathrooms"
+                        min={0}
+                        max={10}
+                        helpText="How many bathrooms are available?"
+                      />
+                      <RangeSelectGroup
+                        name="livingRooms"
+                        label="Living rooms"
+                        min={0}
+                        max={6}
+                        helpText="Reception/living spaces available in the unit."
+                      />
+                      <RangeSelectGroup
+                        name="maxOccupancy"
+                        label="Max occupancy"
+                        min={1}
+                        max={20}
+                        helpText="Maximum number of people allowed."
+                      />
+                      <RangeSelectGroup
+                        name="parkingSpaces"
+                        label="Parking slots"
+                        min={0}
+                        max={10}
+                        helpText="Number of car spots available with the property."
+                      />
+                      <TextInput name="floorNumber" label="Floor number" type="number" />
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <TextInput name="area" label="Area" type="number" />
@@ -413,17 +563,55 @@ export function CreatePropertyListingDialog({
                         label="Currency"
                         options={CURRENCY_FORM_OPTIONS}
                       />
-                      <SelectInput
-                        name="pricePeriod"
-                        label="Price period"
-                        options={PRICE_PERIOD_FORM_OPTIONS}
-                      />
+                      {requiresPeriodicPricing ? (
+                        <SelectInput
+                          name="pricePeriod"
+                          label="Price period"
+                          options={PRICE_PERIOD_FORM_OPTIONS}
+                        />
+                      ) : null}
+                      {requiresPeriodicPricing ? (
+                        <TextInput
+                          name="requiredAdvanceMonths"
+                          label="First payment months"
+                          type="number"
+                        />
+                      ) : null}
                       <TextInput
                         name="securityDeposit"
                         label="Security deposit"
                         type="number"
                       />
+                      <TextInput
+                        name="officeDeposit"
+                        label="Office deposit"
+                        type="number"
+                      />
                     </div>
+                    {requiresPeriodicPricing ? (
+                      <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
+                        <p className="font-medium">Payment summary</p>
+                        <p className="mt-1 text-muted-foreground">
+                          First payment will be{" "}
+                          <span className="font-semibold text-foreground">
+                            {Number.isFinite(firstPayment)
+                              ? firstPayment.toLocaleString("en-US")
+                              : "0"}
+                          </span>
+                        </p>
+                        <p className="text-muted-foreground">
+                          Next payment will be after{" "}
+                          <span className="font-medium text-foreground">
+                            {requiredAdvanceMonthsInput || "0"} month(s)
+                          </span>
+                          {selectedPricePeriod
+                            ? `, then every ${selectedPricePeriod
+                                .toLowerCase()
+                                .replace("_", " ")}.`
+                            : "."}
+                        </p>
+                      </div>
+                    ) : null}
                     {booleanField("isPriceNegotiable", "Price is negotiable")}
                   </FormSection>
                 </TabsContent>
@@ -436,17 +624,27 @@ export function CreatePropertyListingDialog({
                     <div className="grid gap-4 sm:grid-cols-2">
                       <TextInput name="availableFrom" label="Available from" type="date" />
                       <TextInput name="availableUntil" label="Available until" type="date" />
-                      <TextInput name="availableBeds" label="Available beds" type="number" />
-                      <TextInput name="totalBeds" label="Total beds" type="number" />
+                      <RangeSelectGroup
+                        name="totalBeds"
+                        label="Total beds"
+                        min={0}
+                        max={20}
+                        helpText="Total physical beds in the property."
+                      />
+                      <RangeSelectGroup
+                        name="availableBeds"
+                        label="Available beds"
+                        min={0}
+                        max={20}
+                        helpText="Beds currently free now. Should be less than or equal to total beds."
+                      />
                     </div>
                     <div className="flex flex-col gap-2">
                       {booleanField("isAvailable", "Currently available")}
                       {booleanField("isEmergencyShelter", "Emergency shelter")}
-                      {booleanField("acceptFamilies", "Families welcome")}
                       {booleanField("acceptChildren", "Children welcome")}
                       {booleanField("acceptPets", "Pets allowed")}
                       {booleanField("womenOnly", "Women only")}
-                      {booleanField("menOnly", "Men only")}
                     </div>
                     <PropertyListingAmenitiesField />
                   </FormSection>

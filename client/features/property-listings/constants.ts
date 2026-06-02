@@ -23,3 +23,21 @@ export const LEBANON_GOVERNORATES = [
   "North Lebanon",
   "South Lebanon",
 ] as const
+
+export const LEBANON_DISTRICTS_BY_GOVERNORATE: Record<string, string[]> = {
+  Akkar: ["Akkar"],
+  "Baalbek-Hermel": ["Baalbek", "Hermel"],
+  Beirut: ["Beirut"],
+  Bekaa: ["Rashaya", "West Bekaa", "Zahle"],
+  "Mount Lebanon": [
+    "Aley",
+    "Baabda",
+    "Chouf",
+    "Jbeil",
+    "Keserwan",
+    "Matn",
+  ],
+  Nabatieh: ["Bint Jbeil", "Hasbaya", "Marjeyoun", "Nabatieh"],
+  "North Lebanon": ["Batroun", "Bcharre", "Koura", "Miniyeh-Danniyeh", "Tripoli", "Zgharta"],
+  "South Lebanon": ["Jezzine", "Saida", "Sour"],
+}

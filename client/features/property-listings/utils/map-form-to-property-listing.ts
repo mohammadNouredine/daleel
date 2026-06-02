@@ -74,6 +74,7 @@ export function mapFormToCreatePropertyListingInput(
     pricePeriod: values.pricePeriod as PricePeriodValue | undefined,
     requiredAdvanceMonths: parseOptionalInt(values.requiredAdvanceMonths),
     securityDeposit: parseOptionalFloat(values.securityDeposit),
+    officeDeposit: parseOptionalFloat(values.officeDeposit),
     commissionAmount: parseOptionalFloat(values.commissionAmount),
     isPriceNegotiable: values.isPriceNegotiable,
     isEmergencyShelter: values.isEmergencyShelter,
@@ -146,6 +147,8 @@ export function mapPropertyListingToFormValues(
       listing.securityDeposit !== undefined
         ? String(listing.securityDeposit)
         : "",
+    officeDeposit:
+      listing.officeDeposit !== undefined ? String(listing.officeDeposit) : "",
     commissionAmount:
       listing.commissionAmount !== undefined
         ? String(listing.commissionAmount)

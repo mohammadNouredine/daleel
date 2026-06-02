@@ -1,3 +1,5 @@
+import { normalizeLebanonLocationFields } from "@/lib/lebanon-location-normalize"
+
 export type ParsedMapAddress = {
   governorate: string
   district: string
@@ -7,6 +9,7 @@ export type ParsedMapAddress = {
 
 type NominatimAddress = {
   state?: string
+  state_district?: string
   county?: string
   city?: string
   town?: string
@@ -34,7 +37,12 @@ function pickCity(address: NominatimAddress): string {
 }
 
 function pickDistrict(address: NominatimAddress, city: string): string {
-  return address.county ?? address.city_district ?? city
+  return (
+    address.state_district ??
+    address.county ??
+    address.city_district ??
+    city
+  )
 }
 
 export function parseNominatimAddress(
@@ -48,10 +56,14 @@ export function parseNominatimAddress(
   const district = pickDistrict(address, city)
   const governorate = address.state ?? district ?? city
 
-  return {
+  const normalized = normalizeLebanonLocationFields({
     governorate,
     district,
     city: city || district || governorate,
+  })
+
+  return {
+    ...normalized,
     street: address.road,
   }
 }

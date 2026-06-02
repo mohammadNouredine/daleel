@@ -1,6 +1,9 @@
 import { z } from "zod"
 import { phoneFormFields } from "@/lib/validation/phone-fields"
-import { DEFAULT_LISTING_COUNTRY } from "../constants"
+import {
+  DEFAULT_LISTING_COUNTRY,
+  LEBANON_GOVERNORATES,
+} from "../constants"
 import {
   Currency,
   FurnishingStatus,
@@ -21,6 +24,7 @@ const contactMethodValues = Object.values(ListingContactMethod) as [
   string,
   ...string[],
 ]
+const governorateValues = [...LEBANON_GOVERNORATES] as [string, ...string[]]
 const locationVisibilityValues = Object.values(LocationVisibility) as [
   string,
   ...string[],
@@ -44,8 +48,8 @@ export const createPropertyListingSchema = z.object({
     .string()
     .min(10, "Description must be at least 10 characters"),
   country: listingLocationFormSchema.shape.country,
-  governorate: listingLocationFormSchema.shape.governorate,
-  district: listingLocationFormSchema.shape.district,
+  governorate: z.enum(governorateValues, "Choose a Lebanese governorate"),
+  district: z.string().min(1, "District is required"),
   city: listingLocationFormSchema.shape.city,
   street: z.string().optional(),
   latitude: z.string().optional(),
@@ -66,6 +70,7 @@ export const createPropertyListingSchema = z.object({
   pricePeriod: z.enum(pricePeriodValues).optional(),
   requiredAdvanceMonths: optionalPositiveInt,
   securityDeposit: optionalNumber,
+  officeDeposit: optionalNumber,
   commissionAmount: optionalNumber,
   isPriceNegotiable: z.boolean().optional(),
   isEmergencyShelter: z.boolean().optional(),
@@ -80,7 +85,11 @@ export const createPropertyListingSchema = z.object({
   isAvailable: z.boolean().optional(),
   availableFrom: z.string().optional(),
   availableUntil: z.string().optional(),
-  contactMethod: z.enum(contactMethodValues).optional(),
+  contactMethod: z
+    .enum(contactMethodValues)
+    .refine((v) => v !== ListingContactMethod.PLATFORM_ONLY, {
+      message: "Choose a contact method",
+    }),
   ...phoneFormFields,
   contactWhatsapp: z.string().optional(),
   imageUrls: z.array(z.string()).max(20).optional(),
@@ -89,6 +98,19 @@ export const createPropertyListingSchema = z.object({
     .max(20)
     .optional(),
   saveAsDraft: z.boolean().optional(),
+}).superRefine((values, ctx) => {
+  const timeBasedListing =
+    values.listingType === ListingType.RENT ||
+    values.listingType === ListingType.TEMPORARY_HOUSING ||
+    values.listingType === ListingType.ROOMMATE
+
+  if (timeBasedListing && !values.pricePeriod) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Price period is required for time-based listings",
+      path: ["pricePeriod"],
+    })
+  }
 })
 
 export type CreatePropertyListingFormValues = z.infer<
@@ -102,7 +124,7 @@ export const createPropertyListingDefaultValues: CreatePropertyListingFormValues
     title: "",
     description: "",
     country: DEFAULT_LISTING_COUNTRY,
-    governorate: "",
+    governorate: LEBANON_GOVERNORATES[4],
     district: "",
     city: "",
     street: "",
@@ -124,6 +146,7 @@ export const createPropertyListingDefaultValues: CreatePropertyListingFormValues
     pricePeriod: PricePeriod.MONTHLY,
     requiredAdvanceMonths: "",
     securityDeposit: "",
+    officeDeposit: "",
     commissionAmount: "",
     isPriceNegotiable: false,
     isEmergencyShelter: false,
@@ -138,7 +161,7 @@ export const createPropertyListingDefaultValues: CreatePropertyListingFormValues
     isAvailable: true,
     availableFrom: "",
     availableUntil: "",
-    contactMethod: ListingContactMethod.PLATFORM_ONLY,
+    contactMethod: ListingContactMethod.PHONE,
     phoneCode: "+961",
     phoneNumber: "",
     contactWhatsapp: "",

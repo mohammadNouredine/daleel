@@ -135,6 +135,7 @@ export type PropertyListing = {
   pricePeriod?: PricePeriodValue
   requiredAdvanceMonths?: number
   securityDeposit?: number
+  officeDeposit?: number
   commissionAmount?: number
   isPriceNegotiable: boolean
   isEmergencyShelter: boolean
@@ -197,6 +198,7 @@ export type CreatePropertyListingInput = {
   pricePeriod?: PricePeriodValue
   requiredAdvanceMonths?: number
   securityDeposit?: number
+  officeDeposit?: number
   commissionAmount?: number
   isPriceNegotiable?: boolean
   isEmergencyShelter?: boolean

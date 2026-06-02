@@ -157,6 +157,12 @@ export class CreatePropertyListingDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  officeDeposit?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   commissionAmount?: number;
 
   @ApiPropertyOptional()

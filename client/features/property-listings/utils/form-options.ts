@@ -40,9 +40,9 @@ export const PROPERTY_TYPE_FORM_OPTIONS = valuesToOptions(PropertyType, {
 })
 
 export const LOCATION_VISIBILITY_OPTIONS = valuesToOptions(LocationVisibility, {
-  EXACT: "Exact address",
-  APPROXIMATE: "Approximate area",
-  HIDDEN: "Hidden until contact",
+  EXACT: "Show exact location",
+  APPROXIMATE: "Show approximate area",
+  HIDDEN: "Hide exact location",
 })
 
 export const FURNISHING_FORM_OPTIONS = valuesToOptions(FurnishingStatus, {
@@ -63,9 +63,16 @@ export const PRICE_PERIOD_FORM_OPTIONS = valuesToOptions(PricePeriod, {
 
 export const AREA_UNIT_FORM_OPTIONS = valuesToOptions(AreaUnit)
 
+export function getSelectOptionLabel(
+  options: { value: string; label: string }[],
+  value?: string
+): string {
+  if (!value) return ""
+  return options.find((option) => option.value === value)?.label ?? value
+}
+
 export const CONTACT_METHOD_FORM_OPTIONS = valuesToOptions(ListingContactMethod, {
   PHONE: "Phone",
   WHATSAPP: "WhatsApp",
   EMAIL: "Email",
-  PLATFORM_ONLY: "Platform only",
-})
+}).filter((option) => option.value !== ListingContactMethod.PLATFORM_ONLY)

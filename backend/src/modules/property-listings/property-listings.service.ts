@@ -185,6 +185,7 @@ export class PropertyListingsService {
       pricePeriod: dto.pricePeriod,
       requiredAdvanceMonths: dto.requiredAdvanceMonths,
       securityDeposit: dto.securityDeposit,
+      officeDeposit: dto.officeDeposit,
       commissionAmount: dto.commissionAmount,
       isPriceNegotiable: dto.isPriceNegotiable ?? false,
       isEmergencyShelter: dto.isEmergencyShelter ?? false,
@@ -251,6 +252,7 @@ export class PropertyListingsService {
     doc.pricePeriod = dto.pricePeriod;
     doc.requiredAdvanceMonths = dto.requiredAdvanceMonths;
     doc.securityDeposit = dto.securityDeposit;
+    doc.officeDeposit = dto.officeDeposit;
     doc.commissionAmount = dto.commissionAmount;
     doc.isPriceNegotiable = dto.isPriceNegotiable ?? doc.isPriceNegotiable;
     doc.isEmergencyShelter = dto.isEmergencyShelter ?? doc.isEmergencyShelter;

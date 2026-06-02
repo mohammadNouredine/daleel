@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from '../users/users.module';
+import { AmenitySeedService } from './amenity-seed.service';
 import { AmenitiesController } from './amenities.controller';
 import { PropertyListingsController } from './property-listings.controller';
 import { PropertyListingsService } from './property-listings.service';
@@ -39,7 +40,7 @@ import {
     AmenitiesController,
     PropertyReportsController,
   ],
-  providers: [PropertyListingsService],
+  providers: [PropertyListingsService, AmenitySeedService],
   exports: [MongooseModule, PropertyListingsService],
 })
 export class PropertyListingsModule {}

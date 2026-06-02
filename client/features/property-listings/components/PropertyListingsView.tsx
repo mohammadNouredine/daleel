@@ -1,87 +1,95 @@
-"use client"
+"use client";
 
-import { useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Plus } from "lucide-react"
-import { Button, buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { InfiniteScrollSentinel } from "@/components/data/InfiniteScrollSentinel"
-import { useInfiniteScrollTrigger } from "@/lib/hooks/use-infinite-scroll-trigger"
-import { useIsAuthenticated } from "@/features/auth/hooks/use-is-authenticated"
-import { HomeFooter } from "@/features/home/components/HomeFooter"
-import { HomeHeader } from "@/features/home/components/HomeHeader"
-import { SectionHeader } from "@/features/home/components/SectionHeader"
-import { usePropertyListingsInfinite } from "../hooks/use-property-listings-infinite"
-import type { PropertyListing } from "../types"
-import { MyListingsNavLink } from "./MyListingsNavLink"
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { InfiniteScrollSentinel } from "@/components/data/InfiniteScrollSentinel";
+import { useInfiniteScrollTrigger } from "@/lib/hooks/use-infinite-scroll-trigger";
+import { useIsAuthenticated } from "@/features/auth/hooks/use-is-authenticated";
+import { HomeFooter } from "@/features/home/components/HomeFooter";
+import { HomeHeader } from "@/features/home/components/HomeHeader";
+import { SectionHeader } from "@/features/home/components/SectionHeader";
+import { usePropertyListingsInfinite } from "../hooks/use-property-listings-infinite";
+import type { PropertyListing } from "../types";
+import { MyListingsNavLink } from "./MyListingsNavLink";
 import {
   DEFAULT_PROPERTY_LISTING_UI_FILTERS,
   extractGovernoratesFromListings,
   toListFilters,
   type PropertyListingUiFilters,
-} from "../utils/property-listing-filters"
-import { PropertyListingCard } from "./PropertyListingCard"
-import { PropertyListingCardSkeleton } from "./PropertyListingCardSkeleton"
-import { PropertyListingFiltersBar } from "./PropertyListingFiltersBar"
-import { CreatePropertyListingDialog } from "./CreatePropertyListingDialog"
+} from "../utils/property-listing-filters";
+import { PropertyListingCard } from "./PropertyListingCard";
+import { PropertyListingCardSkeleton } from "./PropertyListingCardSkeleton";
+import { PropertyListingFiltersBar } from "./PropertyListingFiltersBar";
+import { CreatePropertyListingDialog } from "./CreatePropertyListingDialog";
 
 export function PropertyListingsView() {
-  const router = useRouter()
-  const isAuthenticated = useIsAuthenticated()
+  const router = useRouter();
+  const isAuthenticated = useIsAuthenticated();
   const [filters, setFilters] = useState<PropertyListingUiFilters>(
-    DEFAULT_PROPERTY_LISTING_UI_FILTERS
-  )
-  const [createOpen, setCreateOpen] = useState(false)
+    DEFAULT_PROPERTY_LISTING_UI_FILTERS,
+  );
+  const [createOpen, setCreateOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<PropertyListing | null>(
-    null
-  )
+    null,
+  );
 
-  const listFilters = useMemo(() => toListFilters(filters), [filters])
+  const listFilters = useMemo(() => toListFilters(filters), [filters]);
 
-  const query = usePropertyListingsInfinite({ filters: listFilters })
+  const query = usePropertyListingsInfinite({ filters: listFilters });
 
   const items = useMemo(
     () => query.data?.pages.flatMap((page) => page.items) ?? [],
-    [query.data]
-  )
+    [query.data],
+  );
 
   const governorates = useMemo(
     () => extractGovernoratesFromListings(items),
-    [items]
-  )
+    [items],
+  );
 
   const { sentinelRef } = useInfiniteScrollTrigger({
     hasNextPage: query.hasNextPage ?? false,
     isFetchingNextPage: query.isFetchingNextPage,
     fetchNextPage: query.fetchNextPage,
     enabled: !query.isLoading && !query.isError,
-  })
+  });
 
   const openCreate = () => {
     if (!isAuthenticated) {
-      router.push("/auth")
-      return
+      router.push("/auth");
+      return;
     }
-    setEditingListing(null)
-    setCreateOpen(true)
-  }
+    setEditingListing(null);
+    setCreateOpen(true);
+  };
 
   const handleDialogOpenChange = (open: boolean) => {
-    setCreateOpen(open)
+    setCreateOpen(open);
     if (!open) {
-      setEditingListing(null)
+      setEditingListing(null);
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <HomeHeader />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
-        <SectionHeader
-          title="Available Housing & Shelters"
-          subtitle="Browse verified rentals, sales, and emergency shelter listings across Lebanon."
-          badge="Live"
-        />
+        <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
+          <SectionHeader
+            title="Available Housing & Shelters"
+            subtitle="Browse verified rentals, sales, and emergency shelter listings across Lebanon."
+            badge="Live"
+          />
+          <div className="flex justify-end">
+            <Button type="button" className="gap-1.5" onClick={openCreate}>
+              <Plus className="size-4" />
+              Add property
+            </Button>
+          </div>
+        </div>
 
         <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <PropertyListingFiltersBar
@@ -90,21 +98,6 @@ export function PropertyListingsView() {
             onChange={setFilters}
             className="flex-1"
           />
-          <div className="flex shrink-0 flex-wrap items-center gap-2 self-start sm:self-auto">
-            <MyListingsNavLink
-              className={cn(
-                buttonVariants({ variant: "outline", size: "sm" })
-              )}
-            />
-            <Button
-              type="button"
-              className="gap-1.5"
-              onClick={openCreate}
-            >
-              <Plus className="size-4" />
-              Add property
-            </Button>
-          </div>
         </div>
 
         <div className="mt-8">
@@ -132,7 +125,11 @@ export function PropertyListingsView() {
                 Only approved, available listings appear here. Publish a new
                 listing or ask an admin to approve pending ones.
               </p>
-              <Button type="button" className="mt-4 gap-1.5" onClick={openCreate}>
+              <Button
+                type="button"
+                className="mt-4 gap-1.5"
+                onClick={openCreate}
+              >
                 <Plus className="size-4" />
                 Add property
               </Button>
@@ -165,5 +162,5 @@ export function PropertyListingsView() {
         editingListing={editingListing}
       />
     </div>
-  )
+  );
 }

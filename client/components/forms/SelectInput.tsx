@@ -33,6 +33,16 @@ type SelectInputProps = {
   displayValue?: string
 }
 
+function resolveSelectedLabel(
+  value: string | undefined,
+  options: SelectOption[],
+  displayValue?: string
+): string {
+  if (displayValue) return displayValue
+  if (!value) return ""
+  return options.find((option) => option.value === value)?.label ?? value
+}
+
 export function SelectInput({
   name,
   label,
@@ -48,35 +58,44 @@ export function SelectInput({
     <FormField
       control={form.control}
       name={name}
-      render={({ field }) => (
-        <FormItem>
-          {label ? <FormLabel>{label}</FormLabel> : null}
-          <Select
-            value={(field.value as string) ?? ""}
-            onValueChange={field.onChange}
-            disabled={disabled}
-          >
-            <FormControl>
-              <SelectTrigger className="w-full" disabled={disabled}>
-                <SelectValue placeholder={placeholder}>
-                  {displayValue ?? null}
-                </SelectValue>
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {options.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {description ? (
-            <FormDescription>{description}</FormDescription>
-          ) : null}
-          <FormMessage />
-        </FormItem>
-      )}
+      render={({ field }) => {
+        const rawValue = (field.value as string | undefined) ?? ""
+        const selectedLabel = resolveSelectedLabel(
+          rawValue,
+          options,
+          displayValue
+        )
+
+        return (
+          <FormItem>
+            {label ? <FormLabel>{label}</FormLabel> : null}
+            <Select
+              value={rawValue}
+              onValueChange={field.onChange}
+              disabled={disabled}
+            >
+              <FormControl>
+                <SelectTrigger className="w-full" disabled={disabled}>
+                  <SelectValue placeholder={placeholder}>
+                    {selectedLabel || null}
+                  </SelectValue>
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {description ? (
+              <FormDescription>{description}</FormDescription>
+            ) : null}
+            <FormMessage />
+          </FormItem>
+        )
+      }}
     />
   )
 }

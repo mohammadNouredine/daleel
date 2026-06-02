@@ -43,6 +43,7 @@ export type PropertyListingResponse = {
   pricePeriod?: string;
   requiredAdvanceMonths?: number;
   securityDeposit?: number;
+  officeDeposit?: number;
   commissionAmount?: number;
   isPriceNegotiable: boolean;
   isEmergencyShelter: boolean;
@@ -179,6 +180,7 @@ export function mapPropertyListingToResponse(
     pricePeriod: doc.pricePeriod,
     requiredAdvanceMonths: doc.requiredAdvanceMonths,
     securityDeposit: doc.securityDeposit,
+    officeDeposit: doc.officeDeposit,
     commissionAmount: doc.commissionAmount,
     isPriceNegotiable: doc.isPriceNegotiable,
     isEmergencyShelter: doc.isEmergencyShelter,
