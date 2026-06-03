@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { UserRole, VerificationStatus } from '../../common/enums';
+import { defaultPermissionsForRole } from '../../common/permissions';
 import type { DaleelUser } from './schemas/user.types';
 
 export function mapDocumentToUser(record: Record<string, unknown>): DaleelUser | null {
@@ -13,7 +14,12 @@ export function mapDocumentToUser(record: Record<string, unknown>): DaleelUser |
       ? (record.role as UserRole)
       : UserRole.USER;
 
-  const permissions = record.permissions as DaleelUser['permissions'] | undefined;
+  const stored = record.permissions as DaleelUser['permissions'] | undefined;
+  const defaults = defaultPermissionsForRole(role);
+  const permissions: DaleelUser['permissions'] = {
+    requests: stored?.requests ?? defaults.requests,
+    properties: stored?.properties ?? defaults.properties,
+  };
 
   return {
     _id: record._id.toHexString(),
@@ -24,18 +30,7 @@ export function mapDocumentToUser(record: Record<string, unknown>): DaleelUser |
     createdAt: record.createdAt instanceof Date ? record.createdAt : undefined,
     updatedAt: record.updatedAt instanceof Date ? record.updatedAt : undefined,
     role,
-    permissions: permissions?.requests
-      ? permissions
-      : {
-          requests: {
-            read: true,
-            write: true,
-            edit: false,
-            verify: false,
-            manage: false,
-            delete: false,
-          },
-        },
+    permissions,
     phoneNumber: typeof record.phoneNumber === 'string' ? record.phoneNumber : null,
     whatsappNumber:
       typeof record.whatsappNumber === 'string' ? record.whatsappNumber : null,

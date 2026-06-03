@@ -7,6 +7,7 @@ export const PROPERTY_LISTINGS_LOCATION_FACETS = `${PROPERTY_LISTINGS_BASE}/loca
 export const PROPERTY_LISTINGS_MINE = `${PROPERTY_LISTINGS_BASE}/mine`
 export const PROPERTY_LISTINGS_PENDING = `${PROPERTY_LISTINGS_BASE}/moderation/pending`
 export const PROPERTY_LISTINGS_HIDDEN_MODERATION = `${PROPERTY_LISTINGS_BASE}/moderation/hidden`
+export const PROPERTY_LISTINGS_ADMIN = `${PROPERTY_LISTINGS_BASE}/admin`
 export const PROPERTY_LISTINGS_CREATE = PROPERTY_LISTINGS_BASE
 
 export const AMENITIES_LIST = AMENITIES_BASE
@@ -30,6 +31,10 @@ export const HIDDEN_PROPERTY_LISTINGS_QUERY_KEY = [
   "property-listings",
   "moderation",
   "hidden",
+] as const
+export const ADMIN_PROPERTY_LISTINGS_QUERY_KEY = [
+  "property-listings",
+  "admin",
 ] as const
 export const AMENITIES_QUERY_KEY = ["amenities"] as const
 

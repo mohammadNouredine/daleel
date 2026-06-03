@@ -24,6 +24,7 @@ import {
 } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
 import { createImageUploadInterceptor } from '../../storage/multer/create-image-upload.interceptor';
+import { ListAdminPropertyListingsQueryDto } from './dto/list-admin-property-listings-query.dto';
 import { ListPropertyListingsQueryDto } from './dto/list-property-listings-query.dto';
 import { RejectPropertyListingDto } from './dto/reject-property-listing.dto';
 import { MAX_PROPERTY_IMAGES } from './property-listings.constants';
@@ -78,6 +79,20 @@ export class PropertyListingsController {
   ) {
     const userId = requireUserId(session);
     return this.propertyListingsService.listMine(userId, query);
+  }
+
+  @Get('admin')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({
+    summary:
+      'List all property listings for dashboard (cursor pagination + summary)',
+  })
+  listForAdmin(
+    @Session() session: UserSession | null,
+    @Query() query: ListAdminPropertyListingsQueryDto,
+  ) {
+    const userId = requireUserId(session);
+    return this.propertyListingsService.listForAdmin(userId, query);
   }
 
   @Get('moderation/pending')

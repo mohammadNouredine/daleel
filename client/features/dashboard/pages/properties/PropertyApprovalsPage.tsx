@@ -3,15 +3,8 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Button, buttonVariants } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
 import { PropertyListingCard } from "@/features/property-listings/components/PropertyListingCard"
+import { RejectPropertyListingDialog } from "@/features/property-listings/components/RejectPropertyListingDialog"
 import {
   useApprovePropertyListing,
   useRejectPropertyListing,
@@ -107,52 +100,20 @@ export function PropertyApprovalsPage() {
         </ul>
       )}
 
-      <Dialog
+      <RejectPropertyListingDialog
+        listing={rejectingListing}
         open={Boolean(rejectingListing)}
+        reason={rejectReason}
+        isPending={rejectMutation.isPending}
+        onReasonChange={setRejectReason}
         onOpenChange={(open) => {
           if (!open) {
             setRejectingListing(null)
             setRejectReason("")
           }
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject listing</DialogTitle>
-          </DialogHeader>
-          {rejectingListing ? (
-            <p className="text-sm text-muted-foreground">
-              {rejectingListing.title}
-            </p>
-          ) : null}
-          <Textarea
-            className="min-h-24"
-            placeholder="Reason shown to the owner (required)"
-            value={rejectReason}
-            onChange={(event) => setRejectReason(event.target.value)}
-          />
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setRejectingListing(null)
-                setRejectReason("")
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleReject}
-              disabled={rejectMutation.isPending || !rejectReason.trim()}
-            >
-              Reject
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onSubmit={handleReject}
+      />
     </>
   )
 }

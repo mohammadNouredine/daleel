@@ -20,9 +20,32 @@ class RequestPermissionsDto {
   delete: boolean;
 }
 
+class PropertyPermissionsDto {
+  @ApiProperty()
+  canViewProperties: boolean;
+
+  @ApiProperty()
+  canEditProperty: boolean;
+
+  @ApiProperty()
+  canDeleteProperty: boolean;
+
+  @ApiProperty()
+  canHideProperty: boolean;
+
+  @ApiProperty()
+  canApproveProperty: boolean;
+
+  @ApiProperty()
+  canRejectProperty: boolean;
+}
+
 class UserPermissionsDto {
   @ApiProperty({ type: RequestPermissionsDto })
   requests: RequestPermissionsDto;
+
+  @ApiProperty({ type: PropertyPermissionsDto })
+  properties: PropertyPermissionsDto;
 }
 
 class UserLocationDto {

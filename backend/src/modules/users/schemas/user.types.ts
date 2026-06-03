@@ -9,8 +9,18 @@ export interface RequestPermissions {
   delete: boolean;
 }
 
+export interface PropertyPermissions {
+  canViewProperties: boolean;
+  canEditProperty: boolean;
+  canDeleteProperty: boolean;
+  canHideProperty: boolean;
+  canApproveProperty: boolean;
+  canRejectProperty: boolean;
+}
+
 export interface UserPermissions {
   requests: RequestPermissions;
+  properties: PropertyPermissions;
 }
 
 export interface UserLocation {

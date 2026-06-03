@@ -7,8 +7,20 @@ export type RequestPermissions = {
   delete: boolean
 }
 
+export type PropertyPermissions = {
+  canViewProperties: boolean
+  canEditProperty: boolean
+  canDeleteProperty: boolean
+  canHideProperty: boolean
+  canApproveProperty: boolean
+  canRejectProperty: boolean
+}
+
+export type PropertyPermissionKey = keyof PropertyPermissions
+
 export type UserPermissions = {
   requests: RequestPermissions
+  properties: PropertyPermissions
 }
 
 export type DaleelProfile = {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Geist } from "next/font/google"
+import { ConfirmDialogProvider } from "@/components/dialogs/ConfirmDialog"
 import { QueryProvider } from "@/components/providers/QueryProvider"
 import { ToastProvider } from "@/components/providers/ToastProvider"
 import { cn } from "@/lib/utils"
@@ -22,8 +23,10 @@ export default function RootLayout({
     <html lang="en" className={cn("font-sans", geist.variable)}>
       <body className="min-h-screen antialiased">
         <QueryProvider>
-          {children}
-          <ToastProvider />
+          <ConfirmDialogProvider>
+            {children}
+            <ToastProvider />
+          </ConfirmDialogProvider>
         </QueryProvider>
       </body>
     </html>

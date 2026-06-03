@@ -3,6 +3,7 @@ import type {
   RequestPermissions,
   UserPermissions,
 } from '../../modules/users/schemas/user.types';
+import { defaultPropertyPermissionsForRole } from './property-permissions';
 
 export function defaultRequestPermissionsForRole(
   role: UserRole,
@@ -50,6 +51,7 @@ export function defaultRequestPermissionsForRole(
 export function defaultPermissionsForRole(role: UserRole): UserPermissions {
   return {
     requests: defaultRequestPermissionsForRole(role),
+    properties: defaultPropertyPermissionsForRole(role),
   };
 }
 

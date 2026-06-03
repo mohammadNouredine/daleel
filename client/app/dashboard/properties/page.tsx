@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation"
+import { PropertiesDirectoryPage } from "@/features/dashboard/pages/properties/PropertiesDirectoryPage"
 
 export default function DashboardPropertiesPage() {
-  redirect("/dashboard/properties/all")
+  return <PropertiesDirectoryPage />
 }

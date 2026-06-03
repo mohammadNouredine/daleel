@@ -5,6 +5,7 @@ import { Eye, EyeOff, Pencil, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useConfirmDialog } from "@/components/dialogs/ConfirmDialog"
 import { useDeletePropertyListing } from "../hooks/use-delete-property-listing"
 import { useHidePropertyListing } from "../hooks/use-hide-property-listing"
 import { useUnhidePropertyListing } from "../hooks/use-unhide-property-listing"
@@ -28,6 +29,7 @@ export function MyPropertyListingCard({
   listing,
   onEdit,
 }: MyPropertyListingCardProps) {
+  const { confirmAsync } = useConfirmDialog()
   const hideMutation = useHidePropertyListing()
   const unhideMutation = useUnhidePropertyListing()
   const deleteMutation = useDeletePropertyListing()
@@ -37,10 +39,15 @@ export function MyPropertyListingCard({
   const isDeleting = deleteMutation.isPending
   const isBusy = isPending || isDeleting
 
-  const handleDelete = () => {
-    const confirmed = window.confirm(
-      "Delete this listing permanently? Admins can still review it, but it will be removed from your list and the public."
-    )
+  const handleDelete = async () => {
+    const confirmed = await confirmAsync({
+      title: "Delete this listing?",
+      description:
+        "Admins can still review it, but it will be removed from your list and the public.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      variant: "danger",
+    })
     if (!confirmed) return
     deleteMutation.mutate(listing._id)
   }

@@ -8,16 +8,22 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
+  hasPropertyPermission,
+  type PropertyPermissionKey,
+} from '../../common/permissions';
+import {
   ListingContactMethod,
   LocationVisibility,
   PropertyListingStatus,
   UserRole,
 } from '../../common/enums';
+import type { DaleelUser } from '../users/schemas/user.types';
 import { toObjectId } from '../../common/utils/object-id.util';
 import { StorageService } from '../../storage/storage.service';
 import { UsersService } from '../users/users.service';
 import type { CreatePropertyListingDto } from './dto/create-property-listing.dto';
 import type { CreatePropertyReportDto } from './dto/create-property-report.dto';
+import type { ListAdminPropertyListingsQueryDto } from './dto/list-admin-property-listings-query.dto';
 import type { ListPropertyListingsQueryDto } from './dto/list-property-listings-query.dto';
 import type { RejectPropertyListingDto } from './dto/reject-property-listing.dto';
 import type { UpdatePropertyListingDto } from './dto/update-property-listing.dto';
@@ -48,6 +54,11 @@ import {
 import { buildPropertyListingFilter } from './utils/property-listing-filters.util';
 import { applyListingTypePricingRules } from './utils/listing-type.util';
 import { assertCoordinatesInLebanon } from './utils/lebanon-coordinates.util';
+import {
+  buildAdminPropertyListingFilter,
+  countAdminPropertyListingSummary,
+  type AdminPropertyListingSummary,
+} from './utils/admin-property-listing-filters.util';
 import { paginatePropertyListings } from './utils/property-listing-pagination.util';
 import type { ListingLocationDto } from './dto/listing-location.dto';
 
@@ -70,6 +81,10 @@ export type PropertyListingLocationFacetsResponse = {
 export type PropertyListingPaginatedResponse = {
   items: PropertyListingResponse[];
   nextLastId: string | null;
+};
+
+export type AdminPropertyListingsResponse = PropertyListingPaginatedResponse & {
+  summary: AdminPropertyListingSummary;
 };
 
 export type AmenityResponse = {
@@ -122,8 +137,28 @@ export class PropertyListingsService {
     );
   }
 
+  async listForAdmin(
+    userId: string,
+    query: ListAdminPropertyListingsQueryDto,
+  ): Promise<AdminPropertyListingsResponse> {
+    await this.assertPropertyPermission(userId, 'canViewProperties');
+
+    const filter = buildAdminPropertyListingFilter(query);
+    const [page, summary] = await Promise.all([
+      paginatePropertyListings(
+        this.propertyListingModel,
+        filter,
+        query.limit,
+        (doc) => mapPropertyListingToResponse(doc, { isAdmin: true }),
+      ),
+      countAdminPropertyListingSummary(this.propertyListingModel),
+    ]);
+
+    return { ...page, summary };
+  }
+
   async listPendingModeration(userId: string): Promise<PropertyListingResponse[]> {
-    await this.assertAdmin(userId);
+    await this.assertPropertyPermission(userId, 'canApproveProperty');
 
     const docs = await this.propertyListingModel
       .find({
@@ -144,23 +179,31 @@ export class PropertyListingsService {
   ): Promise<PropertyListingResponse> {
     const doc = await this.findDocumentOrThrow(id);
     const isOwner = viewerId ? doc.ownerId.toHexString() === viewerId : false;
-    const isAdmin = viewerId ? await this.isAdmin(viewerId) : false;
+    const canViewAll = viewerId
+      ? await this.userHasPropertyPermission(viewerId, 'canViewProperties')
+      : false;
 
     if (doc.deletedAt) {
-      if (!isAdmin) {
+      if (!canViewAll) {
         throw new NotFoundException('Property listing not found');
       }
-      return mapPropertyListingToResponse(doc, { isOwner, isAdmin });
+      return mapPropertyListingToResponse(doc, {
+        isOwner,
+        isAdmin: canViewAll,
+      });
     }
 
     const isPubliclyVisible =
       doc.status === PropertyListingStatus.APPROVED;
 
-    if (!isPubliclyVisible && !isOwner && !isAdmin) {
+    if (!isPubliclyVisible && !isOwner && !canViewAll) {
       throw new NotFoundException('Property listing not found');
     }
 
-    return mapPropertyListingToResponse(doc, { isOwner, isAdmin });
+    return mapPropertyListingToResponse(doc, {
+      isOwner,
+      isAdmin: canViewAll,
+    });
   }
 
   async create(
@@ -314,13 +357,17 @@ export class PropertyListingsService {
     doc.contactPhone = dto.contactPhone?.trim();
     doc.contactWhatsapp = dto.contactWhatsapp?.trim();
 
-    const isAdmin = await this.isAdmin(userId);
+    const isOwner = doc.ownerId.toHexString() === userId;
+    const canEditAsAdmin = await this.userHasPropertyPermission(
+      userId,
+      'canEditProperty',
+    );
     const isArchived = doc.status === PropertyListingStatus.ARCHIVED;
 
     if (!isArchived) {
       if (dto.saveAsDraft) {
         doc.status = PropertyListingStatus.DRAFT;
-      } else if (isAdmin) {
+      } else if (canEditAsAdmin && !isOwner) {
         doc.status = PropertyListingStatus.APPROVED;
         doc.rejectionReason = undefined;
         if (!wasApproved || !doc.publishedAt) {
@@ -337,7 +384,7 @@ export class PropertyListingsService {
     await doc.save();
     return mapPropertyListingToResponse(doc, {
       isOwner: doc.ownerId.toHexString() === userId,
-      isAdmin,
+      isAdmin: canEditAsAdmin,
     });
   }
 
@@ -346,10 +393,11 @@ export class PropertyListingsService {
     if (doc.deletedAt) {
       throw new NotFoundException('Property listing not found');
     }
-    this.assertOwnerOnly(doc, userId);
+    await this.assertCanHide(doc, userId);
+    const isOwner = doc.ownerId.toHexString() === userId;
 
     if (doc.status === PropertyListingStatus.ARCHIVED) {
-      return mapPropertyListingToResponse(doc, { isOwner: true });
+      return mapPropertyListingToResponse(doc, { isOwner, isAdmin: !isOwner });
     }
 
     if (doc.status === PropertyListingStatus.DELETED) {
@@ -361,7 +409,10 @@ export class PropertyListingsService {
     doc.archivedAt = new Date();
     await doc.save();
 
-    return mapPropertyListingToResponse(doc, { isOwner: true });
+    return mapPropertyListingToResponse(doc, {
+      isOwner,
+      isAdmin: !isOwner,
+    });
   }
 
   async unhide(id: string, userId: string): Promise<PropertyListingResponse> {
@@ -369,7 +420,8 @@ export class PropertyListingsService {
     if (doc.deletedAt) {
       throw new NotFoundException('Property listing not found');
     }
-    this.assertOwnerOnly(doc, userId);
+    await this.assertCanHide(doc, userId);
+    const isOwner = doc.ownerId.toHexString() === userId;
 
     if (doc.status !== PropertyListingStatus.ARCHIVED) {
       throw new BadRequestException('Only hidden listings can be restored');
@@ -384,7 +436,10 @@ export class PropertyListingsService {
     doc.archivedAt = undefined;
     await doc.save();
 
-    return mapPropertyListingToResponse(doc, { isOwner: true });
+    return mapPropertyListingToResponse(doc, {
+      isOwner,
+      isAdmin: !isOwner,
+    });
   }
 
   async remove(id: string, userId: string): Promise<void> {
@@ -392,7 +447,7 @@ export class PropertyListingsService {
     if (doc.deletedAt) {
       throw new NotFoundException('Property listing not found');
     }
-    this.assertOwnerOnly(doc, userId);
+    await this.assertCanDelete(doc, userId);
 
     doc.deletedAt = new Date();
     doc.status = PropertyListingStatus.DELETED;
@@ -441,7 +496,7 @@ export class PropertyListingsService {
   }
 
   async listHiddenForAdmin(userId: string): Promise<PropertyListingResponse[]> {
-    await this.assertAdmin(userId);
+    await this.assertPropertyPermission(userId, 'canViewProperties');
 
     const docs = await this.propertyListingModel
       .find({
@@ -460,7 +515,7 @@ export class PropertyListingsService {
   }
 
   async approve(id: string, adminId: string): Promise<PropertyListingResponse> {
-    await this.assertAdmin(adminId);
+    await this.assertPropertyPermission(adminId, 'canApproveProperty');
     const doc = await this.findDocumentOrThrow(id);
 
     if (doc.status !== PropertyListingStatus.PENDING_APPROVAL) {
@@ -480,7 +535,7 @@ export class PropertyListingsService {
     adminId: string,
     dto: RejectPropertyListingDto,
   ): Promise<PropertyListingResponse> {
-    await this.assertAdmin(adminId);
+    await this.assertPropertyPermission(adminId, 'canRejectProperty');
     const doc = await this.findDocumentOrThrow(id);
 
     if (doc.status !== PropertyListingStatus.PENDING_APPROVAL) {
@@ -762,29 +817,66 @@ export class PropertyListingsService {
     userId: string,
   ): Promise<void> {
     const isOwner = doc.ownerId.toHexString() === userId;
-    const isAdmin = await this.isAdmin(userId);
-    if (!isOwner && !isAdmin) {
-      throw new ForbiddenException('Not allowed to modify this listing');
+    if (isOwner) {
+      return;
     }
+    if (await this.userHasPropertyPermission(userId, 'canEditProperty')) {
+      return;
+    }
+    throw new ForbiddenException('Not allowed to modify this listing');
   }
 
-  private assertOwnerOnly(
+  private async assertCanHide(
     doc: PropertyListingDocument,
     userId: string,
-  ): void {
-    if (doc.ownerId.toHexString() !== userId) {
-      throw new ForbiddenException('Only the listing owner can do this');
+  ): Promise<void> {
+    const isOwner = doc.ownerId.toHexString() === userId;
+    if (isOwner) {
+      return;
     }
+    if (await this.userHasPropertyPermission(userId, 'canHideProperty')) {
+      return;
+    }
+    throw new ForbiddenException('Not allowed to hide this listing');
   }
 
-  private async isAdmin(userId: string): Promise<boolean> {
+  private async assertCanDelete(
+    doc: PropertyListingDocument,
+    userId: string,
+  ): Promise<void> {
+    const isOwner = doc.ownerId.toHexString() === userId;
+    if (isOwner) {
+      return;
+    }
+    if (await this.userHasPropertyPermission(userId, 'canDeleteProperty')) {
+      return;
+    }
+    throw new ForbiddenException('Not allowed to delete this listing');
+  }
+
+  private async getUserOrThrow(userId: string): Promise<DaleelUser> {
     const user = await this.usersService.findById(userId);
-    return user?.role === UserRole.ADMIN;
+    if (!user) {
+      throw new ForbiddenException('User profile not found');
+    }
+    return user;
   }
 
-  private async assertAdmin(userId: string): Promise<void> {
-    if (!(await this.isAdmin(userId))) {
-      throw new ForbiddenException('Admin access required');
+  private async userHasPropertyPermission(
+    userId: string,
+    action: PropertyPermissionKey,
+  ): Promise<boolean> {
+    const user = await this.usersService.findById(userId);
+    return hasPropertyPermission(user?.permissions, action);
+  }
+
+  private async assertPropertyPermission(
+    userId: string,
+    action: PropertyPermissionKey,
+  ): Promise<void> {
+    const user = await this.getUserOrThrow(userId);
+    if (!hasPropertyPermission(user.permissions, action)) {
+      throw new ForbiddenException('Insufficient permissions');
     }
   }
 

@@ -34,7 +34,7 @@ export const dashboardNavigation: DashboardNavItem[] = [
     children: [
       {
         label: "All listings",
-        href: "/dashboard/properties/all",
+        href: "/dashboard/properties",
       },
       {
         label: "Approvals",

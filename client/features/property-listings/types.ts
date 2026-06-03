@@ -186,6 +186,18 @@ export type PropertyListingPaginatedResponse = {
   nextLastId: string | null
 }
 
+export type AdminPropertyListingSummary = {
+  total: number
+  forRent: number
+  forSale: number
+  pendingApproval: number
+  hidden: number
+}
+
+export type AdminPropertyListingsResponse = PropertyListingPaginatedResponse & {
+  summary: AdminPropertyListingSummary
+}
+
 export type Amenity = {
   _id: string
   code: string
