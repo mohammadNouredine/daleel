@@ -486,7 +486,7 @@ export function CreatePropertyListingDialog({
                         type="number"
                         min={1}
                         placeholder="e.g. 4"
-                        description="Maximum number of people allowed."
+                        helpText="Maximum number of people allowed."
                       />
                       <RangeSelectGroup
                         name="parkingSpaces"

@@ -8,12 +8,11 @@ import {
   FormDescription,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { useFormContext } from "react-hook-form";
-import { FieldHelpHint } from "./FieldHelpHint";
+import { FormFieldLabelRow } from "./FormFieldLabelRow";
 
 type RangeSelectGroupProps = {
   name: string;
@@ -173,10 +172,7 @@ export function RangeSelectGroup({
 
         return (
           <FormItem>
-            <div className="flex items-center gap-1.5">
-              <FormLabel>{label}</FormLabel>
-              {helpText ? <FieldHelpHint text={helpText} /> : null}
-            </div>
+            <FormFieldLabelRow label={label} helpText={helpText} />
             {description ? (
               <FormDescription>{description}</FormDescription>
             ) : null}

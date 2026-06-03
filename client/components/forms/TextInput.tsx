@@ -5,11 +5,11 @@ import {
   FormDescription,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { useFormContext } from "react-hook-form"
+import { FormFieldLabelRow } from "./FormFieldLabelRow"
 
 type TextInputProps = {
   name: string
@@ -17,6 +17,7 @@ type TextInputProps = {
   placeholder?: string
   type?: React.ComponentProps<"input">["type"]
   description?: string
+  helpText?: string
   min?: React.ComponentProps<"input">["min"]
   step?: React.ComponentProps<"input">["step"]
 }
@@ -27,6 +28,7 @@ export function TextInput({
   placeholder,
   type = "text",
   description,
+  helpText,
   min,
   step,
 }: TextInputProps) {
@@ -38,7 +40,9 @@ export function TextInput({
       name={name}
       render={({ field }) => (
         <FormItem>
-          {label ? <FormLabel>{label}</FormLabel> : null}
+          {label ? (
+            <FormFieldLabelRow label={label} helpText={helpText} />
+          ) : null}
           <FormControl>
             <Input
               type={type}
