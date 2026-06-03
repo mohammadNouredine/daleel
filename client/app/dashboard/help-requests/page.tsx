@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
 
-export default function AdminHelpRequestsRedirectPage() {
+export default function DashboardHelpRequestsPage() {
   redirect("/dashboard/help-requests/pending")
 }

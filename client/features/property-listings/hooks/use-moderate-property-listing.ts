@@ -8,6 +8,7 @@ import {
 import toast from "react-hot-toast"
 import { sendToApi } from "@/lib/api/api-methods"
 import {
+  HIDDEN_PROPERTY_LISTINGS_QUERY_KEY,
   MY_PROPERTY_LISTINGS_QUERY_KEY,
   PENDING_PROPERTY_LISTINGS_QUERY_KEY,
   PROPERTY_LISTINGS_QUERY_KEY,
@@ -20,6 +21,7 @@ const invalidateKeys: QueryKey[] = [
   PROPERTY_LISTINGS_QUERY_KEY,
   MY_PROPERTY_LISTINGS_QUERY_KEY,
   PENDING_PROPERTY_LISTINGS_QUERY_KEY,
+  HIDDEN_PROPERTY_LISTINGS_QUERY_KEY,
 ]
 
 export function useApprovePropertyListing(options?: {

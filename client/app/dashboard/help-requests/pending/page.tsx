@@ -1,8 +1,5 @@
-"use client"
-
 import { HelpRequestsPendingPage } from "@/features/dashboard/pages/help-requests/HelpRequestsPendingPage"
 
-/** @deprecated Use `/dashboard/help-requests/pending` */
-export function AdminHelpRequestsView() {
+export default function DashboardHelpRequestsPendingPage() {
   return <HelpRequestsPendingPage />
 }
