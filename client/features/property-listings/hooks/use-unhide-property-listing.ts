@@ -12,33 +12,35 @@ import {
   MY_PROPERTY_LISTINGS_QUERY_KEY,
   PENDING_PROPERTY_LISTINGS_QUERY_KEY,
   PROPERTY_LISTINGS_QUERY_KEY,
-  propertyListingDeleteEndpoint,
+  propertyListingUnhideEndpoint,
 } from "../endpoints"
+import type { PropertyListing } from "../types"
 
-export function useDeletePropertyListing(options?: { onSuccess?: () => void }) {
+const baseInvalidateKeys: QueryKey[] = [
+  PROPERTY_LISTINGS_QUERY_KEY,
+  MY_PROPERTY_LISTINGS_QUERY_KEY,
+  PENDING_PROPERTY_LISTINGS_QUERY_KEY,
+  HIDDEN_PROPERTY_LISTINGS_QUERY_KEY,
+]
+
+export function useUnhidePropertyListing(options?: { onSuccess?: () => void }) {
   const queryClient = useQueryClient()
-  const queryKeysToInvalidate: QueryKey[] = [
-    PROPERTY_LISTINGS_QUERY_KEY,
-    MY_PROPERTY_LISTINGS_QUERY_KEY,
-    PENDING_PROPERTY_LISTINGS_QUERY_KEY,
-    HIDDEN_PROPERTY_LISTINGS_QUERY_KEY,
-  ]
 
   return useMutation({
     mutationFn: (id: string) =>
-      sendToApi<{ message: string }>(
-        propertyListingDeleteEndpoint(id),
+      sendToApi<PropertyListing>(
+        propertyListingUnhideEndpoint(id),
         {},
-        "DELETE"
+        "PATCH"
       ),
     onSuccess: (_data, id) => {
-      queryKeysToInvalidate.forEach((key) =>
+      baseInvalidateKeys.forEach((key) =>
         queryClient.invalidateQueries({ queryKey: key })
       )
       queryClient.invalidateQueries({
         queryKey: [...PROPERTY_LISTINGS_QUERY_KEY, "detail", id],
       })
-      toast.success("Property listing deleted")
+      toast.success("Listing is visible again")
       options?.onSuccess?.()
     },
     onError: (err: Error) => toast.error(err.message),

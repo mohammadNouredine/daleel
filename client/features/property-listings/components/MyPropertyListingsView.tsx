@@ -97,7 +97,7 @@ export function MyPropertyListingsView() {
 
         <SectionHeader
           title="My property listings"
-          subtitle="Manage drafts, pending, and published listings you created."
+          subtitle="Manage drafts, pending, published, and hidden listings. Hide or delete without admin review."
         />
 
         <div className="mt-6 flex justify-end">

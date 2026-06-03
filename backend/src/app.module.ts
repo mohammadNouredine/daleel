@@ -10,6 +10,7 @@ import { ReferenceModule } from './modules/reference/reference.module';
 import { PropertyListingsModule } from './modules/property-listings/property-listings.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { CronModule } from './cron/cron.module';
 import { StorageModule } from './storage/storage.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -35,6 +36,7 @@ import { UsersModule } from './modules/users/users.module';
     HelpUpdatesModule,
     ReportsModule,
     PropertyListingsModule,
+    CronModule,
   ],
 })
 export class AppModule {}

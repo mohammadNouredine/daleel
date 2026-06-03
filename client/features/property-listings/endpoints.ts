@@ -6,6 +6,7 @@ export const PROPERTY_LISTINGS_LIST = PROPERTY_LISTINGS_BASE
 export const PROPERTY_LISTINGS_LOCATION_FACETS = `${PROPERTY_LISTINGS_BASE}/location-facets`
 export const PROPERTY_LISTINGS_MINE = `${PROPERTY_LISTINGS_BASE}/mine`
 export const PROPERTY_LISTINGS_PENDING = `${PROPERTY_LISTINGS_BASE}/moderation/pending`
+export const PROPERTY_LISTINGS_HIDDEN_MODERATION = `${PROPERTY_LISTINGS_BASE}/moderation/hidden`
 export const PROPERTY_LISTINGS_CREATE = PROPERTY_LISTINGS_BASE
 
 export const AMENITIES_LIST = AMENITIES_BASE
@@ -25,6 +26,11 @@ export const PENDING_PROPERTY_LISTINGS_QUERY_KEY = [
   "moderation",
   "pending",
 ] as const
+export const HIDDEN_PROPERTY_LISTINGS_QUERY_KEY = [
+  "property-listings",
+  "moderation",
+  "hidden",
+] as const
 export const AMENITIES_QUERY_KEY = ["amenities"] as const
 
 export function propertyListingDetailEndpoint(id: string): string {
@@ -37,6 +43,14 @@ export function propertyListingUpdateEndpoint(id: string): string {
 
 export function propertyListingDeleteEndpoint(id: string): string {
   return `${PROPERTY_LISTINGS_BASE}/${id}`
+}
+
+export function propertyListingHideEndpoint(id: string): string {
+  return `${PROPERTY_LISTINGS_BASE}/${id}/hide`
+}
+
+export function propertyListingUnhideEndpoint(id: string): string {
+  return `${PROPERTY_LISTINGS_BASE}/${id}/unhide`
 }
 
 export function propertyListingFavoriteEndpoint(id: string): string {

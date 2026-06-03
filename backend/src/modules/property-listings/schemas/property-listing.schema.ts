@@ -230,6 +230,10 @@ export class PropertyListing {
   @Prop({ type: Date })
   archivedAt?: Date;
 
+  /** Status before owner hid the listing; used to restore on unhide. */
+  @Prop({ type: String, enum: PropertyListingStatus })
+  archivedFromStatus?: PropertyListingStatus;
+
   @Prop({ type: Date, default: null })
   deletedAt: Date | null;
 }

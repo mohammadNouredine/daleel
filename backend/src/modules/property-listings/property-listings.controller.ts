@@ -90,6 +90,16 @@ export class PropertyListingsController {
     return this.propertyListingsService.listPendingModeration(userId);
   }
 
+  @Get('moderation/hidden')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({
+    summary: 'List hidden and deleted property listings (admin only)',
+  })
+  listHiddenForAdmin(@Session() session: UserSession | null) {
+    const userId = requireUserId(session);
+    return this.propertyListingsService.listHiddenForAdmin(userId);
+  }
+
   @Get(':id')
   @OptionalAuth()
   @ApiOperation({ summary: 'Get property listing by id' })
@@ -135,9 +145,39 @@ export class PropertyListingsController {
     return this.propertyListingsService.update(id, userId, dto, uploadedUrls);
   }
 
+  @Patch(':id/hide')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({
+    summary:
+      'Hide a property listing from the public (owner only, no approval)',
+  })
+  hide(
+    @Param('id') id: string,
+    @Session() session: UserSession | null,
+  ) {
+    const userId = requireUserId(session);
+    return this.propertyListingsService.hide(id, userId);
+  }
+
+  @Patch(':id/unhide')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({
+    summary: 'Restore a hidden property listing (owner only, no approval)',
+  })
+  unhide(
+    @Param('id') id: string,
+    @Session() session: UserSession | null,
+  ) {
+    const userId = requireUserId(session);
+    return this.propertyListingsService.unhide(id, userId);
+  }
+
   @Delete(':id')
   @ApiBearerAuth('bearer')
-  @ApiOperation({ summary: 'Soft-delete a property listing' })
+  @ApiOperation({
+    summary:
+      'Soft-delete a property listing (owner only, no approval; admin can still view)',
+  })
   async remove(
     @Param('id') id: string,
     @Session() session: UserSession | null,

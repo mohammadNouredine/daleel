@@ -16,6 +16,12 @@ export default () => ({
     password: process.env.ADMIN_PASSWORD,
     fullName: process.env.ADMIN_FULL_NAME ?? 'Daleel Admin',
   },
+  propertyListings: {
+    softDeleteRetentionDays: parseInt(
+      process.env.PROPERTY_SOFT_DELETE_RETENTION_DAYS ?? '30',
+      10,
+    ),
+  },
   storage: {
     provider: process.env.STORAGE_PROVIDER ?? 'cloudinary',
     cloudinary: {

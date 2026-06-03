@@ -24,6 +24,7 @@ import type { UpdatePropertyListingDto } from './dto/update-property-listing.dto
 import {
   LISTING_EXPIRY_DAYS,
   MAX_PROPERTY_IMAGES,
+  SOFT_DELETE_RETENTION_DAYS,
 } from './property-listings.constants';
 import {
   mapPropertyListingToResponse,
@@ -142,15 +143,20 @@ export class PropertyListingsService {
     viewerId?: string,
   ): Promise<PropertyListingResponse> {
     const doc = await this.findDocumentOrThrow(id);
-    if (doc.deletedAt) {
-      throw new NotFoundException('Property listing not found');
-    }
-
     const isOwner = viewerId ? doc.ownerId.toHexString() === viewerId : false;
     const isAdmin = viewerId ? await this.isAdmin(viewerId) : false;
-    const isApproved = doc.status === PropertyListingStatus.APPROVED;
 
-    if (!isApproved && !isOwner && !isAdmin) {
+    if (doc.deletedAt) {
+      if (!isAdmin) {
+        throw new NotFoundException('Property listing not found');
+      }
+      return mapPropertyListingToResponse(doc, { isOwner, isAdmin });
+    }
+
+    const isPubliclyVisible =
+      doc.status === PropertyListingStatus.APPROVED;
+
+    if (!isPubliclyVisible && !isOwner && !isAdmin) {
       throw new NotFoundException('Property listing not found');
     }
 
@@ -309,20 +315,23 @@ export class PropertyListingsService {
     doc.contactWhatsapp = dto.contactWhatsapp?.trim();
 
     const isAdmin = await this.isAdmin(userId);
+    const isArchived = doc.status === PropertyListingStatus.ARCHIVED;
 
-    if (dto.saveAsDraft) {
-      doc.status = PropertyListingStatus.DRAFT;
-    } else if (isAdmin) {
-      doc.status = PropertyListingStatus.APPROVED;
-      doc.rejectionReason = undefined;
-      if (!wasApproved || !doc.publishedAt) {
-        Object.assign(doc, this.buildApprovalMetadata(userId));
+    if (!isArchived) {
+      if (dto.saveAsDraft) {
+        doc.status = PropertyListingStatus.DRAFT;
+      } else if (isAdmin) {
+        doc.status = PropertyListingStatus.APPROVED;
+        doc.rejectionReason = undefined;
+        if (!wasApproved || !doc.publishedAt) {
+          Object.assign(doc, this.buildApprovalMetadata(userId));
+        }
+      } else {
+        doc.status = PropertyListingStatus.PENDING_APPROVAL;
+        doc.publishedAt = undefined;
+        doc.expiresAt = undefined;
+        doc.rejectionReason = undefined;
       }
-    } else {
-      doc.status = PropertyListingStatus.PENDING_APPROVAL;
-      doc.publishedAt = undefined;
-      doc.expiresAt = undefined;
-      doc.rejectionReason = undefined;
     }
 
     await doc.save();
@@ -332,22 +341,122 @@ export class PropertyListingsService {
     });
   }
 
+  async hide(id: string, userId: string): Promise<PropertyListingResponse> {
+    const doc = await this.findDocumentOrThrow(id);
+    if (doc.deletedAt) {
+      throw new NotFoundException('Property listing not found');
+    }
+    this.assertOwnerOnly(doc, userId);
+
+    if (doc.status === PropertyListingStatus.ARCHIVED) {
+      return mapPropertyListingToResponse(doc, { isOwner: true });
+    }
+
+    if (doc.status === PropertyListingStatus.DELETED) {
+      throw new BadRequestException('Deleted listings cannot be hidden');
+    }
+
+    doc.archivedFromStatus = doc.status;
+    doc.status = PropertyListingStatus.ARCHIVED;
+    doc.archivedAt = new Date();
+    await doc.save();
+
+    return mapPropertyListingToResponse(doc, { isOwner: true });
+  }
+
+  async unhide(id: string, userId: string): Promise<PropertyListingResponse> {
+    const doc = await this.findDocumentOrThrow(id);
+    if (doc.deletedAt) {
+      throw new NotFoundException('Property listing not found');
+    }
+    this.assertOwnerOnly(doc, userId);
+
+    if (doc.status !== PropertyListingStatus.ARCHIVED) {
+      throw new BadRequestException('Only hidden listings can be restored');
+    }
+
+    doc.status =
+      doc.archivedFromStatus ??
+      (doc.publishedAt
+        ? PropertyListingStatus.APPROVED
+        : PropertyListingStatus.PENDING_APPROVAL);
+    doc.archivedFromStatus = undefined;
+    doc.archivedAt = undefined;
+    await doc.save();
+
+    return mapPropertyListingToResponse(doc, { isOwner: true });
+  }
+
   async remove(id: string, userId: string): Promise<void> {
     const doc = await this.findDocumentOrThrow(id);
     if (doc.deletedAt) {
       throw new NotFoundException('Property listing not found');
     }
-    await this.assertCanEdit(doc, userId);
-
-    const imageUrls = (doc.images ?? []).map((image) => image.url);
-    if (doc.coverImage && !imageUrls.includes(doc.coverImage)) {
-      imageUrls.push(doc.coverImage);
-    }
-    await this.storageService.deleteByUrls(imageUrls);
+    this.assertOwnerOnly(doc, userId);
 
     doc.deletedAt = new Date();
     doc.status = PropertyListingStatus.DELETED;
+    doc.archivedFromStatus = undefined;
+    doc.archivedAt = undefined;
     await doc.save();
+  }
+
+  async purgeSoftDeletedPropertyListingsOlderThan(
+    retentionDays: number = SOFT_DELETE_RETENTION_DAYS,
+  ): Promise<{ purgedCount: number }> {
+    const days =
+      Number.isFinite(retentionDays) && retentionDays > 0
+        ? Math.floor(retentionDays)
+        : SOFT_DELETE_RETENTION_DAYS;
+
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+
+    const docs = await this.propertyListingModel
+      .find({
+        deletedAt: { $ne: null, $lte: cutoff },
+      })
+      .exec();
+
+    if (!docs.length) {
+      return { purgedCount: 0 };
+    }
+
+    for (const doc of docs) {
+      const imageUrls = (doc.images ?? []).map((image) => image.url);
+      if (doc.coverImage && !imageUrls.includes(doc.coverImage)) {
+        imageUrls.push(doc.coverImage);
+      }
+      await this.storageService.deleteByUrls(imageUrls);
+
+      const propertyId = doc._id;
+      await Promise.all([
+        this.propertyFavoriteModel.deleteMany({ propertyId }),
+        this.propertyReportModel.deleteMany({ propertyId }),
+        this.propertyListingModel.deleteOne({ _id: propertyId }),
+      ]);
+    }
+
+    return { purgedCount: docs.length };
+  }
+
+  async listHiddenForAdmin(userId: string): Promise<PropertyListingResponse[]> {
+    await this.assertAdmin(userId);
+
+    const docs = await this.propertyListingModel
+      .find({
+        $or: [
+          { status: PropertyListingStatus.ARCHIVED, deletedAt: null },
+          { status: PropertyListingStatus.DELETED },
+        ],
+      })
+      .sort({ updatedAt: -1 })
+      .limit(100)
+      .exec();
+
+    return docs.map((doc) =>
+      mapPropertyListingToResponse(doc, { isAdmin: true }),
+    );
   }
 
   async approve(id: string, adminId: string): Promise<PropertyListingResponse> {
@@ -656,6 +765,15 @@ export class PropertyListingsService {
     const isAdmin = await this.isAdmin(userId);
     if (!isOwner && !isAdmin) {
       throw new ForbiddenException('Not allowed to modify this listing');
+    }
+  }
+
+  private assertOwnerOnly(
+    doc: PropertyListingDocument,
+    userId: string,
+  ): void {
+    if (doc.ownerId.toHexString() !== userId) {
+      throw new ForbiddenException('Only the listing owner can do this');
     }
   }
 

@@ -5,7 +5,7 @@ const STATUS_LABELS: Record<PropertyListingStatusValue, string> = {
   [PropertyListingStatus.PENDING_APPROVAL]: "Pending review",
   [PropertyListingStatus.APPROVED]: "Approved",
   [PropertyListingStatus.REJECTED]: "Rejected",
-  [PropertyListingStatus.ARCHIVED]: "Archived",
+  [PropertyListingStatus.ARCHIVED]: "Hidden",
   [PropertyListingStatus.EXPIRED]: "Expired",
   [PropertyListingStatus.DELETED]: "Deleted",
 }
@@ -28,6 +28,10 @@ export function propertyListingStatusBadgeClass(
       return "bg-destructive/10 text-destructive"
     case PropertyListingStatus.DRAFT:
       return "bg-muted text-muted-foreground"
+    case PropertyListingStatus.ARCHIVED:
+      return "bg-slate-500/10 text-slate-700 dark:text-slate-300"
+    case PropertyListingStatus.DELETED:
+      return "bg-destructive/10 text-destructive"
     default:
       return "bg-secondary text-secondary-foreground"
   }
