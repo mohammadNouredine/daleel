@@ -476,6 +476,7 @@ export function CreatePropertyListingDialog({
                         name="livingRooms"
                         label="Living rooms"
                         min={0}
+                        quickMax={4}
                         max={6}
                         helpText="Reception/living spaces available in the unit."
                       />
@@ -492,6 +493,7 @@ export function CreatePropertyListingDialog({
                         label="Parking slots"
                         min={0}
                         max={10}
+                        quickMax={4}
                         helpText="Number of car spots available with the property."
                       />
                       <TextInput
