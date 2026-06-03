@@ -59,7 +59,32 @@ export const PRICE_PERIOD_FORM_OPTIONS = valuesToOptions(PricePeriod, {
   MONTHLY: "Monthly",
   QUARTERLY: "Quarterly",
   YEARLY: "Yearly",
-});
+})
+
+/** Shown beside the Price label for rent / recurring listing types. */
+export const PRICE_PERIOD_SUFFIX: Record<string, string> = {
+  NIGHTLY: "/night",
+  WEEKLY: "/week",
+  MONTHLY: "/month",
+  QUARTERLY: "/quarter",
+  YEARLY: "/year",
+}
+
+export function getPriceFieldLightLabel(
+  listingType: string,
+  pricePeriod?: string
+): string | undefined {
+  const isRecurring =
+    listingType === "RENT" ||
+    listingType === "ROOMMATE" ||
+    listingType === "TEMPORARY_HOUSING"
+
+  if (!isRecurring || !pricePeriod) {
+    return undefined
+  }
+
+  return PRICE_PERIOD_SUFFIX[pricePeriod]
+};
 
 export const AREA_UNIT_FORM_OPTIONS = valuesToOptions(AreaUnit);
 

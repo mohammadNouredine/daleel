@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   FormControl,
@@ -6,21 +6,22 @@ import {
   FormField,
   FormItem,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { useFormContext } from "react-hook-form"
-import { FormFieldLabelRow } from "./FormFieldLabelRow"
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useFormContext } from "react-hook-form";
+import { FormFieldLabelRow } from "./FormFieldLabelRow";
 
 type TextInputProps = {
-  name: string
-  label?: string
-  placeholder?: string
-  type?: React.ComponentProps<"input">["type"]
-  description?: string
-  helpText?: string
-  min?: React.ComponentProps<"input">["min"]
-  step?: React.ComponentProps<"input">["step"]
-}
+  name: string;
+  label?: string;
+  placeholder?: string;
+  type?: React.ComponentProps<"input">["type"];
+  description?: string;
+  helpText?: string;
+  min?: React.ComponentProps<"input">["min"];
+  step?: React.ComponentProps<"input">["step"];
+  lightLabelText?: string;
+};
 
 export function TextInput({
   name,
@@ -31,8 +32,9 @@ export function TextInput({
   helpText,
   min,
   step,
+  lightLabelText,
 }: TextInputProps) {
-  const form = useFormContext()
+  const form = useFormContext();
 
   return (
     <FormField
@@ -41,7 +43,11 @@ export function TextInput({
       render={({ field }) => (
         <FormItem>
           {label ? (
-            <FormFieldLabelRow label={label} helpText={helpText} />
+            <FormFieldLabelRow
+              label={label}
+              helpText={helpText}
+              lightLabelText={lightLabelText}
+            />
           ) : null}
           <FormControl>
             <Input
@@ -60,5 +66,5 @@ export function TextInput({
         </FormItem>
       )}
     />
-  )
+  );
 }

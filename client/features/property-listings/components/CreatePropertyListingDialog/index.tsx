@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,7 @@ import {
   CONTACT_METHOD_FORM_OPTIONS,
   CURRENCY_FORM_OPTIONS,
   FURNISHING_FORM_OPTIONS,
+  getPriceFieldLightLabel,
   LISTING_TYPE_FORM_OPTIONS,
   LOCATION_VISIBILITY_OPTIONS,
   PRICE_PERIOD_FORM_OPTIONS,
@@ -83,12 +84,19 @@ export function CreatePropertyListingDialog({
   onOpenChange,
   editingListing = null,
 }: CreatePropertyListingDialogProps) {
-  const isEdit = editingListing != null;
   const [activeTab, setActiveTab] =
     useState<PropertyListingFormStep>(INITIAL_STEP);
   const [visitedTabs, setVisitedTabs] = useState<Set<PropertyListingFormStep>>(
     () => new Set([INITIAL_STEP]),
   );
+  /** After first draft create, further saves use PATCH without closing the dialog. */
+  const [persistedListingId, setPersistedListingId] = useState<string | null>(
+    null,
+  );
+  const initSessionKeyRef = useRef<string | null>(null);
+
+  const listingId = editingListing?._id ?? persistedListingId;
+  const isEdit = listingId != null;
 
   const form = useForm<CreatePropertyListingFormValues>({
     resolver: zodResolver(createPropertyListingSchema),
@@ -96,56 +104,75 @@ export function CreatePropertyListingDialog({
     mode: "onTouched",
   });
 
-  const closeAndReset = useCallback(() => {
-    onOpenChange(false);
+  const resetWizardState = useCallback(() => {
     form.reset(createPropertyListingDefaultValues);
     setActiveTab(INITIAL_STEP);
     setVisitedTabs(new Set([INITIAL_STEP]));
-  }, [form, onOpenChange]);
-
-  const createMutation = useCreatePropertyListing({
-    showSuccessToast: false,
-    onSuccess: (data) => {
-      toast.success(publishSuccessMessage(data.status));
-      closeAndReset();
-    },
-  });
-
-  const updateMutation = useUpdatePropertyListing({
-    showSuccessToast: false,
-    onSuccess: (data) => {
-      toast.success(publishSuccessMessage(data.status));
-      closeAndReset();
-    },
-  });
-
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
-
-  const resetWizard = useCallback(() => {
-    form.reset(createPropertyListingDefaultValues);
-    setActiveTab(INITIAL_STEP);
-    setVisitedTabs(new Set([INITIAL_STEP]));
+    setPersistedListingId(null);
+    initSessionKeyRef.current = null;
   }, [form]);
 
-  const loadEditWizard = useCallback(
+  const closeDialog = useCallback(() => {
+    onOpenChange(false);
+  }, [onOpenChange]);
+
+  const syncFormFromListing = useCallback(
     (listing: PropertyListing) => {
       form.reset(mapPropertyListingToFormValues(listing));
-      setActiveTab(INITIAL_STEP);
-      setVisitedTabs(new Set(PROPERTY_LISTING_FORM_STEPS));
     },
     [form],
   );
 
+  const handleMutationSuccess = useCallback(
+    (data: PropertyListing, asDraft: boolean) => {
+      toast.success(publishSuccessMessage(data.status));
+
+      if (asDraft) {
+        setPersistedListingId(data._id);
+        syncFormFromListing(data);
+        return;
+      }
+
+      closeDialog();
+    },
+    [closeDialog, syncFormFromListing],
+  );
+
+  const createMutation = useCreatePropertyListing({
+    showSuccessToast: false,
+  });
+
+  const updateMutation = useUpdatePropertyListing({
+    showSuccessToast: false,
+  });
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
   useEffect(() => {
     if (!open) {
+      resetWizardState();
       return;
     }
-    if (editingListing) {
-      loadEditWizard(editingListing);
-    } else {
-      resetWizard();
+
+    const sessionKey = editingListing?._id ?? "create";
+    if (initSessionKeyRef.current === sessionKey) {
+      return;
     }
-  }, [open, editingListing, loadEditWizard, resetWizard]);
+    initSessionKeyRef.current = sessionKey;
+
+    if (editingListing) {
+      syncFormFromListing(editingListing);
+      setPersistedListingId(editingListing._id);
+      setActiveTab(INITIAL_STEP);
+      setVisitedTabs(new Set(PROPERTY_LISTING_FORM_STEPS));
+      return;
+    }
+
+    form.reset(createPropertyListingDefaultValues);
+    setPersistedListingId(null);
+    setActiveTab(INITIAL_STEP);
+    setVisitedTabs(new Set([INITIAL_STEP]));
+  }, [open, editingListing, form, resetWizardState, syncFormFromListing]);
 
   useEffect(() => {
     setVisitedTabs((prev) => {
@@ -174,8 +201,13 @@ export function CreatePropertyListingDialog({
     listingType === "ROOMMATE" ||
     listingType === "TEMPORARY_HOUSING";
 
+  const priceLightLabel = getPriceFieldLightLabel(
+    listingType,
+    selectedPricePeriod,
+  );
+
   const parsedPrice = Number(priceInput || 0);
-  const parsedAdvanceMonths = Number(requiredAdvanceMonthsInput || 0);
+  const parsedAdvanceMonths = Number(requiredAdvanceMonthsInput || 1);
   const parsedSecurityDeposit = Number(securityDepositInput || 0);
   const parsedOfficeDeposit = Number(officeDepositInput || 0);
   const firstPayment =
@@ -196,12 +228,15 @@ export function CreatePropertyListingDialog({
       newFiles: values.imageFiles ?? [],
     });
 
-    if (editingListing) {
-      updateMutation.mutate({ id: editingListing._id, formData });
+    const onSuccess = (data: PropertyListing) =>
+      handleMutationSuccess(data, asDraft);
+
+    if (listingId) {
+      updateMutation.mutate({ id: listingId, formData }, { onSuccess });
       return;
     }
 
-    createMutation.mutate(formData);
+    createMutation.mutate(formData, { onSuccess });
   };
 
   const applyResolvedLocation = useCallback(
@@ -519,7 +554,12 @@ export function CreatePropertyListingDialog({
 
                   <FormSection title="Pricing">
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <TextInput name="price" label="Price" type="number" />
+                      <TextInput
+                        name="price"
+                        label="Price"
+                        type="number"
+                        lightLabelText={priceLightLabel}
+                      />
                       <SelectInput
                         name="currency"
                         label="Currency"
@@ -536,6 +576,7 @@ export function CreatePropertyListingDialog({
                         <TextInput
                           name="requiredAdvanceMonths"
                           label="First payment months"
+                          helpText="How many months of rent are paid upfront?"
                           type="number"
                         />
                       ) : null}
