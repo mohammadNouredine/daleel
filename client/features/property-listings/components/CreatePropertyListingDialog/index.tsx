@@ -575,71 +575,71 @@ export function CreatePropertyListingDialog({
                   </FormSection>
 
                   {showPricingSection ? (
-                  <FormSection title="Pricing">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <TextInput
-                        name="price"
-                        label="Price"
-                        type="number"
-                        lightLabelText={priceLightLabel}
-                      />
-                      <SelectInput
-                        name="currency"
-                        label="Currency"
-                        options={CURRENCY_FORM_OPTIONS}
-                      />
-                      {requiresPeriodicPricing ? (
-                        <SelectInput
-                          name="pricePeriod"
-                          label="Price period"
-                          options={PRICE_PERIOD_FORM_OPTIONS}
-                        />
-                      ) : null}
-                      {requiresPeriodicPricing ? (
+                    <FormSection title="Pricing">
+                      <div className="grid gap-4 sm:grid-cols-2">
                         <TextInput
-                          name="requiredAdvanceMonths"
-                          label="First payment months"
-                          helpText="How many months of rent are paid upfront?"
+                          name="price"
+                          label="Price"
+                          type="number"
+                          lightLabelText={priceLightLabel}
+                        />
+                        <SelectInput
+                          name="currency"
+                          label="Currency"
+                          options={CURRENCY_FORM_OPTIONS}
+                        />
+                        {requiresPeriodicPricing ? (
+                          <SelectInput
+                            name="pricePeriod"
+                            label="Price period"
+                            options={PRICE_PERIOD_FORM_OPTIONS}
+                          />
+                        ) : null}
+                        {requiresPeriodicPricing ? (
+                          <TextInput
+                            name="requiredAdvanceMonths"
+                            label="First payment months"
+                            helpText="How many months of rent are paid upfront?"
+                            type="number"
+                          />
+                        ) : null}
+                        <TextInput
+                          name="securityDeposit"
+                          label="Security deposit"
                           type="number"
                         />
-                      ) : null}
-                      <TextInput
-                        name="securityDeposit"
-                        label="Security deposit"
-                        type="number"
-                      />
-                      <TextInput
-                        name="officeDeposit"
-                        label="Office deposit"
-                        type="number"
-                      />
-                    </div>
-                    {requiresPeriodicPricing ? (
-                      <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
-                        <p className="font-medium">Payment summary</p>
-                        <p className="mt-1 text-muted-foreground">
-                          First payment will be{" "}
-                          <span className="font-semibold text-foreground">
-                            {Number.isFinite(firstPayment)
-                              ? firstPayment.toLocaleString("en-US")
-                              : "0"}
-                          </span>
-                        </p>
-                        <p className="text-muted-foreground">
-                          Next payment will be after{" "}
-                          <span className="font-medium text-foreground">
-                            {requiredAdvanceMonthsInput || "0"} month(s)
-                          </span>
-                          {selectedPricePeriod
-                            ? `, then every ${selectedPricePeriod
-                                .toLowerCase()
-                                .replace("_", " ")}.`
-                            : "."}
-                        </p>
+                        <TextInput
+                          name="officeDeposit"
+                          label="Office deposit"
+                          type="number"
+                        />
                       </div>
-                    ) : null}
-                    {booleanField("isPriceNegotiable", "Price is negotiable")}
-                  </FormSection>
+                      {requiresPeriodicPricing ? (
+                        <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
+                          <p className="font-medium">Payment summary</p>
+                          <p className="mt-1 text-muted-foreground">
+                            First payment will be{" "}
+                            <span className="font-semibold text-foreground">
+                              {Number.isFinite(firstPayment)
+                                ? firstPayment.toLocaleString("en-US")
+                                : "0"}
+                            </span>
+                          </p>
+                          <p className="text-muted-foreground">
+                            Next payment will be after{" "}
+                            <span className="font-medium text-foreground">
+                              {requiredAdvanceMonthsInput || "0"} month(s)
+                            </span>
+                            {selectedPricePeriod
+                              ? `, then every ${selectedPricePeriod
+                                  .toLowerCase()
+                                  .replace("_", " ")}.`
+                              : "."}
+                          </p>
+                        </div>
+                      ) : null}
+                      {booleanField("isPriceNegotiable", "Price is negotiable")}
+                    </FormSection>
                   ) : null}
                 </TabsContent>
 

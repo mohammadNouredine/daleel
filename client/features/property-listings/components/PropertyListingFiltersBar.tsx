@@ -1,14 +1,14 @@
 "use client"
 
-import { X } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { SelectField } from "@/components/select/SelectField"
 import { cn } from "@/lib/utils"
-import {
-  DEFAULT_PROPERTY_LISTING_UI_FILTERS,
-  hasActivePropertyListingFilters,
-  type PropertyListingUiFilters,
-} from "../utils/property-listing-filters"
 import type { PropertyListingLocationFacets } from "../types"
+import {
+  type CurrencyValue,
+  type FurnishingStatusValue,
+  type ListingTypeValue,
+  type PropertyTypeValue,
+} from "../types"
 import {
   BEDROOM_FILTER_OPTIONS,
   CURRENCY_FILTER_OPTIONS,
@@ -16,14 +16,9 @@ import {
   LISTING_TYPE_FILTER_OPTIONS,
   PROPERTY_TYPE_FILTER_OPTIONS,
 } from "../utils/filter-options"
-import {
-  type CurrencyValue,
-  type FurnishingStatusValue,
-  type ListingTypeValue,
-  type PropertyTypeValue,
-} from "../types"
+import type { PropertyListingUiFilters } from "../utils/property-listing-filters"
 
-const selectClassName = cn(
+const inputClassName = cn(
   "h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-sm",
   "outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
   "dark:bg-input/30"
@@ -62,7 +57,11 @@ export function PropertyListingFiltersBar({
       .map((c) => ({ value: c.value, label: c.value })),
   ]
 
-  const showClear = hasActivePropertyListingFilters(filters)
+  const cityDisabled =
+    governorateOptions.length <= 1 ||
+    (filters.governorate !== "all" &&
+      filters.governorate !== undefined &&
+      cityOptions.length <= 1)
 
   return (
     <div
@@ -71,190 +70,107 @@ export function PropertyListingFiltersBar({
         className
       )}
     >
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-sm font-medium">Filters</p>
-        {showClear ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 gap-1 px-2 text-muted-foreground"
-            onClick={() => onChange(DEFAULT_PROPERTY_LISTING_UI_FILTERS)}
-          >
-            <X className="size-3.5" />
-            Clear
-          </Button>
-        ) : null}
-      </div>
+      <p className="mb-3 text-sm font-medium">Filters</p>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <label className="grid gap-1.5 text-xs font-medium text-muted-foreground">
-          Listing type
-          <select
-            className={selectClassName}
-            value={filters.listingType ?? "all"}
-            onChange={(e) =>
-              onChange({
-                ...filters,
-                listingType:
-                  e.target.value === "all"
-                    ? undefined
-                    : (e.target.value as ListingTypeValue),
-              })
-            }
-          >
-            {LISTING_TYPE_FILTER_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          label="Listing type"
+          options={LISTING_TYPE_FILTER_OPTIONS}
+          value={filters.listingType ?? "all"}
+          clearValue="all"
+          onValueChange={(value) =>
+            onChange({
+              ...filters,
+              listingType:
+                value === "all" ? undefined : (value as ListingTypeValue),
+            })
+          }
+        />
 
-        <label className="grid gap-1.5 text-xs font-medium text-muted-foreground">
-          Property type
-          <select
-            className={selectClassName}
-            value={filters.propertyType ?? "all"}
-            onChange={(e) =>
-              onChange({
-                ...filters,
-                propertyType:
-                  e.target.value === "all"
-                    ? undefined
-                    : (e.target.value as PropertyTypeValue),
-              })
-            }
-          >
-            {PROPERTY_TYPE_FILTER_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          label="Property type"
+          options={PROPERTY_TYPE_FILTER_OPTIONS}
+          value={filters.propertyType ?? "all"}
+          clearValue="all"
+          onValueChange={(value) =>
+            onChange({
+              ...filters,
+              propertyType:
+                value === "all" ? undefined : (value as PropertyTypeValue),
+            })
+          }
+        />
 
-        <label className="grid gap-1.5 text-xs font-medium text-muted-foreground">
-          Governorate
-          <select
-            className={selectClassName}
-            value={filters.governorate ?? "all"}
-            onChange={(e) =>
-              onChange({
-                ...filters,
-                governorate: e.target.value,
-                city: "all",
-              })
-            }
-          >
-            {governorateOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          label="Governorate"
+          options={governorateOptions}
+          value={filters.governorate ?? "all"}
+          clearValue="all"
+          onValueChange={(value) =>
+            onChange({
+              ...filters,
+              governorate: value,
+              city: "all",
+            })
+          }
+        />
 
-        <label className="grid gap-1.5 text-xs font-medium text-muted-foreground">
-          City
-          <select
-            className={selectClassName}
-            value={filters.city ?? "all"}
-            disabled={
-              governorateOptions.length <= 1 ||
-              (filters.governorate !== "all" &&
-                filters.governorate !== undefined &&
-                cityOptions.length <= 1)
-            }
-            onChange={(e) =>
-              onChange({ ...filters, city: e.target.value })
-            }
-          >
-            {cityOptions.map((opt) => (
-              <option key={`${opt.value}-${opt.label}`} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          label="City"
+          options={cityOptions}
+          value={filters.city ?? "all"}
+          clearValue="all"
+          disabled={cityDisabled}
+          onValueChange={(value) => onChange({ ...filters, city: value })}
+        />
 
-        <label className="grid gap-1.5 text-xs font-medium text-muted-foreground">
-          Bedrooms
-          <select
-            className={selectClassName}
-            value={
-              filters.bedrooms != null ? String(filters.bedrooms) : "all"
-            }
-            onChange={(e) =>
-              onChange({
-                ...filters,
-                bedrooms:
-                  e.target.value === "all"
-                    ? undefined
-                    : Number(e.target.value),
-              })
-            }
-          >
-            {BEDROOM_FILTER_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          label="Bedrooms"
+          options={BEDROOM_FILTER_OPTIONS}
+          value={filters.bedrooms != null ? String(filters.bedrooms) : "all"}
+          clearValue="all"
+          onValueChange={(value) =>
+            onChange({
+              ...filters,
+              bedrooms: value === "all" ? undefined : Number(value),
+            })
+          }
+        />
 
-        <label className="grid gap-1.5 text-xs font-medium text-muted-foreground">
-          Furnishing
-          <select
-            className={selectClassName}
-            value={filters.furnishingStatus ?? "all"}
-            onChange={(e) =>
-              onChange({
-                ...filters,
-                furnishingStatus:
-                  e.target.value === "all"
-                    ? undefined
-                    : (e.target.value as FurnishingStatusValue),
-              })
-            }
-          >
-            {FURNISHING_FILTER_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          label="Furnishing"
+          options={FURNISHING_FILTER_OPTIONS}
+          value={filters.furnishingStatus ?? "all"}
+          clearValue="all"
+          onValueChange={(value) =>
+            onChange({
+              ...filters,
+              furnishingStatus:
+                value === "all" ? undefined : (value as FurnishingStatusValue),
+            })
+          }
+        />
 
-        <label className="grid gap-1.5 text-xs font-medium text-muted-foreground">
-          Currency
-          <select
-            className={selectClassName}
-            value={filters.currency ?? "all"}
-            onChange={(e) =>
-              onChange({
-                ...filters,
-                currency:
-                  e.target.value === "all"
-                    ? undefined
-                    : (e.target.value as CurrencyValue),
-              })
-            }
-          >
-            {CURRENCY_FILTER_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          label="Currency"
+          options={CURRENCY_FILTER_OPTIONS}
+          value={filters.currency ?? "all"}
+          clearValue="all"
+          onValueChange={(value) =>
+            onChange({
+              ...filters,
+              currency:
+                value === "all" ? undefined : (value as CurrencyValue),
+            })
+          }
+        />
 
         <label className="grid gap-1.5 text-xs font-medium text-muted-foreground">
           Min price
           <input
             type="number"
             min={0}
-            className={selectClassName}
+            className={inputClassName}
             value={filters.priceMin ?? ""}
             onChange={(e) =>
               onChange({
@@ -271,7 +187,7 @@ export function PropertyListingFiltersBar({
           <input
             type="number"
             min={0}
-            className={selectClassName}
+            className={inputClassName}
             value={filters.priceMax ?? ""}
             onChange={(e) =>
               onChange({
