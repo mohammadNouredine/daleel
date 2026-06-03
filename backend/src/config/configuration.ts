@@ -16,8 +16,13 @@ export default () => ({
     password: process.env.ADMIN_PASSWORD,
     fullName: process.env.ADMIN_FULL_NAME ?? 'Daleel Admin',
   },
-  uploads: {
-    dir: process.env.UPLOAD_DIR ?? 'uploads/proof-images',
-    maxFiles: 8,
+  storage: {
+    provider: process.env.STORAGE_PROVIDER ?? 'cloudinary',
+    cloudinary: {
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_API_KEY,
+      apiSecret: process.env.CLOUDINARY_API_SECRET,
+      folderPrefix: process.env.CLOUDINARY_FOLDER_PREFIX ?? 'daleel',
+    },
   },
 });

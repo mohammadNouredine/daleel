@@ -17,13 +17,9 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { FilesInterceptor } from '@nestjs/platform-express';
 import { Session, AllowAnonymous, OptionalAuth } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
-import { randomUUID } from 'crypto';
+import { createImageUploadInterceptor } from '../../storage/multer/create-image-upload.interceptor';
 import { MAX_PROOF_IMAGES } from '../uploads/uploads.constants';
 import { FulfillmentAdjustmentDto } from './dto/fulfillment-adjustment.dto';
 import { HelpRequestSortQueryDto } from './dto/help-request-sort-query.dto';
@@ -38,21 +34,7 @@ function requireUserId(session: UserSession | null): string {
   return session.user.id;
 }
 
-const multipartInterceptor = FilesInterceptor('files', MAX_PROOF_IMAGES, {
-  storage: diskStorage({
-    destination: (_req, _file, cb) => {
-      const dir = join(process.cwd(), 'uploads/proof-images');
-      if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true });
-      }
-      cb(null, dir);
-    },
-    filename: (_req, file, cb) => {
-      const extension = extname(file.originalname) || '.jpg';
-      cb(null, `${randomUUID()}${extension}`);
-    },
-  }),
-});
+const multipartInterceptor = createImageUploadInterceptor(MAX_PROOF_IMAGES);
 
 @ApiTags('Help Requests')
 @Controller('help-requests')
@@ -100,14 +82,15 @@ export class HelpRequestsController {
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create a help request' })
   @UseInterceptors(multipartInterceptor)
-  create(
+  async create(
     @Session() session: UserSession | null,
     @Body('payload') payload: string,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
     const userId = requireUserId(session);
     const dto = this.helpRequestsService.parsePayloadJson(payload);
-    const uploadedMedia = this.helpRequestsService.mapUploadedFiles(files);
+    const uploadedMedia =
+      await this.helpRequestsService.mapUploadedFiles(files);
     return this.helpRequestsService.create(userId, dto, uploadedMedia);
   }
 
@@ -116,7 +99,7 @@ export class HelpRequestsController {
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Update a help request' })
   @UseInterceptors(multipartInterceptor)
-  update(
+  async update(
     @Param('id') id: string,
     @Session() session: UserSession | null,
     @Body('payload') payload: string,
@@ -124,7 +107,8 @@ export class HelpRequestsController {
   ) {
     const userId = requireUserId(session);
     const dto = this.helpRequestsService.parsePayloadJson(payload);
-    const uploadedMedia = this.helpRequestsService.mapUploadedFiles(files);
+    const uploadedMedia =
+      await this.helpRequestsService.mapUploadedFiles(files);
     return this.helpRequestsService.update(id, userId, dto, uploadedMedia);
   }
 

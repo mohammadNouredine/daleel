@@ -17,6 +17,7 @@ import {
   Visibility,
 } from '../../common/enums';
 import { toObjectId } from '../../common/utils/object-id.util';
+import { StorageService } from '../../storage/storage.service';
 import { UsersService } from '../users/users.service';
 import type { CreateHelpRequestDto, LocationDto } from './dto/create-help-request.dto';
 import type { FulfillmentAdjustmentDto } from './dto/fulfillment-adjustment.dto';
@@ -41,6 +42,7 @@ export class HelpRequestsService {
     @InjectModel(HelpRequest.name)
     private readonly helpRequestModel: Model<HelpRequestDocument>,
     private readonly usersService: UsersService,
+    private readonly storageService: StorageService,
   ) {}
 
   async listPublic(
@@ -151,10 +153,14 @@ export class HelpRequestsService {
     const doc = await this.findDocumentOrThrow(id);
     await this.assertCanEdit(doc, userId);
 
+    const oldMedia = doc.media ?? [];
     const media = [...(dto.existingMedia ?? []), ...uploadedMedia].slice(
       0,
       8,
     );
+    const newMediaSet = new Set(media);
+    const removedMedia = oldMedia.filter((url) => !newMediaSet.has(url));
+    await this.storageService.deleteByUrls(removedMedia);
 
     const previousNeeds = new Map(
       (doc.needs ?? []).map((line) => [line.id, line.fulfilled]),
@@ -179,6 +185,7 @@ export class HelpRequestsService {
   async remove(id: string, userId: string): Promise<void> {
     const doc = await this.findDocumentOrThrow(id);
     await this.assertCanDelete(doc, userId);
+    await this.storageService.deleteByUrls(doc.media ?? []);
     doc.deletedAt = new Date();
     await doc.save();
   }
@@ -256,10 +263,10 @@ export class HelpRequestsService {
     }
   }
 
-  mapUploadedFiles(files: Express.Multer.File[] | undefined): string[] {
-    return (files ?? []).map(
-      (file) => `/api/v1/uploads/files/${file.filename}`,
-    );
+  async mapUploadedFiles(
+    files: Express.Multer.File[] | undefined,
+  ): Promise<string[]> {
+    return this.storageService.uploadFilesFromMulter(files, 'help-requests');
   }
 
   private buildListFilter(

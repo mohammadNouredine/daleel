@@ -10,6 +10,7 @@ import { ReferenceModule } from './modules/reference/reference.module';
 import { PropertyListingsModule } from './modules/property-listings/property-listings.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { StorageModule } from './storage/storage.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { UsersModule } from './modules/users/users.module';
       load: [configuration],
     }),
     DatabaseModule,
+    StorageModule,
     AuthModule.forRoot({
       auth,
       bodyParser: {

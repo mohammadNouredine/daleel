@@ -1,9 +1,6 @@
 import {
   Controller,
-  Get,
-  Param,
   Post,
-  StreamableFile,
   UnauthorizedException,
   UploadedFiles,
   UseInterceptors,
@@ -15,20 +12,16 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { FilesInterceptor } from '@nestjs/platform-express';
-import { Session, AllowAnonymous } from '@thallesp/nestjs-better-auth';
+import { Session } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
-import { diskStorage } from 'multer';
-import { existsSync, mkdirSync } from 'fs';
-import { extname, join } from 'path';
-import { randomUUID } from 'crypto';
-import { UploadsService } from './uploads.service';
+import { StorageService } from '../../storage/storage.service';
+import { createImageUploadInterceptor } from '../../storage/multer/create-image-upload.interceptor';
 import { MAX_PROOF_IMAGES } from './uploads.constants';
 
 @ApiTags('Uploads')
 @Controller('uploads')
 export class UploadsController {
-  constructor(private readonly uploadsService: UploadsService) {}
+  constructor(private readonly storageService: StorageService) {}
 
   @Post('proof-images')
   @ApiBearerAuth('bearer')
@@ -41,24 +34,8 @@ export class UploadsController {
       },
     },
   })
-  @UseInterceptors(
-    FilesInterceptor('files', MAX_PROOF_IMAGES, {
-      storage: diskStorage({
-        destination: (_req, _file, cb) => {
-          const dir = join(process.cwd(), 'uploads/proof-images');
-          if (!existsSync(dir)) {
-            mkdirSync(dir, { recursive: true });
-          }
-          cb(null, dir);
-        },
-        filename: (_req, file, cb) => {
-          const extension = extname(file.originalname) || '.jpg';
-          cb(null, `${randomUUID()}${extension}`);
-        },
-      }),
-    }),
-  )
-  uploadProofImages(
+  @UseInterceptors(createImageUploadInterceptor(MAX_PROOF_IMAGES))
+  async uploadProofImages(
     @Session() session: UserSession | null,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
@@ -66,18 +43,11 @@ export class UploadsController {
       throw new UnauthorizedException('Authentication required');
     }
 
-    const urls = (files ?? []).map(
-      (file) => `/api/v1/uploads/files/${file.filename}`,
+    const urls = await this.storageService.uploadFilesFromMulter(
+      files,
+      'proof-images',
     );
 
     return { urls };
-  }
-
-  @Get('files/:filename')
-  @AllowAnonymous()
-  @ApiOperation({ summary: 'Serve an uploaded proof image' })
-  getFile(@Param('filename') filename: string): StreamableFile {
-    const stream = this.uploadsService.resolveFileStream(filename);
-    return new StreamableFile(stream);
   }
 }

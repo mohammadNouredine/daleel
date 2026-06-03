@@ -30,5 +30,8 @@ coverage
 # build
 build
 
+# local uploads (legacy)
+backend/uploads
+
 # turbo
 .turbo

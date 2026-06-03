@@ -17,17 +17,13 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { FilesInterceptor } from '@nestjs/platform-express';
 import {
   AllowAnonymous,
   OptionalAuth,
   Session,
 } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
-import { diskStorage } from 'multer';
-import { existsSync, mkdirSync } from 'fs';
-import { extname, join } from 'path';
-import { randomUUID } from 'crypto';
+import { createImageUploadInterceptor } from '../../storage/multer/create-image-upload.interceptor';
 import { ListPropertyListingsQueryDto } from './dto/list-property-listings-query.dto';
 import { RejectPropertyListingDto } from './dto/reject-property-listing.dto';
 import { MAX_PROPERTY_IMAGES } from './property-listings.constants';
@@ -40,24 +36,8 @@ function requireUserId(session: UserSession | null): string {
   return session.user.id;
 }
 
-const propertyImagesInterceptor = FilesInterceptor(
-  'files',
+const propertyImagesInterceptor = createImageUploadInterceptor(
   MAX_PROPERTY_IMAGES,
-  {
-    storage: diskStorage({
-      destination: (_req, _file, cb) => {
-        const dir = join(process.cwd(), 'uploads/proof-images');
-        if (!existsSync(dir)) {
-          mkdirSync(dir, { recursive: true });
-        }
-        cb(null, dir);
-      },
-      filename: (_req, file, cb) => {
-        const extension = extname(file.originalname) || '.jpg';
-        cb(null, `${randomUUID()}${extension}`);
-      },
-    }),
-  },
 );
 
 @ApiTags('Property Listings')
@@ -125,14 +105,15 @@ export class PropertyListingsController {
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create a property listing' })
   @UseInterceptors(propertyImagesInterceptor)
-  create(
+  async create(
     @Session() session: UserSession | null,
     @Body('payload') payload: string,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
     const userId = requireUserId(session);
     const dto = this.propertyListingsService.parsePayloadJson(payload);
-    const uploadedUrls = this.propertyListingsService.mapUploadedFiles(files);
+    const uploadedUrls =
+      await this.propertyListingsService.mapUploadedFiles(files);
     return this.propertyListingsService.create(userId, dto, uploadedUrls);
   }
 
@@ -141,7 +122,7 @@ export class PropertyListingsController {
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Update a property listing' })
   @UseInterceptors(propertyImagesInterceptor)
-  update(
+  async update(
     @Param('id') id: string,
     @Session() session: UserSession | null,
     @Body('payload') payload: string,
@@ -149,7 +130,8 @@ export class PropertyListingsController {
   ) {
     const userId = requireUserId(session);
     const dto = this.propertyListingsService.parsePayloadJson(payload);
-    const uploadedUrls = this.propertyListingsService.mapUploadedFiles(files);
+    const uploadedUrls =
+      await this.propertyListingsService.mapUploadedFiles(files);
     return this.propertyListingsService.update(id, userId, dto, uploadedUrls);
   }
 

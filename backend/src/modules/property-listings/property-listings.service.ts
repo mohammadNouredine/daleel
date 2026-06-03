@@ -14,6 +14,7 @@ import {
   UserRole,
 } from '../../common/enums';
 import { toObjectId } from '../../common/utils/object-id.util';
+import { StorageService } from '../../storage/storage.service';
 import { UsersService } from '../users/users.service';
 import type { CreatePropertyListingDto } from './dto/create-property-listing.dto';
 import type { CreatePropertyReportDto } from './dto/create-property-report.dto';
@@ -89,6 +90,7 @@ export class PropertyListingsService {
     @InjectModel(PropertyReport.name)
     private readonly propertyReportModel: Model<PropertyReportDocument>,
     private readonly usersService: UsersService,
+    private readonly storageService: StorageService,
   ) {}
 
   async listPublic(
@@ -248,7 +250,12 @@ export class PropertyListingsService {
       await this.validateAmenityIds(dto.amenityIds);
     }
 
+    const oldUrls = (doc.images ?? []).map((image) => image.url);
     const images = this.buildImages(dto, uploadedUrls);
+    const newUrlSet = new Set(images.map((image) => image.url));
+    const removedUrls = oldUrls.filter((url) => !newUrlSet.has(url));
+    await this.storageService.deleteByUrls(removedUrls);
+
     const wasApproved = doc.status === PropertyListingStatus.APPROVED;
     const payload = applyListingTypePricingRules(dto);
 
@@ -331,6 +338,13 @@ export class PropertyListingsService {
       throw new NotFoundException('Property listing not found');
     }
     await this.assertCanEdit(doc, userId);
+
+    const imageUrls = (doc.images ?? []).map((image) => image.url);
+    if (doc.coverImage && !imageUrls.includes(doc.coverImage)) {
+      imageUrls.push(doc.coverImage);
+    }
+    await this.storageService.deleteByUrls(imageUrls);
+
     doc.deletedAt = new Date();
     doc.status = PropertyListingStatus.DELETED;
     await doc.save();
@@ -453,9 +467,12 @@ export class PropertyListingsService {
     }
   }
 
-  mapUploadedFiles(files: Express.Multer.File[] | undefined): string[] {
-    return (files ?? []).map(
-      (file) => `/api/v1/uploads/files/${file.filename}`,
+  async mapUploadedFiles(
+    files: Express.Multer.File[] | undefined,
+  ): Promise<string[]> {
+    return this.storageService.uploadFilesFromMulter(
+      files,
+      'property-listings',
     );
   }
 
