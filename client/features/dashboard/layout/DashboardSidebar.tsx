@@ -28,9 +28,7 @@ export function DashboardSidebar({ className }: DashboardSidebarProps) {
       )}
     >
       <div className="border-b border-border px-4 py-4">
-        <Link href="/dashboard" className="inline-flex">
-          <DaleelLogo showTagline={false} />
-        </Link>
+        <DaleelLogo showTagline={false} href="/dashboard" className="inline-flex" />
         <p className="mt-2 text-xs text-muted-foreground">Management dashboard</p>
       </div>
 

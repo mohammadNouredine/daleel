@@ -5,14 +5,13 @@ import { cn } from "@/lib/utils"
 type DaleelLogoProps = {
   className?: string
   showTagline?: boolean
+  /** Logo link target. Pass `false` to render markup without a link. */
+  href?: string | false
 }
 
-export function DaleelLogo({ className, showTagline = true }: DaleelLogoProps) {
+function DaleelLogoMark({ className, showTagline }: DaleelLogoProps) {
   return (
-    <Link
-      href="/"
-      className={cn("flex items-center gap-2.5 outline-none", className)}
-    >
+    <>
       <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
         <MapPin className="size-5" aria-hidden />
       </span>
@@ -24,6 +23,28 @@ export function DaleelLogo({ className, showTagline = true }: DaleelLogoProps) {
           </span>
         ) : null}
       </span>
+    </>
+  )
+}
+
+export function DaleelLogo({
+  className,
+  showTagline = true,
+  href = "/",
+}: DaleelLogoProps) {
+  const contentClassName = cn("flex items-center gap-2.5 outline-none", className)
+
+  if (href === false) {
+    return (
+      <span className={contentClassName}>
+        <DaleelLogoMark showTagline={showTagline} />
+      </span>
+    )
+  }
+
+  return (
+    <Link href={href} className={contentClassName}>
+      <DaleelLogoMark showTagline={showTagline} />
     </Link>
   )
 }
