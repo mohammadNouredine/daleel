@@ -30,8 +30,10 @@ const LISTING_TYPE_LABELS: Record<string, string> = {
   [ListingType.RENT]: "Rent",
   [ListingType.SALE]: "Sale",
   [ListingType.SHELTER]: "Shelter",
-  [ListingType.TEMPORARY_HOUSING]: "Temporary",
+  [ListingType.SHORT_TERM]: "Short term",
   [ListingType.ROOMMATE]: "Roommate",
+  [ListingType.FREE_STAY]: "Free stay",
+  TEMPORARY_HOUSING: "Short term",
 }
 
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
@@ -79,6 +81,10 @@ export function formatListingLocation(listing: PropertyListing): string {
 }
 
 export function formatListingPriceLabel(listing: PropertyListing): string {
+  if (listing.listingType === ListingType.FREE_STAY) {
+    return "Free stay"
+  }
+
   if (
     listing.listingType === ListingType.SHELTER ||
     listing.isEmergencyShelter

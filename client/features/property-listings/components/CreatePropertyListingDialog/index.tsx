@@ -58,6 +58,11 @@ import {
 } from "../../utils/form-options";
 import type { ResolvedLocation } from "@/lib/location-resolve";
 import { resolvePropertyMapCoordinates } from "../../utils/resolve-map-coordinates";
+import {
+  getListingTypeDescription,
+  isRecurringListingType,
+  shouldShowPricingSection,
+} from "../../utils/listing-type-rules";
 import { PropertyListingAmenitiesField } from "./PropertyListingAmenitiesField";
 import { PropertyListingImagesUpload } from "./PropertyListingImagesUpload";
 
@@ -196,10 +201,22 @@ export function CreatePropertyListingDialog({
   const resolvedGovernorate = form.watch("governorate");
   const resolvedCity = form.watch("city");
 
-  const requiresPeriodicPricing =
-    listingType === "RENT" ||
-    listingType === "ROOMMATE" ||
-    listingType === "TEMPORARY_HOUSING";
+  const requiresPeriodicPricing = isRecurringListingType(listingType);
+  const showPricingSection = shouldShowPricingSection(listingType);
+  const listingTypeDescription = getListingTypeDescription(listingType);
+
+  useEffect(() => {
+    if (!showPricingSection) {
+      form.setValue("price", "", { shouldValidate: false });
+      form.setValue("currency", "USD", { shouldValidate: false });
+      form.setValue("pricePeriod", "MONTHLY", { shouldValidate: false });
+      form.setValue("requiredAdvanceMonths", "", { shouldValidate: false });
+      form.setValue("securityDeposit", "", { shouldValidate: false });
+      form.setValue("officeDeposit", "", { shouldValidate: false });
+      form.setValue("commissionAmount", "", { shouldValidate: false });
+      form.setValue("isPriceNegotiable", false, { shouldValidate: false });
+    }
+  }, [showPricingSection, form]);
 
   const priceLightLabel = getPriceFieldLightLabel(
     listingType,
@@ -426,6 +443,11 @@ export function CreatePropertyListingDialog({
                         options={PROPERTY_TYPE_FORM_OPTIONS}
                       />
                     </div>
+                    {listingTypeDescription ? (
+                      <p className="text-xs text-muted-foreground">
+                        {listingTypeDescription}
+                      </p>
+                    ) : null}
                     <TextInput
                       name="title"
                       label="Title"
@@ -552,6 +574,7 @@ export function CreatePropertyListingDialog({
                     />
                   </FormSection>
 
+                  {showPricingSection ? (
                   <FormSection title="Pricing">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <TextInput
@@ -617,6 +640,7 @@ export function CreatePropertyListingDialog({
                     ) : null}
                     {booleanField("isPriceNegotiable", "Price is negotiable")}
                   </FormSection>
+                  ) : null}
                 </TabsContent>
 
                 <TabsContent value="access" className="mt-0 space-y-4">

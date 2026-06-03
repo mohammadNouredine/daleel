@@ -98,7 +98,7 @@ export const createPropertyListingSchema = z.object({
 }).superRefine((values, ctx) => {
   const timeBasedListing =
     values.listingType === ListingType.RENT ||
-    values.listingType === ListingType.TEMPORARY_HOUSING ||
+    values.listingType === ListingType.SHORT_TERM ||
     values.listingType === ListingType.ROOMMATE
 
   if (timeBasedListing && !values.pricePeriod) {

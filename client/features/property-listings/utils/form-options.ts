@@ -7,7 +7,8 @@ import {
   LocationVisibility,
   PricePeriod,
   PropertyType,
-} from "../types";
+} from "../types"
+import { isRecurringListingType } from "./listing-type-rules"
 
 function valuesToOptions<T extends Record<string, string>>(
   obj: T,
@@ -23,9 +24,10 @@ export const LISTING_TYPE_FORM_OPTIONS = valuesToOptions(ListingType, {
   RENT: "Rent",
   SALE: "Sale",
   SHELTER: "Shelter",
-  TEMPORARY_HOUSING: "Temporary housing",
+  SHORT_TERM: "Short term",
   ROOMMATE: "Roommate",
-});
+  FREE_STAY: "Free stay",
+})
 
 export const PROPERTY_TYPE_FORM_OPTIONS = valuesToOptions(PropertyType, {
   APARTMENT: "Apartment",
@@ -74,17 +76,12 @@ export function getPriceFieldLightLabel(
   listingType: string,
   pricePeriod?: string
 ): string | undefined {
-  const isRecurring =
-    listingType === "RENT" ||
-    listingType === "ROOMMATE" ||
-    listingType === "TEMPORARY_HOUSING"
-
-  if (!isRecurring || !pricePeriod) {
+  if (!isRecurringListingType(listingType) || !pricePeriod) {
     return undefined
   }
 
   return PRICE_PERIOD_SUFFIX[pricePeriod]
-};
+}
 
 export const AREA_UNIT_FORM_OPTIONS = valuesToOptions(AreaUnit);
 

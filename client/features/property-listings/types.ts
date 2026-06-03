@@ -2,8 +2,9 @@ export const ListingType = {
   RENT: "RENT",
   SALE: "SALE",
   SHELTER: "SHELTER",
-  TEMPORARY_HOUSING: "TEMPORARY_HOUSING",
+  SHORT_TERM: "SHORT_TERM",
   ROOMMATE: "ROOMMATE",
+  FREE_STAY: "FREE_STAY",
 } as const
 
 export type ListingTypeValue = (typeof ListingType)[keyof typeof ListingType]

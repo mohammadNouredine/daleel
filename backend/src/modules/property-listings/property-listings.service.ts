@@ -44,6 +44,7 @@ import {
   type PropertyReportDocument,
 } from './schemas/property-report.schema';
 import { buildPropertyListingFilter } from './utils/property-listing-filters.util';
+import { applyListingTypePricingRules } from './utils/listing-type.util';
 import { assertCoordinatesInLebanon } from './utils/lebanon-coordinates.util';
 import { paginatePropertyListings } from './utils/property-listing-pagination.util';
 import type { ListingLocationDto } from './dto/listing-location.dto';
@@ -177,11 +178,13 @@ export class PropertyListingsService {
       ? this.buildApprovalMetadata(userId)
       : {};
 
+    const payload = applyListingTypePricingRules(dto);
+
     const doc = await this.propertyListingModel.create({
       ownerId: toObjectId(userId),
       status,
       ...approvalMeta,
-      listingType: dto.listingType,
+      listingType: payload.listingType,
       propertyType: dto.propertyType,
       title: dto.title.trim(),
       description: dto.description.trim(),
@@ -196,16 +199,16 @@ export class PropertyListingsService {
       buildingFloors: dto.buildingFloors,
       area: dto.area,
       areaUnit: dto.areaUnit,
-      furnishingStatus: dto.furnishingStatus,
-      price: dto.price,
-      currency: dto.currency,
-      pricePeriod: dto.pricePeriod,
-      requiredAdvanceMonths: dto.requiredAdvanceMonths,
-      securityDeposit: dto.securityDeposit,
-      officeDeposit: dto.officeDeposit,
-      commissionAmount: dto.commissionAmount,
-      isPriceNegotiable: dto.isPriceNegotiable ?? false,
-      isEmergencyShelter: dto.isEmergencyShelter ?? false,
+      furnishingStatus: payload.furnishingStatus,
+      price: payload.price,
+      currency: payload.currency,
+      pricePeriod: payload.pricePeriod,
+      requiredAdvanceMonths: payload.requiredAdvanceMonths,
+      securityDeposit: payload.securityDeposit,
+      officeDeposit: payload.officeDeposit,
+      commissionAmount: payload.commissionAmount,
+      isPriceNegotiable: payload.isPriceNegotiable ?? false,
+      isEmergencyShelter: payload.isEmergencyShelter ?? false,
       acceptFamilies: dto.acceptFamilies ?? false,
       acceptChildren: dto.acceptChildren ?? false,
       acceptPets: dto.acceptPets ?? false,
@@ -247,8 +250,9 @@ export class PropertyListingsService {
 
     const images = this.buildImages(dto, uploadedUrls);
     const wasApproved = doc.status === PropertyListingStatus.APPROVED;
+    const payload = applyListingTypePricingRules(dto);
 
-    doc.listingType = dto.listingType;
+    doc.listingType = payload.listingType;
     doc.propertyType = dto.propertyType;
     doc.title = dto.title.trim();
     doc.description = dto.description.trim();
@@ -263,15 +267,15 @@ export class PropertyListingsService {
     doc.buildingFloors = dto.buildingFloors;
     doc.area = dto.area;
     doc.areaUnit = dto.areaUnit;
-    doc.furnishingStatus = dto.furnishingStatus;
-    doc.price = dto.price;
-    doc.currency = dto.currency;
-    doc.pricePeriod = dto.pricePeriod;
-    doc.requiredAdvanceMonths = dto.requiredAdvanceMonths;
-    doc.securityDeposit = dto.securityDeposit;
-    doc.officeDeposit = dto.officeDeposit;
-    doc.commissionAmount = dto.commissionAmount;
-    doc.isPriceNegotiable = dto.isPriceNegotiable ?? doc.isPriceNegotiable;
+    doc.furnishingStatus = payload.furnishingStatus;
+    doc.price = payload.price;
+    doc.currency = payload.currency;
+    doc.pricePeriod = payload.pricePeriod;
+    doc.requiredAdvanceMonths = payload.requiredAdvanceMonths;
+    doc.securityDeposit = payload.securityDeposit;
+    doc.officeDeposit = payload.officeDeposit;
+    doc.commissionAmount = payload.commissionAmount;
+    doc.isPriceNegotiable = payload.isPriceNegotiable ?? false;
     doc.isEmergencyShelter = dto.isEmergencyShelter ?? doc.isEmergencyShelter;
     doc.acceptFamilies = dto.acceptFamilies ?? doc.acceptFamilies;
     doc.acceptChildren = dto.acceptChildren ?? doc.acceptChildren;

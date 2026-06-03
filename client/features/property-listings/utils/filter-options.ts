@@ -21,8 +21,9 @@ export const LISTING_TYPE_FILTER_OPTIONS = [
     RENT: "Rent",
     SALE: "Sale",
     SHELTER: "Shelter",
-    TEMPORARY_HOUSING: "Temporary housing",
+    SHORT_TERM: "Short term",
     ROOMMATE: "Roommate",
+    FREE_STAY: "Free stay",
   }),
 ]
 

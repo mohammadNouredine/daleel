@@ -1,15 +1,16 @@
-import type {
-  AreaUnitValue,
-  CreatePropertyListingInput,
-  CurrencyValue,
-  FurnishingStatusValue,
-  ListingContactMethodValue,
-  ListingLocation,
-  ListingTypeValue,
-  LocationVisibilityValue,
-  PricePeriodValue,
-  PropertyListing,
-  PropertyTypeValue,
+import {
+  ListingType,
+  type AreaUnitValue,
+  type CreatePropertyListingInput,
+  type CurrencyValue,
+  type FurnishingStatusValue,
+  type ListingContactMethodValue,
+  type ListingLocation,
+  type ListingTypeValue,
+  type LocationVisibilityValue,
+  type PricePeriodValue,
+  type PropertyListing,
+  type PropertyTypeValue,
 } from "../types"
 import {
   formatContactPhone,
@@ -17,11 +18,21 @@ import {
 } from "@/components/forms/Phone/phone-utils"
 import { DEFAULT_LISTING_COUNTRY } from "../constants"
 import type { CreatePropertyListingFormValues } from "../schemas/create-property-listing.schema"
+import { isFreeListingType } from "./listing-type-rules"
 
 function parseOptionalInt(value?: string): number | undefined {
   if (!value?.trim()) return undefined
   const n = Number(value)
   return Number.isFinite(n) ? n : undefined
+}
+
+function normalizeListingTypeFromApi(
+  listingType: string
+): ListingTypeValue {
+  if (listingType === "TEMPORARY_HOUSING") {
+    return ListingType.SHORT_TERM
+  }
+  return listingType as ListingTypeValue
 }
 
 function parseOptionalFloat(value?: string): number | undefined {
@@ -52,6 +63,8 @@ function buildLocationFromForm(
 export function mapFormToCreatePropertyListingInput(
   values: CreatePropertyListingFormValues
 ): CreatePropertyListingInput {
+  const isFree = isFreeListingType(values.listingType)
+
   return {
     listingType: values.listingType as ListingTypeValue,
     propertyType: values.propertyType as PropertyTypeValue,
@@ -70,14 +83,22 @@ export function mapFormToCreatePropertyListingInput(
     furnishingStatus: values.furnishingStatus as
       | FurnishingStatusValue
       | undefined,
-    price: parseOptionalFloat(values.price),
-    currency: values.currency as CurrencyValue | undefined,
-    pricePeriod: values.pricePeriod as PricePeriodValue | undefined,
-    requiredAdvanceMonths: parseOptionalInt(values.requiredAdvanceMonths),
-    securityDeposit: parseOptionalFloat(values.securityDeposit),
-    officeDeposit: parseOptionalFloat(values.officeDeposit),
-    commissionAmount: parseOptionalFloat(values.commissionAmount),
-    isPriceNegotiable: values.isPriceNegotiable,
+    price: isFree ? undefined : parseOptionalFloat(values.price),
+    currency: isFree ? undefined : (values.currency as CurrencyValue | undefined),
+    pricePeriod: isFree
+      ? undefined
+      : (values.pricePeriod as PricePeriodValue | undefined),
+    requiredAdvanceMonths: isFree
+      ? undefined
+      : parseOptionalInt(values.requiredAdvanceMonths),
+    securityDeposit: isFree
+      ? undefined
+      : parseOptionalFloat(values.securityDeposit),
+    officeDeposit: isFree ? undefined : parseOptionalFloat(values.officeDeposit),
+    commissionAmount: isFree
+      ? undefined
+      : parseOptionalFloat(values.commissionAmount),
+    isPriceNegotiable: isFree ? false : values.isPriceNegotiable,
     isEmergencyShelter: values.isEmergencyShelter,
     acceptFamilies: values.acceptFamilies,
     acceptChildren: values.acceptChildren,
@@ -103,7 +124,7 @@ export function mapPropertyListingToFormValues(
   const phone = splitContactPhone(listing.contactPhone)
 
   return {
-    listingType: listing.listingType,
+    listingType: normalizeListingTypeFromApi(listing.listingType),
     propertyType: listing.propertyType,
     title: listing.title,
     description: listing.description,
