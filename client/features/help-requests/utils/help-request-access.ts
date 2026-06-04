@@ -25,8 +25,10 @@ export function canManageHelpRequest(
     return false
   }
   const isOwner = request.createdBy === profile._id
-  const isAdmin = profile.role === "ADMIN"
-  return isOwner || isAdmin
+  if (isOwner) {
+    return true
+  }
+  return hasRequestPermission(profile.permissions, "manage")
 }
 
 export function canEditHelpRequest(

@@ -17,8 +17,9 @@ export function mapDocumentToUser(record: Record<string, unknown>): DaleelUser |
   const stored = record.permissions as DaleelUser['permissions'] | undefined;
   const defaults = defaultPermissionsForRole(role);
   const permissions: DaleelUser['permissions'] = {
-    requests: stored?.requests ?? defaults.requests,
-    properties: stored?.properties ?? defaults.properties,
+    requests: { ...defaults.requests, ...stored?.requests },
+    properties: { ...defaults.properties, ...stored?.properties },
+    users: { ...defaults.users, ...stored?.users },
   };
 
   return {

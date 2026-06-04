@@ -19,9 +19,43 @@ export type PropertyPermissions = {
 
 export type PropertyPermissionKey = keyof PropertyPermissions
 
+export type UserAdminPermissions = {
+  read: boolean
+  edit: boolean
+  delete: boolean
+  managePermissions: boolean
+}
+
+export type UserAdminPermissionKey = keyof UserAdminPermissions
+
 export type UserPermissions = {
   requests: RequestPermissions
   properties: PropertyPermissions
+  users: UserAdminPermissions
+}
+
+export type AdminUser = {
+  _id: string
+  fullName: string
+  email: string
+  role: DaleelProfile["role"]
+  permissions: UserPermissions
+  isVerified: boolean
+  isActive: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type UsersListResponse = {
+  items: AdminUser[]
+  nextLastId: string | null
+}
+
+export type UpdateUserInput = {
+  fullName?: string
+  role?: DaleelProfile["role"]
+  isActive?: boolean
+  isVerified?: boolean
 }
 
 export type DaleelProfile = {

@@ -8,14 +8,18 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { randomUUID } from 'crypto';
 import {
-  hasRequestPermission,
+  canAccessResource,
+  getModerationQueueScope,
+  getScope,
+  hasPermission,
+  shouldAutoApproveCreatedContent,
 } from '../../common/permissions';
 import {
   HelpRequestApprovalStatus,
   HelpRequestStatus,
-  UserRole,
   Visibility,
 } from '../../common/enums';
+import type { DaleelUser } from '../users/schemas/user.types';
 import { toObjectId } from '../../common/utils/object-id.util';
 import { StorageService } from '../../storage/storage.service';
 import { UsersService } from '../users/users.service';
@@ -61,6 +65,11 @@ export class HelpRequestsService {
     userId: string,
     query: HelpRequestSortQueryDto = {},
   ): Promise<HelpRequestResponse[]> {
+    const user = await this.getUserOrThrow(userId);
+    if (!hasPermission(user, 'requests.read')) {
+      throw new ForbiddenException('Insufficient permissions');
+    }
+
     const docs = await this.helpRequestModel
       .find({
         createdBy: toObjectId(userId),
@@ -72,7 +81,10 @@ export class HelpRequestsService {
   }
 
   async listPendingModeration(userId: string): Promise<HelpRequestResponse[]> {
-    await this.assertAdmin(userId);
+    const user = await this.getUserOrThrow(userId);
+    if (getModerationQueueScope(user, 'helpRequest') === 'none') {
+      throw new ForbiddenException('Insufficient permissions');
+    }
 
     const docs = await this.helpRequestModel
       .find({
@@ -91,12 +103,18 @@ export class HelpRequestsService {
   ): Promise<HelpRequestResponse> {
     const doc = await this.findDocumentOrThrow(id);
 
-    const isOwner = viewerId ? doc.createdBy.toHexString() === viewerId : false;
-    const isAdmin = viewerId ? await this.isAdmin(viewerId) : false;
     const isApproved =
       doc.approvalStatus === HelpRequestApprovalStatus.APPROVED;
 
-    if (!isApproved && !isOwner && !isAdmin) {
+    if (!viewerId) {
+      if (!isApproved) {
+        throw new NotFoundException('Help request not found');
+      }
+      return mapHelpRequestToResponse(doc);
+    }
+
+    const user = await this.getUserOrThrow(viewerId);
+    if (!this.canViewHelpRequest(user, viewerId, doc)) {
       throw new NotFoundException('Help request not found');
     }
 
@@ -113,9 +131,11 @@ export class HelpRequestsService {
       throw new ForbiddenException('User profile not found');
     }
 
-    const autoApprove =
-      user.role === UserRole.ADMIN ||
-      hasRequestPermission(user.permissions, 'write');
+    if (!hasPermission(user, 'requests.write')) {
+      throw new ForbiddenException('Insufficient permissions');
+    }
+
+    const autoApprove = shouldAutoApproveCreatedContent(user);
 
     const media = [...(dto.existingMedia ?? []), ...uploadedMedia].slice(
       0,
@@ -226,7 +246,7 @@ export class HelpRequestsService {
   }
 
   async approve(id: string, adminId: string): Promise<HelpRequestResponse> {
-    await this.assertAdmin(adminId);
+    await this.assertCanVerify(adminId);
     const doc = await this.findDocumentOrThrow(id);
 
     doc.approvalStatus = HelpRequestApprovalStatus.APPROVED;
@@ -243,7 +263,7 @@ export class HelpRequestsService {
     adminId: string,
     dto: RejectHelpRequestDto,
   ): Promise<HelpRequestResponse> {
-    await this.assertAdmin(adminId);
+    await this.assertCanVerify(adminId);
     const doc = await this.findDocumentOrThrow(id);
 
     doc.approvalStatus = HelpRequestApprovalStatus.REJECTED;
@@ -401,14 +421,35 @@ export class HelpRequestsService {
     return doc;
   }
 
-  private async isAdmin(userId: string): Promise<boolean> {
+  private async getUserOrThrow(userId: string): Promise<DaleelUser> {
     const user = await this.usersService.findById(userId);
-    return user?.role === UserRole.ADMIN;
+    if (!user) {
+      throw new ForbiddenException('User profile not found');
+    }
+    return user;
   }
 
-  private async assertAdmin(userId: string): Promise<void> {
-    if (!(await this.isAdmin(userId))) {
-      throw new ForbiddenException('Admin access required');
+  private canViewHelpRequest(
+    user: DaleelUser,
+    userId: string,
+    doc: HelpRequestDocument,
+  ): boolean {
+    const isApproved =
+      doc.approvalStatus === HelpRequestApprovalStatus.APPROVED;
+    if (isApproved) {
+      return true;
+    }
+
+    return canAccessResource(user, userId, 'helpRequest', 'requests.read', {
+      resource: { createdBy: doc.createdBy.toHexString() },
+      allowOwnerWithoutPermission: true,
+    });
+  }
+
+  private async assertCanVerify(userId: string): Promise<void> {
+    const user = await this.getUserOrThrow(userId);
+    if (!hasPermission(user, 'requests.verify')) {
+      throw new ForbiddenException('Insufficient permissions');
     }
   }
 
@@ -416,16 +457,13 @@ export class HelpRequestsService {
     doc: HelpRequestDocument,
     userId: string,
   ): Promise<void> {
-    const user = await this.usersService.findById(userId);
-    if (!user) {
-      throw new ForbiddenException('User profile not found');
-    }
-
-    const isOwner = doc.createdBy.toHexString() === userId;
-    const isAdmin = user.role === UserRole.ADMIN;
-    const canEdit = hasRequestPermission(user.permissions, 'edit');
-
-    if (!isAdmin && !(isOwner && canEdit)) {
+    const user = await this.getUserOrThrow(userId);
+    if (
+      !canAccessResource(user, userId, 'helpRequest', 'requests.edit', {
+        resource: { createdBy: doc.createdBy.toHexString() },
+        allowOwnerWithoutPermission: true,
+      })
+    ) {
       throw new ForbiddenException('Not allowed to edit this request');
     }
   }
@@ -434,16 +472,13 @@ export class HelpRequestsService {
     doc: HelpRequestDocument,
     userId: string,
   ): Promise<void> {
-    const user = await this.usersService.findById(userId);
-    if (!user) {
-      throw new ForbiddenException('User profile not found');
-    }
-
-    const isOwner = doc.createdBy.toHexString() === userId;
-    const isAdmin = user.role === UserRole.ADMIN;
-    const canDelete = hasRequestPermission(user.permissions, 'delete');
-
-    if (!isAdmin && !(isOwner && canDelete)) {
+    const user = await this.getUserOrThrow(userId);
+    if (
+      !canAccessResource(user, userId, 'helpRequest', 'requests.delete', {
+        resource: { createdBy: doc.createdBy.toHexString() },
+        allowOwnerWithoutPermission: true,
+      })
+    ) {
       throw new ForbiddenException('Not allowed to delete this request');
     }
   }
@@ -452,14 +487,7 @@ export class HelpRequestsService {
     doc: HelpRequestDocument,
     userId: string,
   ): Promise<void> {
-    const user = await this.usersService.findById(userId);
-    if (!user) {
-      throw new ForbiddenException('User profile not found');
-    }
-
-    const isOwner = doc.createdBy.toHexString() === userId;
-    const isAdmin = user.role === UserRole.ADMIN;
-    const canManage = hasRequestPermission(user.permissions, 'manage');
+    const user = await this.getUserOrThrow(userId);
 
     const manageableStatuses = [
       HelpRequestStatus.ACTIVE,
@@ -470,8 +498,17 @@ export class HelpRequestsService {
       throw new ForbiddenException('Request is not manageable in this status');
     }
 
-    if (!isAdmin && !(isOwner && canManage)) {
-      throw new ForbiddenException('Not allowed to manage this request');
+    const manageScope = getScope(user, 'helpRequest', 'requests.manage');
+    const isOwner = doc.createdBy.toHexString() === userId;
+
+    if (manageScope === 'platform') {
+      return;
     }
+
+    if (isOwner && hasPermission(user, 'requests.manage')) {
+      return;
+    }
+
+    throw new ForbiddenException('Not allowed to manage this request');
   }
 }

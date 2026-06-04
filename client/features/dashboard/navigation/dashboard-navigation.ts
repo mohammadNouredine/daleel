@@ -19,11 +19,15 @@ export const dashboardNavigation: DashboardNavItem[] = [
   {
     label: "Users",
     icon: Users,
-    access: { roles: ["ADMIN", "ORGANIZATION"] },
+    access: {
+      roles: ["ADMIN", "ORGANIZATION"],
+      anyPermissions: ["users.read"],
+    },
     children: [
       {
         label: "All users",
         href: "/dashboard/users",
+        access: { anyPermissions: ["users.read"] },
       },
     ],
   },
@@ -39,12 +43,22 @@ export const dashboardNavigation: DashboardNavItem[] = [
       {
         label: "Approvals",
         href: "/dashboard/properties/approvals",
-        access: { roles: ["ADMIN"] },
+        access: {
+          anyPermissions: [
+            "properties.canApproveProperty",
+            "properties.canRejectProperty",
+          ],
+        },
       },
       {
         label: "Hidden & deleted",
         href: "/dashboard/properties/hidden",
-        access: { roles: ["ADMIN"] },
+        access: {
+          anyPermissions: [
+            "properties.canHideProperty",
+            "properties.canPermanentlyDeleteProperty",
+          ],
+        },
       },
       {
         label: "Categories",
@@ -60,7 +74,7 @@ export const dashboardNavigation: DashboardNavItem[] = [
       {
         label: "Pending approval",
         href: "/dashboard/help-requests/pending",
-        access: { roles: ["ADMIN"] },
+        access: { anyPermissions: ["requests.verify"] },
       },
       {
         label: "Open",

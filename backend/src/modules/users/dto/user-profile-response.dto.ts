@@ -43,12 +43,29 @@ class PropertyPermissionsDto {
   canPermanentlyDeleteProperty: boolean;
 }
 
+class UserAdminPermissionsDto {
+  @ApiProperty()
+  read: boolean;
+
+  @ApiProperty()
+  edit: boolean;
+
+  @ApiProperty()
+  delete: boolean;
+
+  @ApiProperty()
+  managePermissions: boolean;
+}
+
 class UserPermissionsDto {
   @ApiProperty({ type: RequestPermissionsDto })
   requests: RequestPermissionsDto;
 
   @ApiProperty({ type: PropertyPermissionsDto })
   properties: PropertyPermissionsDto;
+
+  @ApiProperty({ type: UserAdminPermissionsDto })
+  users: UserAdminPermissionsDto;
 }
 
 class UserLocationDto {

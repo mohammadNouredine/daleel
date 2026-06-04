@@ -15,14 +15,16 @@ import {
   propertyListingStatusBadgeClass,
 } from "@/features/property-listings/utils/property-listing-status"
 import { cn } from "@/lib/utils"
+import { canViewHiddenProperties } from "@/lib/access-control"
 import { useDashboardAuth } from "../../providers/DashboardAuthProvider"
 import { DashboardPageHeader } from "../../components/DashboardPageHeader"
 
 export function PropertyHiddenPage() {
-  const { isAdmin } = useDashboardAuth()
+  const { profile } = useDashboardAuth()
+  const canView = canViewHiddenProperties(profile)
   const { confirmAsync } = useConfirmDialog()
   const permanentDeleteMutation = usePermanentDeletePropertyListing()
-  const { data: listings = [], isLoading } = useHiddenPropertyListings(isAdmin)
+  const { data: listings = [], isLoading } = useHiddenPropertyListings(canView)
 
   const handlePermanentDelete = async (listingId: string) => {
     const confirmed = await confirmAsync({
@@ -37,7 +39,7 @@ export function PropertyHiddenPage() {
     permanentDeleteMutation.mutate(listingId)
   }
 
-  if (!isAdmin) {
+  if (!canView) {
     return (
       <>
         <DashboardPageHeader

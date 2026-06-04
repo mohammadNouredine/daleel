@@ -17,12 +17,14 @@ import {
   useRejectHelpRequest,
 } from "@/features/help-requests/hooks/use-moderate-help-request"
 import type { HelpRequest } from "@/features/help-requests/types"
+import { canModerateHelpRequests } from "@/lib/access-control"
 import { useDashboardAuth } from "../../providers/DashboardAuthProvider"
 import { DashboardPageHeader } from "../../components/DashboardPageHeader"
 
 export function HelpRequestsPendingPage() {
-  const { isAdmin } = useDashboardAuth()
-  const { data: pending = [], isLoading } = usePendingHelpRequests(isAdmin)
+  const { profile } = useDashboardAuth()
+  const canModerate = canModerateHelpRequests(profile)
+  const { data: pending = [], isLoading } = usePendingHelpRequests(canModerate)
   const approveMutation = useApproveHelpRequest()
   const rejectMutation = useRejectHelpRequest()
   const [rejectingRequest, setRejectingRequest] = useState<HelpRequest | null>(
@@ -43,12 +45,12 @@ export function HelpRequestsPendingPage() {
     )
   }
 
-  if (!isAdmin) {
+  if (!canModerate) {
     return (
       <>
         <DashboardPageHeader
           title="Pending approval"
-          description="Help request moderation is limited to administrators."
+          description="You need verify permission to access this queue."
         />
         <div className="rounded-xl border border-dashed border-border/80 bg-card/50 px-6 py-14 text-center text-sm text-muted-foreground">
           You do not have access to this queue.

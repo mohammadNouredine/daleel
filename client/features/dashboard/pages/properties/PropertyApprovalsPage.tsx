@@ -11,12 +11,14 @@ import {
 } from "@/features/property-listings/hooks/use-moderate-property-listing"
 import { usePendingPropertyListings } from "@/features/property-listings/hooks/use-pending-property-listings"
 import type { PropertyListing } from "@/features/property-listings/types"
+import { canModerateProperties } from "@/lib/access-control"
 import { useDashboardAuth } from "../../providers/DashboardAuthProvider"
 import { DashboardPageHeader } from "../../components/DashboardPageHeader"
 
 export function PropertyApprovalsPage() {
-  const { isAdmin } = useDashboardAuth()
-  const { data: pending = [], isLoading } = usePendingPropertyListings(isAdmin)
+  const { profile } = useDashboardAuth()
+  const canModerate = canModerateProperties(profile)
+  const { data: pending = [], isLoading } = usePendingPropertyListings(canModerate)
   const approveMutation = useApprovePropertyListing()
   const rejectMutation = useRejectPropertyListing()
   const [rejectingListing, setRejectingListing] =
@@ -38,12 +40,12 @@ export function PropertyApprovalsPage() {
     )
   }
 
-  if (!isAdmin) {
+  if (!canModerate) {
     return (
       <>
         <DashboardPageHeader
           title="Approvals"
-          description="Property moderation is limited to administrators."
+          description="You need approve or reject permission to access this queue."
         />
         <div className="rounded-xl border border-dashed border-border/80 bg-card/50 px-6 py-14 text-center text-sm text-muted-foreground">
           You do not have access to this queue.

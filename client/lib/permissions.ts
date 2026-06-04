@@ -1,6 +1,7 @@
 import type {
   PropertyPermissionKey,
   RequestPermissions,
+  UserAdminPermissionKey,
   UserPermissions,
 } from "@/features/users/types"
 
@@ -82,4 +83,35 @@ export function canPermanentlyDeleteProperty(
   permissions: UserPermissions | undefined
 ): boolean {
   return hasPropertyPermission(permissions, "canPermanentlyDeleteProperty")
+}
+
+export function hasUserAdminPermission(
+  permissions: UserPermissions | undefined,
+  action: UserAdminPermissionKey
+): boolean {
+  return permissions?.users?.[action] === true
+}
+
+export function canReadUsers(
+  permissions: UserPermissions | undefined
+): boolean {
+  return hasUserAdminPermission(permissions, "read")
+}
+
+export function canEditUsers(
+  permissions: UserPermissions | undefined
+): boolean {
+  return hasUserAdminPermission(permissions, "edit")
+}
+
+export function canDeleteUsers(
+  permissions: UserPermissions | undefined
+): boolean {
+  return hasUserAdminPermission(permissions, "delete")
+}
+
+export function canManageUserPermissions(
+  permissions: UserPermissions | undefined
+): boolean {
+  return hasUserAdminPermission(permissions, "managePermissions")
 }

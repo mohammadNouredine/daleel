@@ -19,9 +19,17 @@ export interface PropertyPermissions {
   canPermanentlyDeleteProperty: boolean;
 }
 
+export interface UserAdminPermissions {
+  read: boolean;
+  edit: boolean;
+  delete: boolean;
+  managePermissions: boolean;
+}
+
 export interface UserPermissions {
   requests: RequestPermissions;
   properties: PropertyPermissions;
+  users: UserAdminPermissions;
 }
 
 export interface UserLocation {

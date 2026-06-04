@@ -10,6 +10,11 @@ import { usePathname, useRouter } from "next/navigation"
 import toast from "react-hot-toast"
 import { useAuthState } from "@/features/auth/hooks/use-is-authenticated"
 import { useCurrentProfile } from "@/features/users/hooks/use-current-profile"
+import {
+  hasAnyPermission,
+  hasPermission,
+} from "@/lib/access-control"
+import type { PermissionPath } from "@/lib/permission-catalog"
 import { DASHBOARD_ALLOWED_ROLES } from "../navigation/dashboard-navigation"
 import type { DashboardAuthContextValue } from "../navigation/dashboard-nav.types"
 
@@ -92,6 +97,9 @@ export function DashboardAuthProvider({ children }: DashboardAuthProviderProps) 
     profile,
     isAdmin: profile.role === "ADMIN",
     isOrganization: profile.role === "ORGANIZATION",
+    hasPermission: (path: PermissionPath) => hasPermission(profile, path),
+    hasAnyPermission: (paths: PermissionPath[]) =>
+      hasAnyPermission(profile, paths),
   }
 
   return (
