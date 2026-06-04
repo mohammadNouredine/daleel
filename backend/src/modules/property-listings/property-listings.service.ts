@@ -456,6 +456,13 @@ export class PropertyListingsService {
     await doc.save();
   }
 
+  async permanentRemove(id: string, userId: string): Promise<{ message: string }> {
+    const doc = await this.findDocumentOrThrow(id);
+    await this.assertCanPermanentlyDelete(doc, userId);
+    await this.purgePropertyListingDocument(doc);
+    return { message: 'Property listing permanently deleted' };
+  }
+
   async purgeSoftDeletedPropertyListingsOlderThan(
     retentionDays: number = SOFT_DELETE_RETENTION_DAYS,
   ): Promise<{ purgedCount: number }> {
@@ -478,18 +485,7 @@ export class PropertyListingsService {
     }
 
     for (const doc of docs) {
-      const imageUrls = (doc.images ?? []).map((image) => image.url);
-      if (doc.coverImage && !imageUrls.includes(doc.coverImage)) {
-        imageUrls.push(doc.coverImage);
-      }
-      await this.storageService.deleteByUrls(imageUrls);
-
-      const propertyId = doc._id;
-      await Promise.all([
-        this.propertyFavoriteModel.deleteMany({ propertyId }),
-        this.propertyReportModel.deleteMany({ propertyId }),
-        this.propertyListingModel.deleteOne({ _id: propertyId }),
-      ]);
+      await this.purgePropertyListingDocument(doc);
     }
 
     return { purgedCount: docs.length };
@@ -852,6 +848,39 @@ export class PropertyListingsService {
       return;
     }
     throw new ForbiddenException('Not allowed to delete this listing');
+  }
+
+  private async assertCanPermanentlyDelete(
+    doc: PropertyListingDocument,
+    userId: string,
+  ): Promise<void> {
+    const isOwner = doc.ownerId.toHexString() === userId;
+    if (isOwner) {
+      return;
+    }
+    if (
+      await this.userHasPropertyPermission(userId, 'canPermanentlyDeleteProperty')
+    ) {
+      return;
+    }
+    throw new ForbiddenException('Not allowed to permanently delete this listing');
+  }
+
+  private async purgePropertyListingDocument(
+    doc: PropertyListingDocument,
+  ): Promise<void> {
+    const imageUrls = (doc.images ?? []).map((image) => image.url);
+    if (doc.coverImage && !imageUrls.includes(doc.coverImage)) {
+      imageUrls.push(doc.coverImage);
+    }
+    await this.storageService.deleteByUrls(imageUrls);
+
+    const propertyId = doc._id;
+    await Promise.all([
+      this.propertyFavoriteModel.deleteMany({ propertyId }),
+      this.propertyReportModel.deleteMany({ propertyId }),
+      this.propertyListingModel.deleteOne({ _id: propertyId }),
+    ]);
   }
 
   private async getUserOrThrow(userId: string): Promise<DaleelUser> {

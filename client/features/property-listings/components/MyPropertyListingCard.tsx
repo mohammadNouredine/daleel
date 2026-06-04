@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useConfirmDialog } from "@/components/dialogs/ConfirmDialog"
 import { useDeletePropertyListing } from "../hooks/use-delete-property-listing"
+import { usePermanentDeletePropertyListing } from "../hooks/use-permanent-delete-property-listing"
 import { useHidePropertyListing } from "../hooks/use-hide-property-listing"
 import { useUnhidePropertyListing } from "../hooks/use-unhide-property-listing"
 import { PropertyListingStatus, type PropertyListing } from "../types"
@@ -33,23 +34,39 @@ export function MyPropertyListingCard({
   const hideMutation = useHidePropertyListing()
   const unhideMutation = useUnhidePropertyListing()
   const deleteMutation = useDeletePropertyListing()
+  const permanentDeleteMutation = usePermanentDeletePropertyListing()
 
   const isHidden = listing.status === PropertyListingStatus.ARCHIVED
+  const isDeleted = listing.status === PropertyListingStatus.DELETED
   const isPending = hideMutation.isPending || unhideMutation.isPending
-  const isDeleting = deleteMutation.isPending
+  const isDeleting =
+    deleteMutation.isPending || permanentDeleteMutation.isPending
   const isBusy = isPending || isDeleting
 
-  const handleDelete = async () => {
+  const handleSoftDelete = async () => {
     const confirmed = await confirmAsync({
       title: "Delete this listing?",
       description:
-        "Admins can still review it, but it will be removed from your list and the public.",
+        "The listing is soft-deleted. You can permanently remove it later from your deleted listings.",
       confirmText: "Delete",
       cancelText: "Cancel",
       variant: "danger",
     })
     if (!confirmed) return
     deleteMutation.mutate(listing._id)
+  }
+
+  const handlePermanentDelete = async () => {
+    const confirmed = await confirmAsync({
+      title: "Permanently delete this listing?",
+      description:
+        "This cannot be undone. All images and data will be removed from the platform.",
+      confirmText: "Delete permanently",
+      cancelText: "Cancel",
+      variant: "danger",
+    })
+    if (!confirmed) return
+    permanentDeleteMutation.mutate(listing._id)
   }
 
   return (
@@ -79,7 +96,7 @@ export function MyPropertyListingCard({
               {listing.title}
             </h3>
           </Link>
-          {!isHidden ? (
+          {!isHidden && !isDeleted ? (
             <Button
               type="button"
               variant="outline"
@@ -107,6 +124,13 @@ export function MyPropertyListingCard({
           </p>
         ) : null}
 
+        {isDeleted ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            This listing is deleted. Permanently remove it to clear it from your
+            account.
+          </p>
+        ) : null}
+
         {listing.rejectionReason ? (
           <p className="mt-2 text-xs text-destructive">
             {listing.rejectionReason}
@@ -114,42 +138,69 @@ export function MyPropertyListingCard({
         ) : null}
 
         <div className="mt-auto flex flex-wrap gap-2 pt-4">
-          {isHidden ? (
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="h-8 gap-1"
-              disabled={isBusy}
-              onClick={() => unhideMutation.mutate(listing._id)}
-            >
-              <Eye className="size-3.5" />
-              Show listing
-            </Button>
+          {!isDeleted ? (
+            <>
+              {isHidden ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="h-8 gap-1"
+                  disabled={isBusy}
+                  onClick={() => unhideMutation.mutate(listing._id)}
+                >
+                  <Eye className="size-3.5" />
+                  Show listing
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="h-8 gap-1"
+                  disabled={isBusy}
+                  onClick={() => hideMutation.mutate(listing._id)}
+                >
+                  <EyeOff className="size-3.5" />
+                  Hide
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1 text-destructive hover:text-destructive"
+                disabled={isBusy}
+                onClick={() => void handleSoftDelete()}
+              >
+                <Trash2 className="size-3.5" />
+                Delete
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1 text-destructive hover:text-destructive"
+                disabled={isBusy}
+                onClick={() => void handlePermanentDelete()}
+              >
+                <Trash2 className="size-3.5" />
+                Delete permanently
+              </Button>
+            </>
           ) : (
             <Button
               type="button"
-              variant="secondary"
+              variant="destructive"
               size="sm"
               className="h-8 gap-1"
               disabled={isBusy}
-              onClick={() => hideMutation.mutate(listing._id)}
+              onClick={() => void handlePermanentDelete()}
             >
-              <EyeOff className="size-3.5" />
-              Hide
+              <Trash2 className="size-3.5" />
+              Delete permanently
             </Button>
           )}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1 text-destructive hover:text-destructive"
-            disabled={isBusy}
-            onClick={handleDelete}
-          >
-            <Trash2 className="size-3.5" />
-            Delete
-          </Button>
         </div>
       </div>
     </article>

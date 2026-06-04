@@ -187,6 +187,20 @@ export class PropertyListingsController {
     return this.propertyListingsService.unhide(id, userId);
   }
 
+  @Delete(':id/permanent')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({
+    summary:
+      'Permanently delete a property listing (owner or users with permanent-delete permission)',
+  })
+  permanentRemove(
+    @Param('id') id: string,
+    @Session() session: UserSession | null,
+  ) {
+    const userId = requireUserId(session);
+    return this.propertyListingsService.permanentRemove(id, userId);
+  }
+
   @Delete(':id')
   @ApiBearerAuth('bearer')
   @ApiOperation({

@@ -5,9 +5,13 @@ import type { ListAdminPropertyListingsQueryDto } from '../dto/list-admin-proper
 export function buildAdminPropertyListingFilter(
   query: ListAdminPropertyListingsQueryDto,
 ): Record<string, unknown> {
-  const filter: Record<string, unknown> = {
-    deletedAt: null,
-  };
+  const filter: Record<string, unknown> = {};
+
+  if (query.status === PropertyListingStatus.DELETED) {
+    filter.deletedAt = { $ne: null };
+  } else {
+    filter.deletedAt = null;
+  }
 
   if (query.status) {
     filter.status = query.status;
@@ -36,6 +40,7 @@ export type AdminPropertyListingSummary = {
   forSale: number;
   pendingApproval: number;
   hidden: number;
+  deleted: number;
 };
 
 export async function countAdminPropertyListingSummary(
@@ -45,25 +50,27 @@ export async function countAdminPropertyListingSummary(
 ): Promise<AdminPropertyListingSummary> {
   const base = { deletedAt: null };
 
-  const [total, forRent, forSale, pendingApproval, hidden] = await Promise.all([
-    model.countDocuments(base),
-    model.countDocuments({
-      ...base,
-      listingType: ListingType.RENT,
-    }),
-    model.countDocuments({
-      ...base,
-      listingType: ListingType.SALE,
-    }),
-    model.countDocuments({
-      ...base,
-      status: PropertyListingStatus.PENDING_APPROVAL,
-    }),
-    model.countDocuments({
-      ...base,
-      status: PropertyListingStatus.ARCHIVED,
-    }),
-  ]);
+  const [total, forRent, forSale, pendingApproval, hidden, deleted] =
+    await Promise.all([
+      model.countDocuments(base),
+      model.countDocuments({
+        ...base,
+        listingType: ListingType.RENT,
+      }),
+      model.countDocuments({
+        ...base,
+        listingType: ListingType.SALE,
+      }),
+      model.countDocuments({
+        ...base,
+        status: PropertyListingStatus.PENDING_APPROVAL,
+      }),
+      model.countDocuments({
+        ...base,
+        status: PropertyListingStatus.ARCHIVED,
+      }),
+      model.countDocuments({ deletedAt: { $ne: null } }),
+    ]);
 
-  return { total, forRent, forSale, pendingApproval, hidden };
+  return { total, forRent, forSale, pendingApproval, hidden, deleted };
 }

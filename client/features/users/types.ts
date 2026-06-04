@@ -14,6 +14,7 @@ export type PropertyPermissions = {
   canHideProperty: boolean
   canApproveProperty: boolean
   canRejectProperty: boolean
+  canPermanentlyDeleteProperty: boolean
 }
 
 export type PropertyPermissionKey = keyof PropertyPermissions

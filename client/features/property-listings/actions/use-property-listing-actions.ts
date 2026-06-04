@@ -5,6 +5,7 @@ import { useConfirmDialog } from "@/components/dialogs/ConfirmDialog"
 import type { DaleelProfile } from "@/features/users/types"
 import { useApprovePropertyListing, useRejectPropertyListing } from "../hooks/use-moderate-property-listing"
 import { useDeletePropertyListing } from "../hooks/use-delete-property-listing"
+import { usePermanentDeletePropertyListing } from "../hooks/use-permanent-delete-property-listing"
 import { useHidePropertyListing } from "../hooks/use-hide-property-listing"
 import { useUnhidePropertyListing } from "../hooks/use-unhide-property-listing"
 import type { PropertyListing } from "../types"
@@ -29,6 +30,7 @@ export function usePropertyListingActions({
   const hideMutation = useHidePropertyListing()
   const unhideMutation = useUnhidePropertyListing()
   const deleteMutation = useDeletePropertyListing()
+  const permanentDeleteMutation = usePermanentDeletePropertyListing()
 
   const [rejectingListing, setRejectingListing] = useState<PropertyListing | null>(
     null
@@ -81,6 +83,9 @@ export function usePropertyListingActions({
         case "delete":
           deleteMutation.mutate(listing._id)
           break
+        case "permanentDelete":
+          permanentDeleteMutation.mutate(listing._id)
+          break
         default:
           break
       }
@@ -89,6 +94,7 @@ export function usePropertyListingActions({
       approveMutation,
       confirmAsync,
       deleteMutation,
+      permanentDeleteMutation,
       hideMutation,
       onEdit,
       unhideMutation,
@@ -115,7 +121,8 @@ export function usePropertyListingActions({
     rejectMutation.isPending ||
     hideMutation.isPending ||
     unhideMutation.isPending ||
-    deleteMutation.isPending
+    deleteMutation.isPending ||
+    permanentDeleteMutation.isPending
 
   return {
     getAvailableActions,

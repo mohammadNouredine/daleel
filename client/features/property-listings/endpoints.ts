@@ -50,6 +50,10 @@ export function propertyListingDeleteEndpoint(id: string): string {
   return `${PROPERTY_LISTINGS_BASE}/${id}`
 }
 
+export function propertyListingPermanentDeleteEndpoint(id: string): string {
+  return `${PROPERTY_LISTINGS_BASE}/${id}/permanent`
+}
+
 export function propertyListingHideEndpoint(id: string): string {
   return `${PROPERTY_LISTINGS_BASE}/${id}/hide`
 }

@@ -199,7 +199,7 @@ export function PropertiesDirectoryPage() {
         description="Browse and manage all property listings on the platform."
       />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <SummaryCard
           label="Total properties"
           value={summary?.total}
@@ -213,6 +213,11 @@ export function PropertiesDirectoryPage() {
           loading={isLoading}
         />
         <SummaryCard label="Hidden" value={summary?.hidden} loading={isLoading} />
+        <SummaryCard
+          label="Deleted"
+          value={summary?.deleted}
+          loading={isLoading}
+        />
       </div>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">

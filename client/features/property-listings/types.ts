@@ -192,6 +192,7 @@ export type AdminPropertyListingSummary = {
   forSale: number
   pendingApproval: number
   hidden: number
+  deleted: number
 }
 
 export type AdminPropertyListingsResponse = PropertyListingPaginatedResponse & {

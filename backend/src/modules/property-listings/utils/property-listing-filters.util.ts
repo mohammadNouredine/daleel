@@ -11,12 +11,12 @@ export function buildPropertyListingFilter(
   query: ListPropertyListingsQueryDto,
   options: PropertyListingFilterOptions = {},
 ): Record<string, unknown> {
-  const filter: Record<string, unknown> = {
-    deletedAt: null,
-  };
+  const filter: Record<string, unknown> = {};
 
   if (options.ownerId) {
     filter.ownerId = toObjectId(options.ownerId);
+  } else {
+    filter.deletedAt = null;
   }
 
   if (options.publicFeed) {

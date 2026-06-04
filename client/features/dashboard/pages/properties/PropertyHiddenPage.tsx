@@ -1,9 +1,12 @@
 "use client"
 
 import Link from "next/link"
+import { Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { buttonVariants } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { useConfirmDialog } from "@/components/dialogs/ConfirmDialog"
 import { useHiddenPropertyListings } from "@/features/property-listings/hooks/use-hidden-property-listings"
+import { usePermanentDeletePropertyListing } from "@/features/property-listings/hooks/use-permanent-delete-property-listing"
 import { PropertyListingStatus } from "@/features/property-listings/types"
 import { PropertyListingCover } from "@/features/property-listings/components/PropertyListingCover"
 import { formatListingLocation, formatListingPriceLabel } from "@/features/property-listings/utils/property-listing-display"
@@ -17,7 +20,22 @@ import { DashboardPageHeader } from "../../components/DashboardPageHeader"
 
 export function PropertyHiddenPage() {
   const { isAdmin } = useDashboardAuth()
+  const { confirmAsync } = useConfirmDialog()
+  const permanentDeleteMutation = usePermanentDeletePropertyListing()
   const { data: listings = [], isLoading } = useHiddenPropertyListings(isAdmin)
+
+  const handlePermanentDelete = async (listingId: string) => {
+    const confirmed = await confirmAsync({
+      title: "Permanently delete this listing?",
+      description:
+        "This cannot be undone. All images and data will be removed from the platform.",
+      confirmText: "Delete permanently",
+      cancelText: "Cancel",
+      variant: "danger",
+    })
+    if (!confirmed) return
+    permanentDeleteMutation.mutate(listingId)
+  }
 
   if (!isAdmin) {
     return (
@@ -83,12 +101,33 @@ export function PropertyHiddenPage() {
                     Hidden {new Date(listing.archivedAt).toLocaleDateString()}
                   </p>
                 ) : null}
-                <Link
-                  href={`/properties/${listing._id}`}
-                  className={buttonVariants({ variant: "outline", size: "sm" })}
-                >
-                  View
-                </Link>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Link
+                    href={`/dashboard/properties/${listing._id}`}
+                    className={buttonVariants({ variant: "outline", size: "sm" })}
+                  >
+                    Dashboard view
+                  </Link>
+                  <Link
+                    href={`/properties/${listing._id}`}
+                    className={buttonVariants({ variant: "ghost", size: "sm" })}
+                  >
+                    Public view
+                  </Link>
+                  {listing.status === PropertyListingStatus.DELETED ? (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="h-8 gap-1"
+                      disabled={permanentDeleteMutation.isPending}
+                      onClick={() => void handlePermanentDelete(listing._id)}
+                    >
+                      <Trash2 className="size-3.5" />
+                      Delete permanently
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             </li>
           ))}

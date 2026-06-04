@@ -5,6 +5,7 @@ import {
   Eye,
   Pencil,
   Trash2,
+  Trash,
   X,
 } from "lucide-react"
 import type { PropertyPermissionKey } from "@/features/users/types"
@@ -81,14 +82,27 @@ export const PROPERTY_LISTING_ACTIONS: PropertyListingActionDefinition[] = [
   },
   {
     id: "delete",
-    label: "Delete",
+    label: "Move to deleted",
     icon: Trash2,
     permission: "canDeleteProperty",
     confirm: {
       title: "Delete this listing?",
       description:
-        "This soft-deletes the listing. Owners lose access; admins can still review it.",
+        "The listing is soft-deleted. You can permanently remove it later from deleted listings.",
       confirmText: "Delete",
+      variant: "danger",
+    },
+  },
+  {
+    id: "permanentDelete",
+    label: "Delete permanently",
+    icon: Trash,
+    permission: "canPermanentlyDeleteProperty",
+    confirm: {
+      title: "Permanently delete this listing?",
+      description:
+        "This cannot be undone. All images and data will be removed from the platform.",
+      confirmText: "Delete permanently",
       variant: "danger",
     },
   },
@@ -111,6 +125,8 @@ function isActionVisibleForListing(
       return listing.status === PropertyListingStatus.ARCHIVED
     case "delete":
       return listing.status !== PropertyListingStatus.DELETED
+    case "permanentDelete":
+      return true
     case "edit":
       return listing.status !== PropertyListingStatus.DELETED
     default:
@@ -135,6 +151,7 @@ export function getAvailablePropertyListingActions(
       (action.id === "hide" ||
         action.id === "unhide" ||
         action.id === "delete" ||
+        action.id === "permanentDelete" ||
         action.id === "edit")
     ) {
       return true

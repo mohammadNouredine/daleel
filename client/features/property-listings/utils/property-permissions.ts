@@ -4,6 +4,7 @@ import {
   canDeleteProperty,
   canEditProperty,
   canHideProperty,
+  canPermanentlyDeleteProperty,
   canRejectProperty,
   canViewProperties,
 } from "@/lib/permissions"
@@ -42,4 +43,10 @@ export function canRejectPropertyFromProfile(
   profile: DaleelProfile | null | undefined
 ): boolean {
   return canRejectProperty(profile?.permissions)
+}
+
+export function canPermanentlyDeletePropertyFromProfile(
+  profile: DaleelProfile | null | undefined
+): boolean {
+  return canPermanentlyDeleteProperty(profile?.permissions)
 }

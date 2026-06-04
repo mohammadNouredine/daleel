@@ -16,6 +16,7 @@ export interface PropertyPermissions {
   canHideProperty: boolean;
   canApproveProperty: boolean;
   canRejectProperty: boolean;
+  canPermanentlyDeleteProperty: boolean;
 }
 
 export interface UserPermissions {

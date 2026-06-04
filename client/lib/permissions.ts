@@ -77,3 +77,9 @@ export function canRejectProperty(
 ): boolean {
   return hasPropertyPermission(permissions, "canRejectProperty")
 }
+
+export function canPermanentlyDeleteProperty(
+  permissions: UserPermissions | undefined
+): boolean {
+  return hasPropertyPermission(permissions, "canPermanentlyDeleteProperty")
+}

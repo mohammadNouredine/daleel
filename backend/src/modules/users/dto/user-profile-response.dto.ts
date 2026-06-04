@@ -38,6 +38,9 @@ class PropertyPermissionsDto {
 
   @ApiProperty()
   canRejectProperty: boolean;
+
+  @ApiProperty()
+  canPermanentlyDeleteProperty: boolean;
 }
 
 class UserPermissionsDto {

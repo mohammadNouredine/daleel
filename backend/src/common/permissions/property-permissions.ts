@@ -13,6 +13,7 @@ const ALL_PROPERTY_PERMISSIONS: PropertyPermissions = {
   canHideProperty: true,
   canApproveProperty: true,
   canRejectProperty: true,
+  canPermanentlyDeleteProperty: true,
 };
 
 const NO_PROPERTY_PERMISSIONS: PropertyPermissions = {
@@ -22,6 +23,7 @@ const NO_PROPERTY_PERMISSIONS: PropertyPermissions = {
   canHideProperty: false,
   canApproveProperty: false,
   canRejectProperty: false,
+  canPermanentlyDeleteProperty: false,
 };
 
 export function defaultPropertyPermissionsForRole(
