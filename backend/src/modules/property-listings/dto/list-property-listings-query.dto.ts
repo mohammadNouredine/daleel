@@ -192,7 +192,8 @@ export class ListPropertyListingsQueryDto {
   isAvailable?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Comma-separated amenity document ids or repeated query params',
+    description:
+      'Comma-separated amenity document ids or repeated query params',
   })
   @IsOptional()
   @Transform(({ value }) => parseAmenityIds(value))

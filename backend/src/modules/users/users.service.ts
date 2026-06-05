@@ -79,7 +79,9 @@ export class UsersService {
       },
     );
 
-    const record = await mongoDb.collection(USERS_COLLECTION).findOne({ _id: objectId });
+    const record = await mongoDb
+      .collection(USERS_COLLECTION)
+      .findOne({ _id: objectId });
     if (!record) {
       throw new Error(`User not found: ${_id}`);
     }
@@ -117,7 +119,10 @@ export class UsersService {
 
     const search = query.q?.trim();
     if (search) {
-      const pattern = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      const pattern = new RegExp(
+        search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        'i',
+      );
       filter.$or = [{ name: pattern }, { email: pattern }];
     }
 
@@ -208,10 +213,9 @@ export class UsersService {
 
     update.updatedAt = new Date();
 
-    await mongoDb.collection(USERS_COLLECTION).updateOne(
-      { _id: toObjectId(targetId) },
-      { $set: update },
-    );
+    await mongoDb
+      .collection(USERS_COLLECTION)
+      .updateOne({ _id: toObjectId(targetId) }, { $set: update });
 
     const updated = await this.findById(targetId);
     if (!updated) {
@@ -242,10 +246,12 @@ export class UsersService {
       users: { ...dto.users },
     };
 
-    await mongoDb.collection(USERS_COLLECTION).updateOne(
-      { _id: toObjectId(targetId) },
-      { $set: { permissions, updatedAt: new Date() } },
-    );
+    await mongoDb
+      .collection(USERS_COLLECTION)
+      .updateOne(
+        { _id: toObjectId(targetId) },
+        { $set: { permissions, updatedAt: new Date() } },
+      );
 
     const updated = await this.findById(targetId);
     if (!updated) {
@@ -271,9 +277,11 @@ export class UsersService {
     }
 
     if (existing.role === UserRole.ADMIN) {
-      const adminCount = await mongoDb.collection(USERS_COLLECTION).countDocuments({
-        role: UserRole.ADMIN,
-      });
+      const adminCount = await mongoDb
+        .collection(USERS_COLLECTION)
+        .countDocuments({
+          role: UserRole.ADMIN,
+        });
       if (adminCount <= 1) {
         throw new BadRequestException('Cannot delete the last admin account');
       }

@@ -2,8 +2,7 @@ import { ListingType } from '../../../common/enums';
 
 export function isFreeListingType(listingType: ListingType): boolean {
   return (
-    listingType === ListingType.SHELTER ||
-    listingType === ListingType.FREE_STAY
+    listingType === ListingType.SHELTER || listingType === ListingType.FREE_STAY
   );
 }
 
@@ -18,9 +17,7 @@ export type ListingPricingFields = {
   isPriceNegotiable?: boolean;
 };
 
-export function clearPricingFields<T extends ListingPricingFields>(
-  dto: T,
-): T {
+export function clearPricingFields<T extends ListingPricingFields>(dto: T): T {
   return {
     ...dto,
     price: undefined,

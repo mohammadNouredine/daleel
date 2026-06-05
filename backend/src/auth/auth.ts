@@ -2,6 +2,8 @@ import { betterAuth } from 'better-auth';
 import { mongodbAdapter } from 'better-auth/adapters/mongodb';
 import { bearer } from 'better-auth/plugins/bearer';
 import { apiResponseWrapPlugin } from './api-response-wrap.plugin';
+import { blockDirectSignupPlugin } from './block-direct-signup.plugin';
+import { otpSignupPlugin } from './otp-signup.plugin';
 import { UserRole } from '../common/enums';
 import { mongoClient, mongoDb } from '../database/mongo-client';
 import { runUserProfileSetup } from '../modules/users/users-profile.registry';
@@ -50,7 +52,12 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  plugins: [bearer(), apiResponseWrapPlugin()],
+  plugins: [
+    bearer(),
+    apiResponseWrapPlugin(),
+    blockDirectSignupPlugin(),
+    otpSignupPlugin(),
+  ],
   databaseHooks: {
     user: {
       create: {

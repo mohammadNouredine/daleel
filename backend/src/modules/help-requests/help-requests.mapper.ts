@@ -1,4 +1,7 @@
-import type { HelpRequestDocument, NeedLine } from './schemas/help-request.schema';
+import type {
+  HelpRequestDocument,
+  NeedLine,
+} from './schemas/help-request.schema';
 
 export type HelpRequestResponse = {
   _id: string;

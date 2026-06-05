@@ -23,7 +23,10 @@ export function buildAdminPropertyListingFilter(
 
   const search = query.q?.trim();
   if (search) {
-    const pattern = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    const pattern = new RegExp(
+      search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+      'i',
+    );
     filter.$or = [{ title: pattern }, { 'location.city': pattern }];
   }
 
@@ -43,11 +46,9 @@ export type AdminPropertyListingSummary = {
   deleted: number;
 };
 
-export async function countAdminPropertyListingSummary(
-  model: {
-    countDocuments: (filter: Record<string, unknown>) => Promise<number>;
-  },
-): Promise<AdminPropertyListingSummary> {
+export async function countAdminPropertyListingSummary(model: {
+  countDocuments: (filter: Record<string, unknown>) => Promise<number>;
+}): Promise<AdminPropertyListingSummary> {
   const base = { deletedAt: null };
 
   const [total, forRent, forSale, pendingApproval, hidden, deleted] =

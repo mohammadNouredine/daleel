@@ -1,7 +1,4 @@
-import {
-  HelpRequestSort,
-  PriorityLevel,
-} from '../../../common/enums';
+import { HelpRequestSort, PriorityLevel } from '../../../common/enums';
 import type { HelpRequestSortQueryDto } from '../dto/help-request-sort-query.dto';
 import type { HelpRequestDocument } from '../schemas/help-request.schema';
 

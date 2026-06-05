@@ -20,7 +20,9 @@ export class CloudinaryStorageProvider implements StorageProvider {
   private readonly folderPrefix: string;
 
   constructor(private readonly configService: ConfigService) {
-    const cloudName = this.configService.get<string>('storage.cloudinary.cloudName');
+    const cloudName = this.configService.get<string>(
+      'storage.cloudinary.cloudName',
+    );
     const apiKey = this.configService.get<string>('storage.cloudinary.apiKey');
     const apiSecret = this.configService.get<string>(
       'storage.cloudinary.apiSecret',

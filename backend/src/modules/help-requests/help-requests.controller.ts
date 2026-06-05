@@ -17,7 +17,11 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Session, AllowAnonymous, OptionalAuth } from '@thallesp/nestjs-better-auth';
+import {
+  Session,
+  AllowAnonymous,
+  OptionalAuth,
+} from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
 import { createImageUploadInterceptor } from '../../storage/multer/create-image-upload.interceptor';
 import { MAX_PROOF_IMAGES } from '../uploads/uploads.constants';
@@ -70,10 +74,7 @@ export class HelpRequestsController {
   @Get(':id')
   @OptionalAuth()
   @ApiOperation({ summary: 'Get help request by id' })
-  findOne(
-    @Param('id') id: string,
-    @Session() session: UserSession | null,
-  ) {
+  findOne(@Param('id') id: string, @Session() session: UserSession | null) {
     return this.helpRequestsService.findById(id, session?.user?.id);
   }
 
@@ -134,21 +135,13 @@ export class HelpRequestsController {
     @Body() dto: FulfillmentAdjustmentDto,
   ) {
     const userId = requireUserId(session);
-    return this.helpRequestsService.adjustFulfillment(
-      id,
-      lineId,
-      userId,
-      dto,
-    );
+    return this.helpRequestsService.adjustFulfillment(id, lineId, userId, dto);
   }
 
   @Patch(':id/approve')
   @ApiBearerAuth('bearer')
   @ApiOperation({ summary: 'Approve a pending help request (admin)' })
-  approve(
-    @Param('id') id: string,
-    @Session() session: UserSession | null,
-  ) {
+  approve(@Param('id') id: string, @Session() session: UserSession | null) {
     const userId = requireUserId(session);
     return this.helpRequestsService.approve(id, userId);
   }

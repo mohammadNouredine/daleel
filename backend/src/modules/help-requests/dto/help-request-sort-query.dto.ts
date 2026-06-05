@@ -12,7 +12,9 @@ export class HelpRequestSortQueryDto {
   @IsEnum(HelpRequestSort)
   sort?: HelpRequestSort;
 
-  @ApiPropertyOptional({ description: 'User latitude — required for nearest sort' })
+  @ApiPropertyOptional({
+    description: 'User latitude — required for nearest sort',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
@@ -20,7 +22,9 @@ export class HelpRequestSortQueryDto {
   @Max(90)
   lat?: number;
 
-  @ApiPropertyOptional({ description: 'User longitude — required for nearest sort' })
+  @ApiPropertyOptional({
+    description: 'User longitude — required for nearest sort',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()

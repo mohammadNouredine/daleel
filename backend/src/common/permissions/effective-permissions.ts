@@ -36,7 +36,10 @@ export function resolveEffectivePermissions(user: DaleelUser): UserPermissions {
 
   return {
     requests: mergeRequestPermissions(defaults.requests, stored?.requests),
-    properties: mergePropertyPermissions(defaults.properties, stored?.properties),
+    properties: mergePropertyPermissions(
+      defaults.properties,
+      stored?.properties,
+    ),
     users: mergeUserAdminPermissions(defaults.users, stored?.users),
   };
 }

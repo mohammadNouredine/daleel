@@ -11,8 +11,6 @@ export class LocaleQueryDto {
   })
   @IsOptional()
   @IsIn(['en', 'ar'])
-  @Transform(({ value }: { value?: string }) =>
-    value === 'ar' ? 'ar' : 'en',
-  )
+  @Transform(({ value }: { value?: string }) => (value === 'ar' ? 'ar' : 'en'))
   locale?: SupportedLocale;
 }

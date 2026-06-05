@@ -2,7 +2,10 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { ReportStatus } from '../../../common/enums';
 
-@Schema({ timestamps: { createdAt: true, updatedAt: false }, collection: 'property_reports' })
+@Schema({
+  timestamps: { createdAt: true, updatedAt: false },
+  collection: 'property_reports',
+})
 export class PropertyReport {
   @Prop({
     type: Types.ObjectId,

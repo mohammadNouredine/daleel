@@ -42,7 +42,10 @@ function extractMongoCode(error: unknown, depth = 0): number | undefined {
   if (typeof obj.code === 'number') return obj.code;
 
   if (error instanceof Error && (error as Error & { cause?: unknown }).cause) {
-    return extractMongoCode((error as Error & { cause?: unknown }).cause, depth + 1);
+    return extractMongoCode(
+      (error as Error & { cause?: unknown }).cause,
+      depth + 1,
+    );
   }
 
   if (obj.cause) return extractMongoCode(obj.cause, depth + 1);
@@ -68,7 +71,6 @@ export function classifySignUpError(error: unknown): {
       lower.includes('already exists') ||
       lower.includes('user already') ||
       lower.includes('duplicate'),
-    dbCaseMismatch:
-      mongoCode === 13297 || lower.includes('different case'),
+    dbCaseMismatch: mongoCode === 13297 || lower.includes('different case'),
   };
 }

@@ -2,7 +2,10 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { HelpUpdateType } from '../../../common/enums';
 
-@Schema({ timestamps: { createdAt: true, updatedAt: false }, collection: 'help_updates' })
+@Schema({
+  timestamps: { createdAt: true, updatedAt: false },
+  collection: 'help_updates',
+})
 export class HelpUpdate {
   @Prop({ type: Types.ObjectId, ref: 'HelpRequest', required: true })
   helpRequestId: Types.ObjectId;

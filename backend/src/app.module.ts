@@ -13,6 +13,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
 import { CronModule } from './cron/cron.module';
 import { StorageModule } from './storage/storage.module';
 import { UsersModule } from './modules/users/users.module';
+import { AuthSignupModule } from './modules/auth-signup/auth-signup.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UsersModule } from './modules/users/users.module';
       },
     }),
     UsersModule,
+    AuthSignupModule,
     ReferenceModule,
     UploadsModule,
     HelpRequestsModule,

@@ -1,11 +1,8 @@
-import {
-  Injectable,
-  Logger,
-  OnApplicationBootstrap,
-} from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { mongoDatabaseName } from '../../database/mongo-client';
 import { auth } from '../../auth/auth';
+import { INTERNAL_SIGNUP_HEADER } from '../../auth/block-direct-signup.plugin';
 import { UserRole } from '../../common/enums';
 import {
   AdminSeedAction,
@@ -86,8 +83,13 @@ export class AdminSeedService implements OnApplicationBootstrap {
     let userId: string | undefined;
 
     try {
+      const internalSecret =
+        process.env.INTERNAL_SIGNUP_SECRET ?? process.env.BETTER_AUTH_SECRET;
       const signUpResult = await auth.api.signUpEmail({
         body: { email, password, name: fullName },
+        headers: new Headers({
+          [INTERNAL_SIGNUP_HEADER]: internalSecret ?? '',
+        }),
       });
       userId = signUpResult.user?.id;
     } catch (error) {

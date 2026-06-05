@@ -249,7 +249,8 @@ export class CreatePropertyListingDto {
   contactWhatsapp?: string;
 
   @ApiPropertyOptional({
-    description: 'When true, listing is saved as DRAFT instead of PENDING_APPROVAL',
+    description:
+      'When true, listing is saved as DRAFT instead of PENDING_APPROVAL',
   })
   @IsOptional()
   @IsBoolean()

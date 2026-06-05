@@ -1,9 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import {
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 import { HelpRequestOptionsResponseDto } from './dto/help-request-options-response.dto';
 import { LocaleQueryDto } from './dto/locale-query.dto';

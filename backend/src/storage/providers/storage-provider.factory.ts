@@ -5,7 +5,8 @@ import type { StorageProvider } from '../storage.types';
 export function createStorageProvider(
   configService: ConfigService,
 ): StorageProvider {
-  const provider = configService.get<string>('storage.provider') ?? 'cloudinary';
+  const provider =
+    configService.get<string>('storage.provider') ?? 'cloudinary';
 
   switch (provider) {
     case 'cloudinary':

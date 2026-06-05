@@ -31,15 +31,9 @@ export function hasPermission(user: DaleelUser, path: PermissionPath): boolean {
 
   switch (group) {
     case 'requests':
-      return hasRequestPermission(
-        effective,
-        key as keyof RequestPermissions,
-      );
+      return hasRequestPermission(effective, key as keyof RequestPermissions);
     case 'properties':
-      return hasPropertyPermission(
-        effective,
-        key as keyof PropertyPermissions,
-      );
+      return hasPropertyPermission(effective, key as keyof PropertyPermissions);
     case 'users':
       return hasUserAdminPermission(
         effective,
@@ -50,10 +44,7 @@ export function hasPermission(user: DaleelUser, path: PermissionPath): boolean {
   }
 }
 
-export function isOwner(
-  userId: string,
-  resource: OwnableResource,
-): boolean {
+export function isOwner(userId: string, resource: OwnableResource): boolean {
   const owner = resource.ownerId ?? resource.createdBy;
   return owner != null && owner === userId;
 }
@@ -123,10 +114,7 @@ export function getScope(
     return 'platform';
   }
 
-  if (
-    resourceType === 'helpRequest' &&
-    permissionPath === 'requests.verify'
-  ) {
+  if (resourceType === 'helpRequest' && permissionPath === 'requests.verify') {
     return 'platform';
   }
 

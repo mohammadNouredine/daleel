@@ -1,9 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
-import {
-  HelpType,
-  PriorityLevel,
-} from '../../../common/enums';
+import { HelpType, PriorityLevel } from '../../../common/enums';
 import { HelpRequestSortQueryDto } from './help-request-sort-query.dto';
 
 export class ListHelpRequestsQueryDto extends HelpRequestSortQueryDto {

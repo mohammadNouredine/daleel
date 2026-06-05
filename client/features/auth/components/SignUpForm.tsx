@@ -1,20 +1,24 @@
 "use client"
 
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { FormRoot } from "@/components/forms/FormRoot"
 import { PasswordInput } from "@/components/forms/PasswordInput"
 import { TextInput } from "@/components/forms/TextInput"
-import { useSignUp } from "../hooks/use-sign-up"
+import { useRequestOtp } from "../hooks/use-request-otp"
 import {
   signUpSchema,
   toSignUpBody,
   type SignUpFormValues,
 } from "../schemas/sign-up.schema"
+import { SignUpOtpStep } from "./SignUpOtpStep"
 
 export function SignUpForm() {
-  const signUp = useSignUp()
+  const requestOtp = useRequestOtp()
+  const [step, setStep] = useState<"details" | "otp">("details")
+  const [pendingEmail, setPendingEmail] = useState("")
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
@@ -28,13 +32,29 @@ export function SignUpForm() {
   })
 
   const onSubmit = (values: SignUpFormValues) => {
-    signUp.mutate(toSignUpBody(values), {
+    requestOtp.mutate(toSignUpBody(values), {
+      onSuccess: () => {
+        setPendingEmail(values.email.trim())
+        setStep("otp")
+      },
       onError: (error) => {
         const message =
           error.message.trim() || "Sign up failed. Please try again."
         form.setError("root", { message })
       },
     })
+  }
+
+  if (step === "otp") {
+    return (
+      <SignUpOtpStep
+        email={pendingEmail}
+        onBack={() => {
+          setStep("details")
+          setPendingEmail("")
+        }}
+      />
+    )
   }
 
   return (
@@ -69,8 +89,8 @@ export function SignUpForm() {
         </p>
       ) : null}
 
-      <Button type="submit" className="w-full" disabled={signUp.isPending}>
-        {signUp.isPending ? "Creating account…" : "Create account"}
+      <Button type="submit" className="w-full" disabled={requestOtp.isPending}>
+        {requestOtp.isPending ? "Sending code…" : "Continue"}
       </Button>
     </FormRoot>
   )

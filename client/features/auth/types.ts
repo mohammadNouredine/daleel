@@ -11,6 +11,15 @@ export type SignUpBody = {
   whatsappNumber?: string
 }
 
+export type VerifyOtpBody = {
+  email: string
+  otp: string
+}
+
+export type OtpMessageResponse = {
+  message: string
+}
+
 export type AuthUser = {
   id: string
   email: string

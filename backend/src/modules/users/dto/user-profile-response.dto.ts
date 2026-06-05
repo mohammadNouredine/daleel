@@ -10,7 +10,9 @@ class RequestPermissionsDto {
   @ApiProperty({ description: 'Update existing help requests' })
   edit: boolean;
 
-  @ApiProperty({ description: 'Verify help requests (anti-fraud / moderation)' })
+  @ApiProperty({
+    description: 'Verify help requests (anti-fraud / moderation)',
+  })
   verify: boolean;
 
   @ApiProperty({ description: 'Full management (assign, admin actions)' })

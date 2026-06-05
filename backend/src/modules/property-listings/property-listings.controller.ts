@@ -37,9 +37,8 @@ function requireUserId(session: UserSession | null): string {
   return session.user.id;
 }
 
-const propertyImagesInterceptor = createImageUploadInterceptor(
-  MAX_PROPERTY_IMAGES,
-);
+const propertyImagesInterceptor =
+  createImageUploadInterceptor(MAX_PROPERTY_IMAGES);
 
 @ApiTags('Property Listings')
 @Controller('property-listings')
@@ -71,7 +70,8 @@ export class PropertyListingsController {
   @Get('mine')
   @ApiBearerAuth('bearer')
   @ApiOperation({
-    summary: 'List current user property listings (cursor pagination via lastId)',
+    summary:
+      'List current user property listings (cursor pagination via lastId)',
   })
   listMine(
     @Session() session: UserSession | null,
@@ -118,10 +118,7 @@ export class PropertyListingsController {
   @Get(':id')
   @OptionalAuth()
   @ApiOperation({ summary: 'Get property listing by id' })
-  findOne(
-    @Param('id') id: string,
-    @Session() session: UserSession | null,
-  ) {
+  findOne(@Param('id') id: string, @Session() session: UserSession | null) {
     return this.propertyListingsService.findById(id, session?.user?.id);
   }
 
@@ -166,10 +163,7 @@ export class PropertyListingsController {
     summary:
       'Hide a property listing from the public (owner only, no approval)',
   })
-  hide(
-    @Param('id') id: string,
-    @Session() session: UserSession | null,
-  ) {
+  hide(@Param('id') id: string, @Session() session: UserSession | null) {
     const userId = requireUserId(session);
     return this.propertyListingsService.hide(id, userId);
   }
@@ -179,10 +173,7 @@ export class PropertyListingsController {
   @ApiOperation({
     summary: 'Restore a hidden property listing (owner only, no approval)',
   })
-  unhide(
-    @Param('id') id: string,
-    @Session() session: UserSession | null,
-  ) {
+  unhide(@Param('id') id: string, @Session() session: UserSession | null) {
     const userId = requireUserId(session);
     return this.propertyListingsService.unhide(id, userId);
   }
@@ -219,10 +210,7 @@ export class PropertyListingsController {
   @Post(':id/favorite')
   @ApiBearerAuth('bearer')
   @ApiOperation({ summary: 'Favorite a property listing' })
-  addFavorite(
-    @Param('id') id: string,
-    @Session() session: UserSession | null,
-  ) {
+  addFavorite(@Param('id') id: string, @Session() session: UserSession | null) {
     const userId = requireUserId(session);
     return this.propertyListingsService.addFavorite(userId, id);
   }
@@ -243,10 +231,7 @@ export class PropertyListingsController {
   @ApiOperation({
     summary: 'Approve a pending property listing (admin dashboard)',
   })
-  approve(
-    @Param('id') id: string,
-    @Session() session: UserSession | null,
-  ) {
+  approve(@Param('id') id: string, @Session() session: UserSession | null) {
     const userId = requireUserId(session);
     return this.propertyListingsService.approve(id, userId);
   }

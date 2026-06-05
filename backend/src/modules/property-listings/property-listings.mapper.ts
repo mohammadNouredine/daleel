@@ -151,7 +151,10 @@ export function mapPropertyListingToResponse(
 
   let contactPhone = doc.contactPhone;
   let contactWhatsapp = doc.contactWhatsapp;
-  if (!canSeePrivate && doc.contactMethod === ListingContactMethod.PLATFORM_ONLY) {
+  if (
+    !canSeePrivate &&
+    doc.contactMethod === ListingContactMethod.PLATFORM_ONLY
+  ) {
     contactPhone = undefined;
     contactWhatsapp = undefined;
   }

@@ -23,7 +23,10 @@ import type { DaleelUser } from '../users/schemas/user.types';
 import { toObjectId } from '../../common/utils/object-id.util';
 import { StorageService } from '../../storage/storage.service';
 import { UsersService } from '../users/users.service';
-import type { CreateHelpRequestDto, LocationDto } from './dto/create-help-request.dto';
+import type {
+  CreateHelpRequestDto,
+  LocationDto,
+} from './dto/create-help-request.dto';
 import type { FulfillmentAdjustmentDto } from './dto/fulfillment-adjustment.dto';
 import type { HelpRequestSortQueryDto } from './dto/help-request-sort-query.dto';
 import type { ListHelpRequestsQueryDto } from './dto/list-help-requests-query.dto';
@@ -97,10 +100,7 @@ export class HelpRequestsService {
     return docs.map(mapHelpRequestToResponse);
   }
 
-  async findById(
-    id: string,
-    viewerId?: string,
-  ): Promise<HelpRequestResponse> {
+  async findById(id: string, viewerId?: string): Promise<HelpRequestResponse> {
     const doc = await this.findDocumentOrThrow(id);
 
     const isApproved =
@@ -137,10 +137,7 @@ export class HelpRequestsService {
 
     const autoApprove = shouldAutoApproveCreatedContent(user);
 
-    const media = [...(dto.existingMedia ?? []), ...uploadedMedia].slice(
-      0,
-      8,
-    );
+    const media = [...(dto.existingMedia ?? []), ...uploadedMedia].slice(0, 8);
 
     const doc = await this.helpRequestModel.create({
       createdBy: toObjectId(userId),
@@ -174,10 +171,7 @@ export class HelpRequestsService {
     await this.assertCanEdit(doc, userId);
 
     const oldMedia = doc.media ?? [];
-    const media = [...(dto.existingMedia ?? []), ...uploadedMedia].slice(
-      0,
-      8,
-    );
+    const media = [...(dto.existingMedia ?? []), ...uploadedMedia].slice(0, 8);
     const newMediaSet = new Set(media);
     const removedMedia = oldMedia.filter((url) => !newMediaSet.has(url));
     await this.storageService.deleteByUrls(removedMedia);
@@ -320,10 +314,7 @@ export class HelpRequestsService {
       };
     } else if (query.view === 'active') {
       filter.status = {
-        $in: [
-          HelpRequestStatus.ACTIVE,
-          HelpRequestStatus.PARTIALLY_FULFILLED,
-        ],
+        $in: [HelpRequestStatus.ACTIVE, HelpRequestStatus.PARTIALLY_FULFILLED],
       };
     }
 
@@ -351,9 +342,7 @@ export class HelpRequestsService {
     });
   }
 
-  private resolveLocation(
-    location?: LocationDto,
-  ): RequestLocation | undefined {
+  private resolveLocation(location?: LocationDto): RequestLocation | undefined {
     if (!location) {
       return undefined;
     }
@@ -402,9 +391,7 @@ export class HelpRequestsService {
     };
   }
 
-  private async findDocumentOrThrow(
-    id: string,
-  ): Promise<HelpRequestDocument> {
+  private async findDocumentOrThrow(id: string): Promise<HelpRequestDocument> {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('Help request not found');
     }

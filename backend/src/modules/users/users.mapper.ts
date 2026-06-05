@@ -3,7 +3,9 @@ import { UserRole, VerificationStatus } from '../../common/enums';
 import { defaultPermissionsForRole } from '../../common/permissions';
 import type { DaleelUser } from './schemas/user.types';
 
-export function mapDocumentToUser(record: Record<string, unknown>): DaleelUser | null {
+export function mapDocumentToUser(
+  record: Record<string, unknown>,
+): DaleelUser | null {
   if (!(record._id instanceof ObjectId) || typeof record.email !== 'string') {
     return null;
   }
@@ -32,10 +34,12 @@ export function mapDocumentToUser(record: Record<string, unknown>): DaleelUser |
     updatedAt: record.updatedAt instanceof Date ? record.updatedAt : undefined,
     role,
     permissions,
-    phoneNumber: typeof record.phoneNumber === 'string' ? record.phoneNumber : null,
+    phoneNumber:
+      typeof record.phoneNumber === 'string' ? record.phoneNumber : null,
     whatsappNumber:
       typeof record.whatsappNumber === 'string' ? record.whatsappNumber : null,
-    profileImage: typeof record.profileImage === 'string' ? record.profileImage : null,
+    profileImage:
+      typeof record.profileImage === 'string' ? record.profileImage : null,
     isVerified: record.isVerified === true,
     verificationStatus:
       typeof record.verificationStatus === 'string' &&

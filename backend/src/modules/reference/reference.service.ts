@@ -26,7 +26,9 @@ export class ReferenceService implements OnModuleInit {
     );
   }
 
-  getHelpRequestOptions(locale: SupportedLocale): HelpRequestOptionsResponseDto {
+  getHelpRequestOptions(
+    locale: SupportedLocale,
+  ): HelpRequestOptionsResponseDto {
     return {
       locale,
       helpTypes: this.mapOptions(HELP_REQUEST_OPTIONS.helpTypes, locale),

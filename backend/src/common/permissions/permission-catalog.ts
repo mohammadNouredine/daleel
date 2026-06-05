@@ -20,7 +20,11 @@ export const PERMISSION_CATALOG: PermissionCatalogGroup[] = [
     id: 'requests',
     label: 'Help requests',
     permissions: [
-      { path: 'requests.read', label: 'Read', description: 'View help requests' },
+      {
+        path: 'requests.read',
+        label: 'Read',
+        description: 'View help requests',
+      },
       {
         path: 'requests.write',
         label: 'Write',
@@ -55,7 +59,8 @@ export const PERMISSION_CATALOG: PermissionCatalogGroup[] = [
       {
         path: 'properties.canViewProperties',
         label: 'View properties',
-        description: 'Access property listings in dashboard (scope: all for admin, own for organization)',
+        description:
+          'Access property listings in dashboard (scope: all for admin, own for organization)',
       },
       {
         path: 'properties.canEditProperty',
@@ -94,7 +99,11 @@ export const PERMISSION_CATALOG: PermissionCatalogGroup[] = [
     label: 'Users',
     permissions: [
       { path: 'users.read', label: 'Read', description: 'List and view users' },
-      { path: 'users.edit', label: 'Edit', description: 'Update user profiles' },
+      {
+        path: 'users.edit',
+        label: 'Edit',
+        description: 'Update user profiles',
+      },
       { path: 'users.delete', label: 'Delete', description: 'Delete users' },
       {
         path: 'users.managePermissions',
@@ -105,6 +114,7 @@ export const PERMISSION_CATALOG: PermissionCatalogGroup[] = [
   },
 ];
 
-export const ALL_PERMISSION_PATHS: PermissionPath[] = PERMISSION_CATALOG.flatMap(
-  (group) => group.permissions.map((entry) => entry.path),
-);
+export const ALL_PERMISSION_PATHS: PermissionPath[] =
+  PERMISSION_CATALOG.flatMap((group) =>
+    group.permissions.map((entry) => entry.path),
+  );

@@ -9,10 +9,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import {
-  ListingType,
-  PropertyListingStatus,
-} from '../../../common/enums';
+import { ListingType, PropertyListingStatus } from '../../../common/enums';
 import {
   DEFAULT_LISTING_PAGE_SIZE,
   MAX_LISTING_PAGE_SIZE,

@@ -3,14 +3,14 @@
 import { useRouter } from "next/navigation"
 import { usePostData } from "@/lib/api/services/use-post-data"
 import { setAuthToken } from "@/lib/api/auth-token"
-import { AUTH_SIGN_UP } from "../endpoints"
-import type { AuthResponse, SignUpBody } from "../types"
+import { AUTH_VERIFY_OTP } from "../endpoints"
+import type { AuthResponse, VerifyOtpBody } from "../types"
 
-export function useSignUp() {
+export function useVerifyOtp() {
   const router = useRouter()
 
-  return usePostData<SignUpBody, AuthResponse>({
-    endpoint: AUTH_SIGN_UP,
+  return usePostData<VerifyOtpBody, AuthResponse>({
+    endpoint: AUTH_VERIFY_OTP,
     showSuccessToast: false,
     showErrorToast: false,
     callBackOnSuccess: (data) => {

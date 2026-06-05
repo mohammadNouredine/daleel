@@ -12,7 +12,9 @@ async function bootstrap() {
 
   const port = parseInt(process.env.PORT ?? '8000', 10);
   const trustedOrigins = process.env.TRUSTED_ORIGINS
-    ? process.env.TRUSTED_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean)
+    ? process.env.TRUSTED_ORIGINS.split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean)
     : [`http://localhost:${port}`, 'http://localhost:3000'];
 
   app.enableCors({
@@ -30,7 +32,11 @@ async function bootstrap() {
   setupSwagger(app);
 
   await app.listen(port);
-  console.log(`Daleel API: ${process.env.BETTER_AUTH_URL ?? `http://localhost:${port}`}`);
-  console.log(`Swagger UI: ${process.env.BETTER_AUTH_URL ?? `http://localhost:${port}`}/api/docs`);
+  console.log(
+    `Daleel API: ${process.env.BETTER_AUTH_URL ?? `http://localhost:${port}`}`,
+  );
+  console.log(
+    `Swagger UI: ${process.env.BETTER_AUTH_URL ?? `http://localhost:${port}`}/api/docs`,
+  );
 }
 bootstrap();

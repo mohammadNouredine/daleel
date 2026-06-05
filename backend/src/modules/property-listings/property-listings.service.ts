@@ -173,7 +173,9 @@ export class PropertyListingsService {
     return { ...page, summary };
   }
 
-  async listPendingModeration(userId: string): Promise<PropertyListingResponse[]> {
+  async listPendingModeration(
+    userId: string,
+  ): Promise<PropertyListingResponse[]> {
     const user = await this.getUserOrThrow(userId);
     if (getModerationQueueScope(user, 'property') === 'none') {
       throw new ForbiddenException('Insufficient permissions');
@@ -209,13 +211,13 @@ export class PropertyListingsService {
     const isOwner = viewerId ? doc.ownerId.toHexString() === viewerId : false;
 
     if (!viewerId) {
-      if (
-        doc.deletedAt ||
-        doc.status !== PropertyListingStatus.APPROVED
-      ) {
+      if (doc.deletedAt || doc.status !== PropertyListingStatus.APPROVED) {
         throw new NotFoundException('Property listing not found');
       }
-      return mapPropertyListingToResponse(doc, { isOwner: false, isAdmin: false });
+      return mapPropertyListingToResponse(doc, {
+        isOwner: false,
+        isAdmin: false,
+      });
     }
 
     const user = await this.getUserOrThrow(viewerId);
@@ -250,9 +252,7 @@ export class PropertyListingsService {
         ? PropertyListingStatus.APPROVED
         : PropertyListingStatus.PENDING_APPROVAL;
 
-    const approvalMeta = autoApprove
-      ? this.buildApprovalMetadata(userId)
-      : {};
+    const approvalMeta = autoApprove ? this.buildApprovalMetadata(userId) : {};
 
     const payload = applyListingTypePricingRules(dto);
 
@@ -295,7 +295,9 @@ export class PropertyListingsService {
       amenityIds: (dto.amenityIds ?? []).map((id) => toObjectId(id)),
       location: this.resolveLocation(dto.location, !dto.saveAsDraft),
       isAvailable: dto.isAvailable ?? true,
-      availableFrom: dto.availableFrom ? new Date(dto.availableFrom) : undefined,
+      availableFrom: dto.availableFrom
+        ? new Date(dto.availableFrom)
+        : undefined,
       availableUntil: dto.availableUntil
         ? new Date(dto.availableUntil)
         : undefined,
@@ -480,7 +482,10 @@ export class PropertyListingsService {
     await doc.save();
   }
 
-  async permanentRemove(id: string, userId: string): Promise<{ message: string }> {
+  async permanentRemove(
+    id: string,
+    userId: string,
+  ): Promise<{ message: string }> {
     const doc = await this.findDocumentOrThrow(id);
     await this.assertCanPermanentlyDelete(doc, userId);
     await this.purgePropertyListingDocument(doc);
@@ -577,7 +582,10 @@ export class PropertyListingsService {
     return mapPropertyListingToResponse(doc, { isAdmin: true });
   }
 
-  async addFavorite(userId: string, propertyId: string): Promise<{ favorited: true }> {
+  async addFavorite(
+    userId: string,
+    propertyId: string,
+  ): Promise<{ favorited: true }> {
     await this.assertUserExists(userId);
     await this.findDocumentOrThrow(propertyId);
 
@@ -853,10 +861,16 @@ export class PropertyListingsService {
     }
 
     if (
-      canAccessResource(user, userId, 'property', 'properties.canViewProperties', {
-        resource,
-        allowOwnerWithoutPermission: true,
-      })
+      canAccessResource(
+        user,
+        userId,
+        'property',
+        'properties.canViewProperties',
+        {
+          resource,
+          allowOwnerWithoutPermission: true,
+        },
+      )
     ) {
       if (getPropertyListScope(user) === 'platform') {
         return true;
@@ -873,10 +887,16 @@ export class PropertyListingsService {
   ): Promise<void> {
     const user = await this.getUserOrThrow(userId);
     if (
-      !canAccessResource(user, userId, 'property', 'properties.canEditProperty', {
-        resource: { ownerId: doc.ownerId.toHexString() },
-        allowOwnerWithoutPermission: true,
-      })
+      !canAccessResource(
+        user,
+        userId,
+        'property',
+        'properties.canEditProperty',
+        {
+          resource: { ownerId: doc.ownerId.toHexString() },
+          allowOwnerWithoutPermission: true,
+        },
+      )
     ) {
       throw new ForbiddenException('Not allowed to modify this listing');
     }
@@ -888,10 +908,16 @@ export class PropertyListingsService {
   ): Promise<void> {
     const user = await this.getUserOrThrow(userId);
     if (
-      !canAccessResource(user, userId, 'property', 'properties.canHideProperty', {
-        resource: { ownerId: doc.ownerId.toHexString() },
-        allowOwnerWithoutPermission: true,
-      })
+      !canAccessResource(
+        user,
+        userId,
+        'property',
+        'properties.canHideProperty',
+        {
+          resource: { ownerId: doc.ownerId.toHexString() },
+          allowOwnerWithoutPermission: true,
+        },
+      )
     ) {
       throw new ForbiddenException('Not allowed to hide this listing');
     }
@@ -903,10 +929,16 @@ export class PropertyListingsService {
   ): Promise<void> {
     const user = await this.getUserOrThrow(userId);
     if (
-      !canAccessResource(user, userId, 'property', 'properties.canDeleteProperty', {
-        resource: { ownerId: doc.ownerId.toHexString() },
-        allowOwnerWithoutPermission: true,
-      })
+      !canAccessResource(
+        user,
+        userId,
+        'property',
+        'properties.canDeleteProperty',
+        {
+          resource: { ownerId: doc.ownerId.toHexString() },
+          allowOwnerWithoutPermission: true,
+        },
+      )
     ) {
       throw new ForbiddenException('Not allowed to delete this listing');
     }
@@ -929,7 +961,9 @@ export class PropertyListingsService {
         },
       )
     ) {
-      throw new ForbiddenException('Not allowed to permanently delete this listing');
+      throw new ForbiddenException(
+        'Not allowed to permanently delete this listing',
+      );
     }
   }
 
