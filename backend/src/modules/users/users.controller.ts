@@ -7,19 +7,17 @@ import {
   Param,
   Patch,
   Query,
-  UnauthorizedException,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { Session } from '@thallesp/nestjs-better-auth';
-import type { UserSession } from '@thallesp/nestjs-better-auth';
+import { CurrentSession, CurrentUserId, RequireAuth } from '../../common/auth';
 import { sanitizeUser } from '../../common/utils/sanitize-user';
+import type { UserSession } from '@thallesp/nestjs-better-auth';
 import { UserProfileResponseDto } from './dto/user-profile-response.dto';
 import { ListUsersQueryDto } from './dto/list-users-query.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -27,16 +25,9 @@ import { UpdateMyProfileDto } from './dto/update-my-profile.dto';
 import { UpdateUserPermissionsDto } from './dto/user-permissions.dto';
 import { UsersService } from './users.service';
 
-function requireUserId(session: UserSession | null): string {
-  if (!session?.user?.id) {
-    throw new UnauthorizedException('Authentication required');
-  }
-  return session.user.id;
-}
-
 @ApiTags('Users')
-@ApiBearerAuth('bearer')
 @Controller('users')
+@RequireAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -49,7 +40,7 @@ export class UsersController {
   @ApiOkResponse({ type: UserProfileResponseDto })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid session token' })
   @ApiNotFoundResponse({ description: 'User profile not found' })
-  async getMe(@Session() session: UserSession) {
+  async getMe(@CurrentSession() session: UserSession) {
     const profile = await this.usersService.findById(session.user.id);
 
     if (!profile) {
@@ -70,7 +61,7 @@ export class UsersController {
   @ApiOkResponse({ type: UserProfileResponseDto })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid session token' })
   async updateMe(
-    @Session() session: UserSession,
+    @CurrentSession() session: UserSession,
     @Body() dto: UpdateMyProfileDto,
   ) {
     const profile = await this.usersService.updateOwnProfile(
@@ -89,44 +80,39 @@ export class UsersController {
 
   @Get()
   @ApiOperation({ summary: 'List users (admin)' })
-  list(@Session() session: UserSession, @Query() query: ListUsersQueryDto) {
-    const userId = requireUserId(session);
+  list(@CurrentUserId() userId: string, @Query() query: ListUsersQueryDto) {
     return this.usersService.listForAdmin(userId, query);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get user by id (admin)' })
-  findOne(@Session() session: UserSession, @Param('id') id: string) {
-    const userId = requireUserId(session);
+  findOne(@CurrentUserId() userId: string, @Param('id') id: string) {
     return this.usersService.findByIdForAdmin(userId, id);
   }
 
   @Patch(':id/permissions')
   @ApiOperation({ summary: 'Update user permissions (admin)' })
   updatePermissions(
-    @Session() session: UserSession,
+    @CurrentUserId() userId: string,
     @Param('id') id: string,
     @Body() dto: UpdateUserPermissionsDto,
   ) {
-    const userId = requireUserId(session);
     return this.usersService.updatePermissionsForAdmin(userId, id, dto);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update user profile (admin)' })
   update(
-    @Session() session: UserSession,
+    @CurrentUserId() userId: string,
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
   ) {
-    const userId = requireUserId(session);
     return this.usersService.updateForAdmin(userId, id, dto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete user (admin)' })
-  remove(@Session() session: UserSession, @Param('id') id: string) {
-    const userId = requireUserId(session);
+  remove(@CurrentUserId() userId: string, @Param('id') id: string) {
     return this.usersService.deleteForAdmin(userId, id);
   }
 }

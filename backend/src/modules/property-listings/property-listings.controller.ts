@@ -7,35 +7,23 @@ import {
   Patch,
   Post,
   Query,
-  UnauthorizedException,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiConsumes,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   AllowAnonymous,
   OptionalAuth,
   Session,
 } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
+import { CurrentUserId, RequireAuth } from '../../common/auth';
 import { createImageUploadInterceptor } from '../../storage/multer/create-image-upload.interceptor';
 import { ListAdminPropertyListingsQueryDto } from './dto/list-admin-property-listings-query.dto';
 import { ListPropertyListingsQueryDto } from './dto/list-property-listings-query.dto';
 import { RejectPropertyListingDto } from './dto/reject-property-listing.dto';
 import { MAX_PROPERTY_IMAGES } from './property-listings.constants';
 import { PropertyListingsService } from './property-listings.service';
-
-function requireUserId(session: UserSession | null): string {
-  if (!session?.user?.id) {
-    throw new UnauthorizedException('Authentication required');
-  }
-  return session.user.id;
-}
 
 const propertyImagesInterceptor =
   createImageUploadInterceptor(MAX_PROPERTY_IMAGES);
@@ -68,50 +56,46 @@ export class PropertyListingsController {
   }
 
   @Get('mine')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({
     summary:
       'List current user property listings (cursor pagination via lastId)',
   })
   listMine(
-    @Session() session: UserSession | null,
+    @CurrentUserId() userId: string,
     @Query() query: ListPropertyListingsQueryDto,
   ) {
-    const userId = requireUserId(session);
     return this.propertyListingsService.listMine(userId, query);
   }
 
   @Get('admin')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({
     summary:
       'List all property listings for dashboard (cursor pagination + summary)',
   })
   listForAdmin(
-    @Session() session: UserSession | null,
+    @CurrentUserId() userId: string,
     @Query() query: ListAdminPropertyListingsQueryDto,
   ) {
-    const userId = requireUserId(session);
     return this.propertyListingsService.listForAdmin(userId, query);
   }
 
   @Get('moderation/pending')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({
     summary: 'List pending property listings (admin dashboard)',
   })
-  listPending(@Session() session: UserSession | null) {
-    const userId = requireUserId(session);
+  listPending(@CurrentUserId() userId: string) {
     return this.propertyListingsService.listPendingModeration(userId);
   }
 
   @Get('moderation/hidden')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({
     summary: 'List hidden and deleted property listings (admin only)',
   })
-  listHiddenForAdmin(@Session() session: UserSession | null) {
-    const userId = requireUserId(session);
+  listHiddenForAdmin(@CurrentUserId() userId: string) {
     return this.propertyListingsService.listHiddenForAdmin(userId);
   }
 
@@ -123,16 +107,15 @@ export class PropertyListingsController {
   }
 
   @Post()
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create a property listing' })
   @UseInterceptors(propertyImagesInterceptor)
   async create(
-    @Session() session: UserSession | null,
+    @CurrentUserId() userId: string,
     @Body('payload') payload: string,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    const userId = requireUserId(session);
     const dto = this.propertyListingsService.parsePayloadJson(payload);
     const uploadedUrls =
       await this.propertyListingsService.mapUploadedFiles(files);
@@ -140,17 +123,16 @@ export class PropertyListingsController {
   }
 
   @Patch(':id')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Update a property listing' })
   @UseInterceptors(propertyImagesInterceptor)
   async update(
     @Param('id') id: string,
-    @Session() session: UserSession | null,
+    @CurrentUserId() userId: string,
     @Body('payload') payload: string,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    const userId = requireUserId(session);
     const dto = this.propertyListingsService.parsePayloadJson(payload);
     const uploadedUrls =
       await this.propertyListingsService.mapUploadedFiles(files);
@@ -158,95 +140,78 @@ export class PropertyListingsController {
   }
 
   @Patch(':id/hide')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({
     summary:
       'Hide a property listing from the public (owner only, no approval)',
   })
-  hide(@Param('id') id: string, @Session() session: UserSession | null) {
-    const userId = requireUserId(session);
+  hide(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.propertyListingsService.hide(id, userId);
   }
 
   @Patch(':id/unhide')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({
     summary: 'Restore a hidden property listing (owner only, no approval)',
   })
-  unhide(@Param('id') id: string, @Session() session: UserSession | null) {
-    const userId = requireUserId(session);
+  unhide(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.propertyListingsService.unhide(id, userId);
   }
 
   @Delete(':id/permanent')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({
     summary:
       'Permanently delete a property listing (owner or users with permanent-delete permission)',
   })
-  permanentRemove(
-    @Param('id') id: string,
-    @Session() session: UserSession | null,
-  ) {
-    const userId = requireUserId(session);
+  permanentRemove(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.propertyListingsService.permanentRemove(id, userId);
   }
 
   @Delete(':id')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({
     summary:
       'Soft-delete a property listing (owner only, no approval; admin can still view)',
   })
-  async remove(
-    @Param('id') id: string,
-    @Session() session: UserSession | null,
-  ) {
-    const userId = requireUserId(session);
+  async remove(@Param('id') id: string, @CurrentUserId() userId: string) {
     await this.propertyListingsService.remove(id, userId);
     return { message: 'Property listing deleted' };
   }
 
   @Post(':id/favorite')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({ summary: 'Favorite a property listing' })
-  addFavorite(@Param('id') id: string, @Session() session: UserSession | null) {
-    const userId = requireUserId(session);
+  addFavorite(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.propertyListingsService.addFavorite(userId, id);
   }
 
   @Delete(':id/favorite')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({ summary: 'Remove property listing from favorites' })
-  removeFavorite(
-    @Param('id') id: string,
-    @Session() session: UserSession | null,
-  ) {
-    const userId = requireUserId(session);
+  removeFavorite(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.propertyListingsService.removeFavorite(userId, id);
   }
 
   @Patch(':id/approve')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({
     summary: 'Approve a pending property listing (admin dashboard)',
   })
-  approve(@Param('id') id: string, @Session() session: UserSession | null) {
-    const userId = requireUserId(session);
+  approve(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.propertyListingsService.approve(id, userId);
   }
 
   @Patch(':id/reject')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({
     summary: 'Reject a pending property listing (admin dashboard)',
   })
   reject(
     @Param('id') id: string,
-    @Session() session: UserSession | null,
+    @CurrentUserId() userId: string,
     @Body() dto: RejectPropertyListingDto,
   ) {
-    const userId = requireUserId(session);
     return this.propertyListingsService.reject(id, userId, dto);
   }
 }

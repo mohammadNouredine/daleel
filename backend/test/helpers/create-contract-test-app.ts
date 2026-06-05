@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
+import { SessionAuthGuard } from '../../src/common/auth';
 import { HelpRequestsController } from '../../src/modules/help-requests/help-requests.controller';
 import { HelpRequestsService } from '../../src/modules/help-requests/help-requests.service';
 import { PropertyListingsController } from '../../src/modules/property-listings/property-listings.controller';
@@ -36,6 +37,7 @@ export async function createContractTestApp(): Promise<INestApplication> {
       UsersController,
     ],
     providers: [
+      SessionAuthGuard,
       {
         provide: PropertyListingsService,
         useValue: propertyListingsServiceMock,

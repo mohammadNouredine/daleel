@@ -7,22 +7,17 @@ import {
   Patch,
   Post,
   Query,
-  UnauthorizedException,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiConsumes,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   Session,
   AllowAnonymous,
   OptionalAuth,
 } from '@thallesp/nestjs-better-auth';
 import type { UserSession } from '@thallesp/nestjs-better-auth';
+import { CurrentUserId, RequireAuth } from '../../common/auth';
 import { createImageUploadInterceptor } from '../../storage/multer/create-image-upload.interceptor';
 import { MAX_PROOF_IMAGES } from '../uploads/uploads.constants';
 import { FulfillmentAdjustmentDto } from './dto/fulfillment-adjustment.dto';
@@ -30,13 +25,6 @@ import { HelpRequestSortQueryDto } from './dto/help-request-sort-query.dto';
 import { ListHelpRequestsQueryDto } from './dto/list-help-requests-query.dto';
 import { RejectHelpRequestDto } from './dto/reject-help-request.dto';
 import { HelpRequestsService } from './help-requests.service';
-
-function requireUserId(session: UserSession | null): string {
-  if (!session?.user?.id) {
-    throw new UnauthorizedException('Authentication required');
-  }
-  return session.user.id;
-}
 
 const multipartInterceptor = createImageUploadInterceptor(MAX_PROOF_IMAGES);
 
@@ -53,21 +41,19 @@ export class HelpRequestsController {
   }
 
   @Get('mine')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({ summary: 'List current user help requests' })
   listMine(
-    @Session() session: UserSession | null,
+    @CurrentUserId() userId: string,
     @Query() query: HelpRequestSortQueryDto,
   ) {
-    const userId = requireUserId(session);
     return this.helpRequestsService.listMine(userId, query);
   }
 
   @Get('moderation/pending')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({ summary: 'List pending help requests (admin)' })
-  listPending(@Session() session: UserSession | null) {
-    const userId = requireUserId(session);
+  listPending(@CurrentUserId() userId: string) {
     return this.helpRequestsService.listPendingModeration(userId);
   }
 
@@ -79,16 +65,15 @@ export class HelpRequestsController {
   }
 
   @Post()
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create a help request' })
   @UseInterceptors(multipartInterceptor)
   async create(
-    @Session() session: UserSession | null,
+    @CurrentUserId() userId: string,
     @Body('payload') payload: string,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    const userId = requireUserId(session);
     const dto = this.helpRequestsService.parsePayloadJson(payload);
     const uploadedMedia =
       await this.helpRequestsService.mapUploadedFiles(files);
@@ -96,17 +81,16 @@ export class HelpRequestsController {
   }
 
   @Patch(':id')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Update a help request' })
   @UseInterceptors(multipartInterceptor)
   async update(
     @Param('id') id: string,
-    @Session() session: UserSession | null,
+    @CurrentUserId() userId: string,
     @Body('payload') payload: string,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    const userId = requireUserId(session);
     const dto = this.helpRequestsService.parsePayloadJson(payload);
     const uploadedMedia =
       await this.helpRequestsService.mapUploadedFiles(files);
@@ -114,86 +98,72 @@ export class HelpRequestsController {
   }
 
   @Delete(':id')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({ summary: 'Soft-delete a help request' })
-  async remove(
-    @Param('id') id: string,
-    @Session() session: UserSession | null,
-  ) {
-    const userId = requireUserId(session);
+  async remove(@Param('id') id: string, @CurrentUserId() userId: string) {
     await this.helpRequestsService.remove(id, userId);
     return { message: 'Help request deleted' };
   }
 
   @Patch(':id/needs/:lineId/fulfillment')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({ summary: 'Adjust fulfillment for a need line' })
   adjustFulfillment(
     @Param('id') id: string,
     @Param('lineId') lineId: string,
-    @Session() session: UserSession | null,
+    @CurrentUserId() userId: string,
     @Body() dto: FulfillmentAdjustmentDto,
   ) {
-    const userId = requireUserId(session);
     return this.helpRequestsService.adjustFulfillment(id, lineId, userId, dto);
   }
 
   @Patch(':id/hide')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({ summary: 'Hide a help request from the active feed (owner)' })
-  hide(@Param('id') id: string, @Session() session: UserSession | null) {
-    const userId = requireUserId(session);
+  hide(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.helpRequestsService.hide(id, userId);
   }
 
   @Patch(':id/restore')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({ summary: 'Restore a hidden help request (owner)' })
-  restore(@Param('id') id: string, @Session() session: UserSession | null) {
-    const userId = requireUserId(session);
+  restore(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.helpRequestsService.restore(id, userId);
   }
 
   @Patch(':id/approve-edit')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({ summary: 'Approve a pending help request edit (admin)' })
-  approveEdit(
-    @Param('id') id: string,
-    @Session() session: UserSession | null,
-  ) {
-    const userId = requireUserId(session);
+  approveEdit(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.helpRequestsService.approveEdit(id, userId);
   }
 
   @Patch(':id/reject-edit')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({ summary: 'Reject a pending help request edit (admin)' })
   rejectEdit(
     @Param('id') id: string,
-    @Session() session: UserSession | null,
+    @CurrentUserId() userId: string,
     @Body() dto: RejectHelpRequestDto,
   ) {
-    const userId = requireUserId(session);
     return this.helpRequestsService.rejectEdit(id, userId, dto);
   }
 
   @Patch(':id/approve')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({ summary: 'Approve a pending help request (admin)' })
-  approve(@Param('id') id: string, @Session() session: UserSession | null) {
-    const userId = requireUserId(session);
+  approve(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.helpRequestsService.approve(id, userId);
   }
 
   @Patch(':id/reject')
-  @ApiBearerAuth('bearer')
+  @RequireAuth()
   @ApiOperation({ summary: 'Reject a pending help request (admin)' })
   reject(
     @Param('id') id: string,
-    @Session() session: UserSession | null,
+    @CurrentUserId() userId: string,
     @Body() dto: RejectHelpRequestDto,
   ) {
-    const userId = requireUserId(session);
     return this.helpRequestsService.reject(id, userId, dto);
   }
 }
