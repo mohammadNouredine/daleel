@@ -4,8 +4,11 @@ import { useMemo, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Plus } from "lucide-react"
 import toast from "react-hot-toast"
-import { PageShell } from "@/components/layout/PageShell"
+import { CardGridSkeleton } from "@/components/data/CardGridSkeleton"
 import { Button } from "@/components/ui/button"
+import { HomeFooter } from "@/features/home/components/HomeFooter"
+import { HomeHeader } from "@/features/home/components/HomeHeader"
+import { SectionHeader } from "@/features/home/components/SectionHeader"
 import { useIsAuthenticated } from "@/features/auth/hooks/use-is-authenticated"
 import { useCurrentProfile } from "@/features/users/hooks/use-current-profile"
 import type { HelpRequest } from "../types"
@@ -90,7 +93,7 @@ export function HelpRequestsView() {
       ? "Getting your location…"
       : undefined
 
-  const { data: profile, isLoading: isProfileLoading } = useCurrentProfile()
+  const { data: profile } = useCurrentProfile()
 
   const listViewMode = viewMode === "mine" ? "active" : viewMode
   const publicQuery = useHelpRequests({
@@ -172,6 +175,17 @@ export function HelpRequestsView() {
       : publicQuery.isLoading ||
         (sort === "nearest" && locationStatus === "loading")
 
+  const isError =
+    viewMode === "mine" ? mineQuery.isError : publicQuery.isError
+
+  const refetch = () => {
+    if (viewMode === "mine") {
+      void mineQuery.refetch()
+      return
+    }
+    void publicQuery.refetch()
+  }
+
   const openCreateDialog = () => {
     if (!canCreate) {
       router.push("/auth")
@@ -237,98 +251,115 @@ export function HelpRequestsView() {
   const showFormDialog = canCreate || (canEdit && editingRequest !== null)
 
   return (
-    <PageShell
-      size="wide"
-      title="Help Requests"
-      description={
-        viewMode === "mine"
-          ? "Track your submissions, including those awaiting approval."
-          : viewMode === "active"
-            ? "Find requests that still need your help."
-            : "Review completed, expired, or cancelled requests."
-      }
-      headerAction={
-        !isProfileLoading && canCreate && viewMode !== "archive" ? (
-          <Button
-            type="button"
-            size="icon"
-            className="shrink-0 rounded-full shadow-sm"
-            onClick={openCreateDialog}
-            aria-label="Add help request"
-          >
-            <Plus className="size-5" />
-          </Button>
-        ) : undefined
-      }
-    >
-      <div className="flex flex-col gap-4 sm:gap-5">
-        <HelpRequestsToolbar
-          viewMode={viewMode}
-          activeCount={active.length}
-          archiveCount={archive.length}
-          mineCount={mineQuery.data?.length ?? 0}
-          showMineTab={isAuthenticated}
-          onViewModeChange={handleViewModeChange}
-        />
+    <div className="flex min-h-screen flex-col bg-background">
+      <HomeHeader />
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <SectionHeader
+            title="Community Help Requests"
+            subtitle="Browse open requests across Lebanon and offer support where it is needed most."
+            badge="Live"
+          />
+          {viewMode !== "archive" ? (
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                className="gap-1.5"
+                onClick={openCreateDialog}
+              >
+                <Plus className="size-4" />
+                Add help request
+              </Button>
+            </div>
+          ) : null}
+        </div>
 
-        <HelpRequestFiltersBar
-          filters={filters}
-          sort={sort}
-          governorates={governorates}
-          onChange={setFilters}
-          onSortChange={setSort}
-          sortHint={sortHint}
-        />
+        <div className="mt-6 flex flex-col gap-4">
+          <HelpRequestsToolbar
+            viewMode={viewMode}
+            activeCount={active.length}
+            archiveCount={archive.length}
+            mineCount={mineQuery.data?.length ?? 0}
+            showMineTab={isAuthenticated}
+            onViewModeChange={handleViewModeChange}
+          />
+          <HelpRequestFiltersBar
+            filters={filters}
+            sort={sort}
+            governorates={governorates}
+            onChange={setFilters}
+            onSortChange={setSort}
+            sortHint={sortHint}
+          />
+        </div>
 
-        {isLoading ? (
-          <div className="rounded-2xl border border-dashed border-border/80 bg-card/50 px-6 py-14 text-center text-muted-foreground">
-            Loading requests…
-          </div>
-        ) : displayedRequests.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 bg-card/50 px-6 py-14 text-center">
-            <p className="text-muted-foreground">{emptyMessage}</p>
-            {hasActiveFilters(filters) ? (
+        <div className="mt-8">
+          {isLoading ? (
+            <CardGridSkeleton
+              columnsClassName="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+            />
+          ) : isError ? (
+            <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center">
+              <p className="text-sm text-destructive">
+                Could not load help requests. Please try again.
+              </p>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="mt-4"
-                onClick={() => setFilters(DEFAULT_HELP_REQUEST_FILTERS)}
+                className="mt-3"
+                onClick={refetch}
               >
-                Clear filters
+                Retry
               </Button>
-            ) : null}
-            {viewMode === "active" && canCreate && !hasActiveFilters(filters) ? (
-              <Button
-                type="button"
-                className="mt-4"
-                onClick={openCreateDialog}
-              >
-                <Plus className="size-4" />
-                Add first request
-              </Button>
-            ) : null}
-          </div>
-        ) : (
-          <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {displayedRequests.map((request) => (
-              <li key={request._id}>
-                <HelpRequestCard
-                  request={request}
-                  variant={viewMode === "archive" ? "archive" : "active"}
-                  showApprovalStatus={viewMode === "mine"}
-                  canEdit={canEdit}
-                  canManage={canManageHelpRequest(request, profile)}
-                  canDelete={canDelete}
-                  onEdit={() => openEditDialog(request)}
-                  onManage={() => setManagingRequest(request)}
-                  onDelete={() => setDeletingRequest(request)}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+            </div>
+          ) : displayedRequests.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
+              <p className="text-sm font-medium">{emptyMessage}</p>
+              {hasActiveFilters(filters) ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => setFilters(DEFAULT_HELP_REQUEST_FILTERS)}
+                >
+                  Clear filters
+                </Button>
+              ) : null}
+              {viewMode === "active" && !hasActiveFilters(filters) ? (
+                <Button
+                  type="button"
+                  className="mt-4 gap-1.5"
+                  onClick={openCreateDialog}
+                >
+                  <Plus className="size-4" />
+                  Add help request
+                </Button>
+              ) : null}
+            </div>
+          ) : (
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {displayedRequests.map((request) => (
+                <li key={request._id}>
+                  <HelpRequestCard
+                    request={request}
+                    variant={viewMode === "archive" ? "archive" : "active"}
+                    showApprovalStatus={viewMode === "mine"}
+                    canEdit={canEdit}
+                    canManage={canManageHelpRequest(request, profile)}
+                    canDelete={canDelete}
+                    onEdit={() => openEditDialog(request)}
+                    onManage={() => setManagingRequest(request)}
+                    onDelete={() => setDeletingRequest(request)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </main>
+      <HomeFooter />
 
       {showFormDialog ? (
         <CreateHelpRequestDialogProvider
@@ -359,6 +390,6 @@ export function HelpRequestsView() {
         }}
         onConfirm={handleDelete}
       />
-    </PageShell>
+    </div>
   )
 }
