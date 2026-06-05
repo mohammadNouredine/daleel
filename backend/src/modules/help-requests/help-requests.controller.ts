@@ -138,6 +138,45 @@ export class HelpRequestsController {
     return this.helpRequestsService.adjustFulfillment(id, lineId, userId, dto);
   }
 
+  @Patch(':id/hide')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ summary: 'Hide a help request from the active feed (owner)' })
+  hide(@Param('id') id: string, @Session() session: UserSession | null) {
+    const userId = requireUserId(session);
+    return this.helpRequestsService.hide(id, userId);
+  }
+
+  @Patch(':id/restore')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ summary: 'Restore a hidden help request (owner)' })
+  restore(@Param('id') id: string, @Session() session: UserSession | null) {
+    const userId = requireUserId(session);
+    return this.helpRequestsService.restore(id, userId);
+  }
+
+  @Patch(':id/approve-edit')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ summary: 'Approve a pending help request edit (admin)' })
+  approveEdit(
+    @Param('id') id: string,
+    @Session() session: UserSession | null,
+  ) {
+    const userId = requireUserId(session);
+    return this.helpRequestsService.approveEdit(id, userId);
+  }
+
+  @Patch(':id/reject-edit')
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ summary: 'Reject a pending help request edit (admin)' })
+  rejectEdit(
+    @Param('id') id: string,
+    @Session() session: UserSession | null,
+    @Body() dto: RejectHelpRequestDto,
+  ) {
+    const userId = requireUserId(session);
+    return this.helpRequestsService.rejectEdit(id, userId, dto);
+  }
+
   @Patch(':id/approve')
   @ApiBearerAuth('bearer')
   @ApiOperation({ summary: 'Approve a pending help request (admin)' })

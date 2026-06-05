@@ -67,6 +67,48 @@ export class RequestLocation {
 export const RequestLocationSchema =
   SchemaFactory.createForClass(RequestLocation);
 
+@Schema({ _id: false })
+export class PendingHelpRequestEdit {
+  @Prop({ required: true, trim: true })
+  title: string;
+
+  @Prop({ required: true })
+  description: string;
+
+  @Prop({ type: String, enum: HelpType, required: true })
+  helpType: HelpType;
+
+  @Prop({ type: String, enum: SubCategory, required: true })
+  subCategory: SubCategory;
+
+  @Prop({ type: String, enum: PriorityLevel, required: true })
+  priorityLevel: PriorityLevel;
+
+  @Prop({ type: [NeedLineSchema], default: [] })
+  needs: NeedLine[];
+
+  @Prop({ min: 1 })
+  beneficiariesCount?: number;
+
+  @Prop({ type: RequestLocationSchema })
+  location?: RequestLocation;
+
+  @Prop({ trim: true })
+  contactPhone?: string;
+
+  @Prop({ type: String, enum: Visibility, required: true })
+  visibility: Visibility;
+
+  @Prop({ type: [String], default: [] })
+  media: string[];
+
+  @Prop({ type: Date, required: true })
+  submittedAt: Date;
+}
+
+export const PendingHelpRequestEditSchema =
+  SchemaFactory.createForClass(PendingHelpRequestEdit);
+
 @Schema({ timestamps: true, collection: 'help_requests' })
 export class HelpRequest {
   @Prop({ type: Types.ObjectId, ref: 'users', required: true, index: true })
@@ -153,6 +195,9 @@ export class HelpRequest {
 
   @Prop({ type: Date, default: null })
   deletedAt: Date | null;
+
+  @Prop({ type: PendingHelpRequestEditSchema, default: null })
+  pendingEdit?: PendingHelpRequestEdit | null;
 }
 
 export type HelpRequestDocument = HydratedDocument<HelpRequest>;
@@ -216,3 +261,4 @@ HelpRequestSchema.index({
 HelpRequestSchema.index({ expiresAt: 1 });
 HelpRequestSchema.index({ createdBy: 1, status: 1 });
 HelpRequestSchema.index({ deletedAt: 1 });
+HelpRequestSchema.index({ 'pendingEdit.submittedAt': 1 });

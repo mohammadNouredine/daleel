@@ -11,19 +11,19 @@ import {
 } from "@/components/ui/dialog"
 import type { HelpRequest } from "../types"
 
-type DeleteHelpRequestDialogProps = {
+type HideHelpRequestDialogProps = {
   request: HelpRequest | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onConfirm: (requestId: string) => void
 }
 
-export function DeleteHelpRequestDialog({
+export function HideHelpRequestDialog({
   request,
   open,
   onOpenChange,
   onConfirm,
-}: DeleteHelpRequestDialogProps) {
+}: HideHelpRequestDialogProps) {
   if (!request) {
     return null
   }
@@ -32,11 +32,10 @@ export function DeleteHelpRequestDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete request permanently?</DialogTitle>
+          <DialogTitle>Hide request?</DialogTitle>
           <DialogDescription>
-            This will permanently remove &ldquo;{request.title}&rdquo; and cannot
-            be undone. To temporarily remove it from the active list, use Hide
-            instead.
+            &ldquo;{request.title}&rdquo; will be removed from the active list
+            and moved to your archive. You can restore it later.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:justify-end">
@@ -49,13 +48,12 @@ export function DeleteHelpRequestDialog({
           </Button>
           <Button
             type="button"
-            variant="destructive"
             onClick={() => {
               onConfirm(request._id)
               onOpenChange(false)
             }}
           >
-            Delete
+            Hide request
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -14,7 +14,9 @@ import {
   PENDING_HELP_REQUESTS_QUERY_KEY,
   HELP_REQUESTS_PENDING,
   helpRequestApproveEndpoint,
+  helpRequestApproveEditEndpoint,
   helpRequestRejectEndpoint,
+  helpRequestRejectEditEndpoint,
 } from "../endpoints"
 import type { HelpRequest } from "../types"
 
@@ -69,6 +71,48 @@ export function useRejectHelpRequest(options?: {
         queryClient.invalidateQueries({ queryKey: key })
       )
       toast.success("Request rejected")
+      options?.onSuccess?.(data)
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+export function useApproveHelpRequestEdit(options?: {
+  onSuccess?: (data: HelpRequest) => void
+}) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) =>
+      sendToApi<HelpRequest>(helpRequestApproveEditEndpoint(id), {}, "PATCH"),
+    onSuccess: (data) => {
+      invalidateKeys.forEach((key) =>
+        queryClient.invalidateQueries({ queryKey: key })
+      )
+      toast.success("Edit approved and applied")
+      options?.onSuccess?.(data)
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+export function useRejectHelpRequestEdit(options?: {
+  onSuccess?: (data: HelpRequest) => void
+}) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
+      sendToApi<HelpRequest>(
+        helpRequestRejectEditEndpoint(id),
+        { reason },
+        "PATCH"
+      ),
+    onSuccess: (data) => {
+      invalidateKeys.forEach((key) =>
+        queryClient.invalidateQueries({ queryKey: key })
+      )
+      toast.success("Edit rejected")
       options?.onSuccess?.(data)
     },
     onError: (err: Error) => toast.error(err.message),

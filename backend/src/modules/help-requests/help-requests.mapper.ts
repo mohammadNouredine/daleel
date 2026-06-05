@@ -21,6 +21,8 @@ export type HelpRequestResponse = {
   isVerified: boolean;
   media?: string[];
   contactPhone?: string;
+  hasPendingEdit: boolean;
+  pendingEditSubmittedAt?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -28,6 +30,8 @@ export type HelpRequestResponse = {
 export function mapHelpRequestToResponse(
   doc: HelpRequestDocument,
 ): HelpRequestResponse {
+  const pendingEdit = doc.pendingEdit ?? null;
+
   return {
     _id: doc._id.toHexString(),
     createdBy: doc.createdBy.toHexString(),
@@ -46,6 +50,8 @@ export function mapHelpRequestToResponse(
     isVerified: doc.isVerified,
     media: doc.media ?? [],
     contactPhone: doc.contactPhone,
+    hasPendingEdit: pendingEdit !== null,
+    pendingEditSubmittedAt: pendingEdit?.submittedAt?.toISOString(),
     createdAt:
       (doc.get('createdAt') as Date | undefined)?.toISOString() ??
       new Date().toISOString(),

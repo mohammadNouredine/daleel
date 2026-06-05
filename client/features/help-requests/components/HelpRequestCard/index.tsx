@@ -22,10 +22,12 @@ import {
   HandHelping,
   MapPin,
   Pencil,
+  RotateCcw,
   Settings2,
   Trash2,
   Users,
   BadgeCheck,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RequestNeedsProgress } from "../RequestNeedsProgress";
@@ -37,9 +39,13 @@ type HelpRequestCardProps = {
   showApprovalStatus?: boolean;
   canEdit?: boolean;
   canManage?: boolean;
+  canHide?: boolean;
+  canRestore?: boolean;
   canDelete?: boolean;
   onEdit?: () => void;
   onManage?: () => void;
+  onHide?: () => void;
+  onRestore?: () => void;
   onDelete?: () => void;
 };
 
@@ -70,9 +76,13 @@ export function HelpRequestCard({
   showApprovalStatus = false,
   canEdit = false,
   canManage = false,
+  canHide = false,
+  canRestore = false,
   canDelete = false,
   onEdit,
   onManage,
+  onHide,
+  onRestore,
   onDelete,
 }: HelpRequestCardProps) {
   const [detailOpen, setDetailOpen] = useState(false);
@@ -82,7 +92,8 @@ export function HelpRequestCard({
 
   const locationLabel = formatHelpRequestLocationLabel(request.location);
 
-  const showOwnerActions = canEdit || canManage || canDelete;
+  const showOwnerActions =
+    canEdit || canManage || canHide || canRestore || canDelete;
 
   const openDetails = () => setDetailOpen(true);
 
@@ -127,6 +138,14 @@ export function HelpRequestCard({
                     className={getApprovalBadgeClass(request.approvalStatus)}
                   >
                     {APPROVAL_LABELS[request.approvalStatus]}
+                  </Badge>
+                ) : null}
+                {request.hasPendingEdit ? (
+                  <Badge
+                    variant="outline"
+                    className="border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300"
+                  >
+                    Edit pending
                   </Badge>
                 ) : null}
                 {isArchive ? (
@@ -218,6 +237,30 @@ export function HelpRequestCard({
                   >
                     <Settings2 className="size-3.5" />
                     Manage
+                  </Button>
+                ) : null}
+                {canHide ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                    onClick={onHide}
+                  >
+                    <EyeOff className="size-3.5" />
+                    Hide
+                  </Button>
+                ) : null}
+                {canRestore ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                    onClick={onRestore}
+                  >
+                    <RotateCcw className="size-3.5" />
+                    Restore
                   </Button>
                 ) : null}
                 {canDelete ? (

@@ -16,7 +16,10 @@ import { HelpRequestApprovalStatus } from "../types"
 import {
   canDeleteHelpRequest,
   canEditHelpRequest,
+  canHideHelpRequest,
   canManageHelpRequest,
+  canRestoreHelpRequest,
+  isHelpRequestOwner,
 } from "../utils/help-request-access"
 import {
   DEFAULT_HELP_REQUEST_FILTERS,
@@ -40,10 +43,13 @@ import { useMyHelpRequests } from "../hooks/use-my-help-requests"
 import { useCreateHelpRequest } from "../hooks/use-create-help-request"
 import { useUpdateHelpRequest } from "../hooks/use-update-help-request"
 import { useDeleteHelpRequest } from "../hooks/use-delete-help-request"
+import { useHideHelpRequest } from "../hooks/use-hide-help-request"
+import { useRestoreHelpRequest } from "../hooks/use-restore-help-request"
 import { useManageHelpRequestFulfillment } from "../hooks/use-manage-help-request-fulfillment"
 import { CreateHelpRequestDialog } from "./CreateHelpRequestDialog"
 import { CreateHelpRequestDialogProvider } from "./CreateHelpRequestDialog/CreateHelpRequestDialogContext"
 import { DeleteHelpRequestDialog } from "./DeleteHelpRequestDialog"
+import { HideHelpRequestDialog } from "./HideHelpRequestDialog"
 import { HelpRequestCard } from "./HelpRequestCard"
 import { HelpRequestFiltersBar } from "./HelpRequestFiltersBar"
 import {
@@ -68,6 +74,7 @@ export function HelpRequestsView() {
   const [deletingRequest, setDeletingRequest] = useState<HelpRequest | null>(
     null
   )
+  const [hidingRequest, setHidingRequest] = useState<HelpRequest | null>(null)
   const [viewMode, setViewMode] = useState<HelpRequestsViewMode>("active")
   const [filters, setFilters] = useState<HelpRequestFilters>(
     DEFAULT_HELP_REQUEST_FILTERS
@@ -134,12 +141,16 @@ export function HelpRequestsView() {
     onSuccess: () => setDeletingRequest(null),
   })
 
+  const hideMutation = useHideHelpRequest({
+    onSuccess: () => setHidingRequest(null),
+  })
+
+  const restoreMutation = useRestoreHelpRequest()
+
   const manageMutation = useManageHelpRequestFulfillment({
     onSuccess: () => setManagingRequest(null),
   })
 
-  const canEdit = canEditHelpRequest(profile)
-  const canDelete = canDeleteHelpRequest(profile)
   const canCreate = isAuthenticated
 
   const sourceRequests = viewMode === "mine" ? (mineQuery.data ?? []) : (publicQuery.data ?? [])
@@ -230,6 +241,14 @@ export function HelpRequestsView() {
     deleteMutation.mutate(requestId)
   }
 
+  const handleHide = (requestId: string) => {
+    hideMutation.mutate(requestId)
+  }
+
+  const handleRestore = (requestId: string) => {
+    restoreMutation.mutate(requestId)
+  }
+
   const handleViewModeChange = (mode: HelpRequestsViewMode) => {
     setViewMode(mode)
     setFilters(DEFAULT_HELP_REQUEST_FILTERS)
@@ -248,7 +267,9 @@ export function HelpRequestsView() {
           : "No completed or inactive requests."
 
   const formMode = editingRequest ? "edit" : "create"
-  const showFormDialog = canCreate || (canEdit && editingRequest !== null)
+  const showFormDialog =
+    canCreate ||
+    (editingRequest !== null && isHelpRequestOwner(editingRequest, profile))
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -340,21 +361,35 @@ export function HelpRequestsView() {
             </div>
           ) : (
             <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {displayedRequests.map((request) => (
-                <li key={request._id}>
-                  <HelpRequestCard
-                    request={request}
-                    variant={viewMode === "archive" ? "archive" : "active"}
-                    showApprovalStatus={viewMode === "mine"}
-                    canEdit={canEdit}
-                    canManage={canManageHelpRequest(request, profile)}
-                    canDelete={canDelete}
-                    onEdit={() => openEditDialog(request)}
-                    onManage={() => setManagingRequest(request)}
-                    onDelete={() => setDeletingRequest(request)}
-                  />
-                </li>
-              ))}
+              {displayedRequests.map((request) => {
+                const isOwner = isHelpRequestOwner(request, profile)
+
+                return (
+                  <li key={request._id}>
+                    <HelpRequestCard
+                      request={request}
+                      variant={viewMode === "archive" ? "archive" : "active"}
+                      showApprovalStatus={viewMode === "mine" || isOwner}
+                      canEdit={isOwner && canEditHelpRequest(request, profile)}
+                      canManage={
+                        isOwner && canManageHelpRequest(request, profile)
+                      }
+                      canHide={isOwner && canHideHelpRequest(request, profile)}
+                      canRestore={
+                        isOwner && canRestoreHelpRequest(request, profile)
+                      }
+                      canDelete={
+                        isOwner && canDeleteHelpRequest(request, profile)
+                      }
+                      onEdit={() => openEditDialog(request)}
+                      onManage={() => setManagingRequest(request)}
+                      onHide={() => setHidingRequest(request)}
+                      onRestore={() => handleRestore(request._id)}
+                      onDelete={() => setDeletingRequest(request)}
+                    />
+                  </li>
+                )
+              })}
             </ul>
           )}
         </div>
@@ -389,6 +424,15 @@ export function HelpRequestsView() {
           if (!open) setDeletingRequest(null)
         }}
         onConfirm={handleDelete}
+      />
+
+      <HideHelpRequestDialog
+        request={hidingRequest}
+        open={hidingRequest !== null}
+        onOpenChange={(open) => {
+          if (!open) setHidingRequest(null)
+        }}
+        onConfirm={handleHide}
       />
     </div>
   )

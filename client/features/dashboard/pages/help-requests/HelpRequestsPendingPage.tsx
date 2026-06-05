@@ -13,13 +13,22 @@ import { Textarea } from "@/components/ui/textarea"
 import { HelpRequestCard } from "@/features/help-requests/components/HelpRequestCard"
 import {
   useApproveHelpRequest,
+  useApproveHelpRequestEdit,
   usePendingHelpRequests,
   useRejectHelpRequest,
+  useRejectHelpRequestEdit,
 } from "@/features/help-requests/hooks/use-moderate-help-request"
-import type { HelpRequest } from "@/features/help-requests/types"
+import {
+  HelpRequestApprovalStatus,
+  type HelpRequest,
+} from "@/features/help-requests/types"
 import { canModerateHelpRequests } from "@/lib/access-control"
 import { useDashboardAuth } from "../../providers/DashboardAuthProvider"
 import { DashboardPageHeader } from "../../components/DashboardPageHeader"
+
+function isEditReview(request: HelpRequest): boolean {
+  return Boolean(request.hasPendingEdit)
+}
 
 export function HelpRequestsPendingPage() {
   const { profile } = useDashboardAuth()
@@ -27,6 +36,8 @@ export function HelpRequestsPendingPage() {
   const { data: pending = [], isLoading } = usePendingHelpRequests(canModerate)
   const approveMutation = useApproveHelpRequest()
   const rejectMutation = useRejectHelpRequest()
+  const approveEditMutation = useApproveHelpRequestEdit()
+  const rejectEditMutation = useRejectHelpRequestEdit()
   const [rejectingRequest, setRejectingRequest] = useState<HelpRequest | null>(
     null
   )
@@ -34,7 +45,12 @@ export function HelpRequestsPendingPage() {
 
   const handleReject = () => {
     if (!rejectingRequest) return
-    rejectMutation.mutate(
+
+    const mutate = isEditReview(rejectingRequest)
+      ? rejectEditMutation.mutate
+      : rejectMutation.mutate
+
+    mutate(
       { id: rejectingRequest._id, reason: rejectReason.trim() || undefined },
       {
         onSuccess: () => {
@@ -63,7 +79,7 @@ export function HelpRequestsPendingPage() {
     <>
       <DashboardPageHeader
         title="Pending approval"
-        description="Review submissions from users without direct publishing permission."
+        description="Review new submissions and proposed edits to approved requests."
       />
 
       {isLoading ? (
@@ -74,34 +90,76 @@ export function HelpRequestsPendingPage() {
         </div>
       ) : (
         <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {pending.map((request) => (
-            <li key={request._id} className="space-y-3">
-              <HelpRequestCard
-                request={request}
-                showApprovalStatus
-                variant="active"
-              />
-              <div className="flex flex-wrap gap-2 px-1">
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => approveMutation.mutate(request._id)}
-                  disabled={approveMutation.isPending}
-                >
-                  Approve
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setRejectingRequest(request)}
-                  disabled={rejectMutation.isPending}
-                >
-                  Reject
-                </Button>
-              </div>
-            </li>
-          ))}
+          {pending.map((request) => {
+            const editReview = isEditReview(request)
+
+            return (
+              <li key={request._id} className="space-y-3">
+                {editReview ? (
+                  <p className="px-1 text-xs font-medium text-amber-800 dark:text-amber-300">
+                    Edit review — proposed changes to &ldquo;{request.title}
+                    &rdquo;
+                  </p>
+                ) : (
+                  <p className="px-1 text-xs font-medium text-muted-foreground">
+                    New submission
+                  </p>
+                )}
+                <HelpRequestCard
+                  request={request}
+                  showApprovalStatus
+                  variant="active"
+                />
+                <div className="flex flex-wrap gap-2 px-1">
+                  {editReview ? (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => approveEditMutation.mutate(request._id)}
+                        disabled={approveEditMutation.isPending}
+                      >
+                        Approve edit
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setRejectingRequest(request)}
+                        disabled={rejectEditMutation.isPending}
+                      >
+                        Reject edit
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => approveMutation.mutate(request._id)}
+                        disabled={
+                          approveMutation.isPending ||
+                          request.approvalStatus !==
+                            HelpRequestApprovalStatus.PENDING
+                        }
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setRejectingRequest(request)}
+                        disabled={rejectMutation.isPending}
+                      >
+                        Reject
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </li>
+            )
+          })}
         </ul>
       )}
 
@@ -116,7 +174,11 @@ export function HelpRequestsPendingPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject request</DialogTitle>
+            <DialogTitle>
+              {rejectingRequest && isEditReview(rejectingRequest)
+                ? "Reject edit"
+                : "Reject request"}
+            </DialogTitle>
           </DialogHeader>
           {rejectingRequest ? (
             <p className="text-sm text-muted-foreground">
@@ -144,7 +206,9 @@ export function HelpRequestsPendingPage() {
               type="button"
               variant="destructive"
               onClick={handleReject}
-              disabled={rejectMutation.isPending}
+              disabled={
+                rejectMutation.isPending || rejectEditMutation.isPending
+              }
             >
               Reject
             </Button>

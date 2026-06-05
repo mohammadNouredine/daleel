@@ -119,6 +119,8 @@ export type HelpRequest = {
   isVerified: boolean
   media?: string[]
   contactPhone?: string
+  hasPendingEdit?: boolean
+  pendingEditSubmittedAt?: string
   createdAt: string
   updatedAt: string
 }

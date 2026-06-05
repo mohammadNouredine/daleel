@@ -40,6 +40,7 @@ import {
   HelpRequest,
   type HelpRequestDocument,
   type NeedLine,
+  type PendingHelpRequestEdit,
   type RequestLocation,
 } from './schemas/help-request.schema';
 
@@ -91,8 +92,11 @@ export class HelpRequestsService {
 
     const docs = await this.helpRequestModel
       .find({
-        approvalStatus: HelpRequestApprovalStatus.PENDING,
         deletedAt: null,
+        $or: [
+          { approvalStatus: HelpRequestApprovalStatus.PENDING },
+          { pendingEdit: { $ne: null } },
+        ],
       })
       .sort({ createdAt: 1 })
       .exec();
@@ -170,28 +174,58 @@ export class HelpRequestsService {
     const doc = await this.findDocumentOrThrow(id);
     await this.assertCanEdit(doc, userId);
 
-    const oldMedia = doc.media ?? [];
+    const user = await this.getUserOrThrow(userId);
     const media = [...(dto.existingMedia ?? []), ...uploadedMedia].slice(0, 8);
-    const newMediaSet = new Set(media);
-    const removedMedia = oldMedia.filter((url) => !newMediaSet.has(url));
-    await this.storageService.deleteByUrls(removedMedia);
 
-    const previousNeeds = new Map(
-      (doc.needs ?? []).map((line) => [line.id, line.fulfilled]),
-    );
+    if (this.shouldStageOwnerEdit(user, userId, doc)) {
+      if (doc.pendingEdit) {
+        throw new BadRequestException(
+          'An edit is already pending review for this request',
+        );
+      }
 
-    doc.title = dto.title.trim();
-    doc.description = dto.description.trim();
-    doc.helpType = dto.helpType;
-    doc.subCategory = dto.subCategory;
-    doc.priorityLevel = dto.priorityLevel;
-    doc.needs = this.buildNeedsFromInput(dto.needs, previousNeeds);
-    doc.beneficiariesCount = dto.beneficiariesCount;
-    doc.location = this.resolveLocation(dto.location);
-    doc.contactPhone = dto.contactPhone?.trim();
-    doc.visibility = dto.visibility ?? doc.visibility;
-    doc.media = media;
+      const previousNeeds = new Map(
+        (doc.needs ?? []).map((line) => [line.id, line.fulfilled]),
+      );
 
+      doc.pendingEdit = this.buildPendingEdit(dto, media, previousNeeds);
+      await doc.save();
+      return mapHelpRequestToResponse(doc);
+    }
+
+    await this.applyDirectUpdate(doc, dto, media, userId);
+    await doc.save();
+    return mapHelpRequestToResponse(doc);
+  }
+
+  async hide(id: string, userId: string): Promise<HelpRequestResponse> {
+    const doc = await this.findDocumentOrThrow(id);
+    await this.assertCanDelete(doc, userId);
+
+    const hideableStatuses = [
+      HelpRequestStatus.ACTIVE,
+      HelpRequestStatus.PARTIALLY_FULFILLED,
+    ];
+
+    if (!hideableStatuses.includes(doc.status)) {
+      throw new BadRequestException('Only active requests can be hidden');
+    }
+
+    await this.clearPendingEdit(doc);
+    doc.status = HelpRequestStatus.CANCELLED;
+    await doc.save();
+    return mapHelpRequestToResponse(doc);
+  }
+
+  async restore(id: string, userId: string): Promise<HelpRequestResponse> {
+    const doc = await this.findDocumentOrThrow(id);
+    await this.assertCanDelete(doc, userId);
+
+    if (doc.status !== HelpRequestStatus.CANCELLED) {
+      throw new BadRequestException('Only hidden requests can be restored');
+    }
+
+    doc.status = HelpRequestStatus.ACTIVE;
     await doc.save();
     return mapHelpRequestToResponse(doc);
   }
@@ -199,6 +233,7 @@ export class HelpRequestsService {
   async remove(id: string, userId: string): Promise<void> {
     const doc = await this.findDocumentOrThrow(id);
     await this.assertCanDelete(doc, userId);
+    await this.clearPendingEdit(doc);
     await this.storageService.deleteByUrls(doc.media ?? []);
     doc.deletedAt = new Date();
     await doc.save();
@@ -265,6 +300,59 @@ export class HelpRequestsService {
     doc.reviewedBy = toObjectId(adminId);
     doc.reviewedAt = new Date();
 
+    await doc.save();
+    return mapHelpRequestToResponse(doc);
+  }
+
+  async approveEdit(id: string, adminId: string): Promise<HelpRequestResponse> {
+    await this.assertCanVerify(adminId);
+    const doc = await this.findDocumentOrThrow(id);
+
+    if (!doc.pendingEdit) {
+      throw new BadRequestException('No pending edit to approve');
+    }
+
+    const pending = doc.pendingEdit;
+    const oldMedia = doc.media ?? [];
+    const newMedia = pending.media ?? [];
+    const newMediaSet = new Set(newMedia);
+    const removedLiveMedia = oldMedia.filter((url) => !newMediaSet.has(url));
+
+    doc.title = pending.title;
+    doc.description = pending.description;
+    doc.helpType = pending.helpType;
+    doc.subCategory = pending.subCategory;
+    doc.priorityLevel = pending.priorityLevel;
+    doc.needs = pending.needs ?? [];
+    doc.beneficiariesCount = pending.beneficiariesCount;
+    doc.location = pending.location;
+    doc.contactPhone = pending.contactPhone;
+    doc.visibility = pending.visibility;
+    doc.media = newMedia;
+    doc.pendingEdit = null;
+    doc.approvalStatus = HelpRequestApprovalStatus.APPROVED;
+    doc.rejectionReason = undefined;
+    doc.reviewedBy = toObjectId(adminId);
+    doc.reviewedAt = new Date();
+
+    await this.storageService.deleteByUrls(removedLiveMedia);
+    await doc.save();
+    return mapHelpRequestToResponse(doc);
+  }
+
+  async rejectEdit(
+    id: string,
+    adminId: string,
+    _dto: RejectHelpRequestDto,
+  ): Promise<HelpRequestResponse> {
+    await this.assertCanVerify(adminId);
+    const doc = await this.findDocumentOrThrow(id);
+
+    if (!doc.pendingEdit) {
+      throw new BadRequestException('No pending edit to reject');
+    }
+
+    await this.clearPendingEdit(doc);
     await doc.save();
     return mapHelpRequestToResponse(doc);
   }
@@ -492,10 +580,107 @@ export class HelpRequestsService {
       return;
     }
 
-    if (isOwner && hasPermission(user, 'requests.manage')) {
+    if (isOwner) {
+      return;
+    }
+
+    if (hasPermission(user, 'requests.manage')) {
       return;
     }
 
     throw new ForbiddenException('Not allowed to manage this request');
+  }
+
+  private shouldStageOwnerEdit(
+    user: DaleelUser,
+    userId: string,
+    doc: HelpRequestDocument,
+  ): boolean {
+    const isOwner = doc.createdBy.toHexString() === userId;
+    if (!isOwner) {
+      return false;
+    }
+
+    if (doc.approvalStatus !== HelpRequestApprovalStatus.APPROVED) {
+      return false;
+    }
+
+    if (shouldAutoApproveCreatedContent(user)) {
+      return false;
+    }
+
+    const editScope = getScope(user, 'helpRequest', 'requests.edit');
+    return editScope === 'none';
+  }
+
+  private buildPendingEdit(
+    dto: CreateHelpRequestDto,
+    media: string[],
+    previousFulfillment: Map<string, number>,
+  ): PendingHelpRequestEdit {
+    return {
+      title: dto.title.trim(),
+      description: dto.description.trim(),
+      helpType: dto.helpType,
+      subCategory: dto.subCategory,
+      priorityLevel: dto.priorityLevel,
+      needs: this.buildNeedsFromInput(dto.needs, previousFulfillment),
+      beneficiariesCount: dto.beneficiariesCount,
+      location: this.resolveLocation(dto.location),
+      contactPhone: dto.contactPhone?.trim(),
+      visibility: dto.visibility ?? Visibility.PUBLIC,
+      media,
+      submittedAt: new Date(),
+    };
+  }
+
+  private async applyDirectUpdate(
+    doc: HelpRequestDocument,
+    dto: CreateHelpRequestDto,
+    media: string[],
+    userId: string,
+  ): Promise<void> {
+    const oldMedia = doc.media ?? [];
+    const newMediaSet = new Set(media);
+    const removedMedia = oldMedia.filter((url) => !newMediaSet.has(url));
+    await this.storageService.deleteByUrls(removedMedia);
+
+    const previousNeeds = new Map(
+      (doc.needs ?? []).map((line) => [line.id, line.fulfilled]),
+    );
+
+    doc.title = dto.title.trim();
+    doc.description = dto.description.trim();
+    doc.helpType = dto.helpType;
+    doc.subCategory = dto.subCategory;
+    doc.priorityLevel = dto.priorityLevel;
+    doc.needs = this.buildNeedsFromInput(dto.needs, previousNeeds);
+    doc.beneficiariesCount = dto.beneficiariesCount;
+    doc.location = this.resolveLocation(dto.location);
+    doc.contactPhone = dto.contactPhone?.trim();
+    doc.visibility = dto.visibility ?? doc.visibility;
+    doc.media = media;
+
+    const isOwner = doc.createdBy.toHexString() === userId;
+    if (
+      isOwner &&
+      doc.approvalStatus === HelpRequestApprovalStatus.REJECTED
+    ) {
+      doc.approvalStatus = HelpRequestApprovalStatus.PENDING;
+      doc.rejectionReason = undefined;
+    }
+  }
+
+  private async clearPendingEdit(doc: HelpRequestDocument): Promise<void> {
+    if (!doc.pendingEdit) {
+      return;
+    }
+
+    const liveMedia = new Set(doc.media ?? []);
+    const stagedOnlyMedia = (doc.pendingEdit.media ?? []).filter(
+      (url) => !liveMedia.has(url),
+    );
+    await this.storageService.deleteByUrls(stagedOnlyMedia);
+    doc.pendingEdit = null;
   }
 }

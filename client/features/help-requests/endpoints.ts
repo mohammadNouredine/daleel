@@ -10,6 +10,10 @@ export const HELP_REQUESTS_DELETE = `${HELP_REQUESTS_BASE}/:id`
 export const HELP_REQUESTS_FULFILLMENT = `${HELP_REQUESTS_BASE}/:id/needs/:lineId/fulfillment`
 export const HELP_REQUESTS_APPROVE = `${HELP_REQUESTS_BASE}/:id/approve`
 export const HELP_REQUESTS_REJECT = `${HELP_REQUESTS_BASE}/:id/reject`
+export const HELP_REQUESTS_HIDE = `${HELP_REQUESTS_BASE}/:id/hide`
+export const HELP_REQUESTS_RESTORE = `${HELP_REQUESTS_BASE}/:id/restore`
+export const HELP_REQUESTS_APPROVE_EDIT = `${HELP_REQUESTS_BASE}/:id/approve-edit`
+export const HELP_REQUESTS_REJECT_EDIT = `${HELP_REQUESTS_BASE}/:id/reject-edit`
 
 export const HELP_REQUESTS_QUERY_KEY = ["help-requests"] as const
 export const MY_HELP_REQUESTS_QUERY_KEY = ["help-requests", "mine"] as const
@@ -44,4 +48,20 @@ export function helpRequestApproveEndpoint(id: string): string {
 
 export function helpRequestRejectEndpoint(id: string): string {
   return `${HELP_REQUESTS_BASE}/${id}/reject`
+}
+
+export function helpRequestHideEndpoint(id: string): string {
+  return `${HELP_REQUESTS_BASE}/${id}/hide`
+}
+
+export function helpRequestRestoreEndpoint(id: string): string {
+  return `${HELP_REQUESTS_BASE}/${id}/restore`
+}
+
+export function helpRequestApproveEditEndpoint(id: string): string {
+  return `${HELP_REQUESTS_BASE}/${id}/approve-edit`
+}
+
+export function helpRequestRejectEditEndpoint(id: string): string {
+  return `${HELP_REQUESTS_BASE}/${id}/reject-edit`
 }
