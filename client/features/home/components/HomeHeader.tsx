@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ChevronDown, LayoutDashboard, LogOut, MapPin } from "lucide-react"
+import { ChevronDown, LayoutDashboard, LogOut, MapPin, Settings } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { UserAvatar } from "@/components/UserAvatar"
 import { useAuthState } from "@/features/auth/hooks/use-is-authenticated"
 import { clearAuthToken } from "@/lib/api/auth-token"
 import { cn } from "@/lib/utils"
@@ -106,13 +107,25 @@ export function HomeHeader() {
                 type="button"
                 className={cn(
                   buttonVariants({ variant: "ghost", size: "sm" }),
-                  "inline-flex items-center gap-1"
+                  "inline-flex items-center gap-2"
                 )}
               >
+                <UserAvatar
+                  src={profile?.profileImage}
+                  name={profile?.fullName}
+                  size="sm"
+                />
                 {profile?.fullName ?? "Account"}
                 <ChevronDown className="size-3.5 opacity-70" />
               </button>
-              <div className="invisible absolute right-0 top-full z-50 mt-2 w-44 rounded-lg border border-border bg-popover p-1 opacity-0 shadow-md transition-all group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+              <div className="invisible absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-border bg-popover p-1 opacity-0 shadow-md transition-all group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                <Link
+                  href="/account"
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <Settings className="size-3.5" />
+                  Account settings
+                </Link>
                 {profile?.role === "ADMIN" || profile?.role === "ORGANIZATION" ? (
                   <Link
                     href="/dashboard"

@@ -196,6 +196,85 @@ function addBetterAuthPaths(document: OpenAPIObject): void {
         },
       },
     },
+    '/api/v1/auth/request-password-reset': {
+      post: {
+        tags: [AUTH_TAG],
+        summary: 'Request password reset email',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email'],
+                properties: {
+                  email: { type: 'string', format: 'email', example: 'user@example.com' },
+                  redirectTo: {
+                    type: 'string',
+                    example: 'http://localhost:3000/auth/reset-password',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Generic success message (anti-enumeration)' },
+        },
+      },
+    },
+    '/api/v1/auth/reset-password': {
+      post: {
+        tags: [AUTH_TAG],
+        summary: 'Reset password with token',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['newPassword', 'token'],
+                properties: {
+                  newPassword: { type: 'string', minLength: 8 },
+                  token: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Password reset successfully' },
+          '400': { description: 'Invalid or expired token' },
+        },
+      },
+    },
+    '/api/v1/auth/change-password': {
+      post: {
+        tags: [AUTH_TAG],
+        summary: 'Change password for authenticated user',
+        security: [{ bearer: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['currentPassword', 'newPassword'],
+                properties: {
+                  currentPassword: { type: 'string' },
+                  newPassword: { type: 'string', minLength: 8 },
+                  revokeOtherSessions: { type: 'boolean' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Password updated; may return new session token' },
+          '400': { description: 'Invalid current password' },
+        },
+      },
+    },
   };
 
   document.paths = { ...authPaths, ...document.paths };

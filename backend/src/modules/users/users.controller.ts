@@ -23,6 +23,7 @@ import { sanitizeUser } from '../../common/utils/sanitize-user';
 import { UserProfileResponseDto } from './dto/user-profile-response.dto';
 import { ListUsersQueryDto } from './dto/list-users-query.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateMyProfileDto } from './dto/update-my-profile.dto';
 import { UpdateUserPermissionsDto } from './dto/user-permissions.dto';
 import { UsersService } from './users.service';
 
@@ -61,6 +62,28 @@ export class UsersController {
         session: session.session,
       },
       profile: sanitizeUser(profile),
+    };
+  }
+
+  @Patch('me')
+  @ApiOperation({ summary: 'Update current user profile' })
+  @ApiOkResponse({ type: UserProfileResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid session token' })
+  async updateMe(
+    @Session() session: UserSession,
+    @Body() dto: UpdateMyProfileDto,
+  ) {
+    const profile = await this.usersService.updateOwnProfile(
+      session.user.id,
+      dto,
+    );
+
+    return {
+      session: {
+        user: session.user,
+        session: session.session,
+      },
+      profile,
     };
   }
 

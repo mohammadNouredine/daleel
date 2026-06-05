@@ -105,6 +105,15 @@ class DaleelProfileDto {
 
   @ApiProperty()
   isActive: boolean;
+
+  @ApiPropertyOptional()
+  phoneNumber?: string | null;
+
+  @ApiPropertyOptional()
+  whatsappNumber?: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  profileImage?: string | null;
 }
 
 export class UserProfileResponseDto {

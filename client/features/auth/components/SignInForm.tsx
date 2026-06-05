@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -42,6 +43,15 @@ export function SignInForm() {
         placeholder="you@example.com"
       />
       <PasswordInput name="password" />
+
+      <div className="text-right">
+        <Link
+          href="/auth/forgot-password"
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          Forgot password?
+        </Link>
+      </div>
 
       {form.formState.errors.root ? (
         <p className="text-sm text-destructive">

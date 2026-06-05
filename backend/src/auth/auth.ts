@@ -7,6 +7,7 @@ import { otpSignupPlugin } from './otp-signup.plugin';
 import { UserRole } from '../common/enums';
 import { mongoClient, mongoDb } from '../database/mongo-client';
 import { runUserProfileSetup } from '../modules/users/users-profile.registry';
+import { deliverPasswordResetEmail } from './password-reset-email';
 
 const trustedOrigins = process.env.TRUSTED_ORIGINS
   ? process.env.TRUSTED_ORIGINS.split(',').map((origin) => origin.trim())
@@ -51,6 +52,14 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    revokeSessionsOnPasswordReset: true,
+    sendResetPassword: async ({ user, url }) => {
+      await deliverPasswordResetEmail({
+        to: user.email,
+        name: user.name ?? user.email,
+        url,
+      });
+    },
   },
   plugins: [
     bearer(),

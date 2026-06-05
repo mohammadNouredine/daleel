@@ -64,6 +64,20 @@ export type DaleelProfile = {
   email?: string
   role: "USER" | "VOLUNTEER" | "ORGANIZATION" | "ADMIN"
   permissions: UserPermissions
+  phoneNumber?: string | null
+  whatsappNumber?: string | null
+  profileImage?: string | null
   isVerified: boolean
   isActive: boolean
+}
+
+export type UpdateMyProfileInput = {
+  fullName?: string
+  phoneNumber?: string | null
+  whatsappNumber?: string | null
+  profileImage?: string | null
+}
+
+export type UsersMeResponse = {
+  profile: DaleelProfile
 }

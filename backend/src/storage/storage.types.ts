@@ -1,7 +1,8 @@
 export type StorageFolder =
   | 'help-requests'
   | 'property-listings'
-  | 'proof-images';
+  | 'proof-images'
+  | 'profile-images';
 
 export interface UploadFileInput {
   buffer: Buffer;

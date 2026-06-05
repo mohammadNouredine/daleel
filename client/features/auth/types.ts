@@ -39,3 +39,29 @@ export type AuthResponse = {
   redirect?: boolean
   url?: string
 }
+
+export type RequestPasswordResetBody = {
+  email: string
+  redirectTo: string
+}
+
+export type ResetPasswordBody = {
+  newPassword: string
+  token: string
+}
+
+export type ChangePasswordBody = {
+  currentPassword: string
+  newPassword: string
+  revokeOtherSessions?: boolean
+}
+
+export type PasswordStatusResponse = {
+  status: boolean
+  message?: string
+}
+
+export type ChangePasswordResponse = {
+  token: string | null
+  user: AuthUser
+}

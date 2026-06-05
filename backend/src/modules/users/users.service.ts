@@ -19,14 +19,17 @@ import { USERS_COLLECTION } from './schemas/user.types';
 import type { ListUsersQueryDto } from './dto/list-users-query.dto';
 import type { UpdateUserDto } from './dto/update-user.dto';
 import type { UpdateUserPermissionsDto } from './dto/user-permissions.dto';
+import type { UpdateMyProfileDto } from './dto/update-my-profile.dto';
+import { sanitizeUser } from '../../common/utils/sanitize-user';
 import {
   mapUserToAdminResponse,
   type AdminUserResponse,
 } from './users-admin.mapper';
+import { StorageService } from '../../storage/storage.service';
 
 @Injectable()
 export class UsersService {
-  constructor() {
+  constructor(private readonly storageService: StorageService) {
     registerUserProfileSetup(async (_id, role) => {
       await this.applyDefaultProfile(_id, role);
     });
@@ -223,6 +226,61 @@ export class UsersService {
     }
 
     return mapUserToAdminResponse(updated);
+  }
+
+  async updateOwnProfile(
+    userId: string,
+    dto: UpdateMyProfileDto,
+  ): Promise<ReturnType<typeof sanitizeUser>> {
+    const existing = await this.findById(userId);
+    if (!existing) {
+      throw new NotFoundException('User profile not found');
+    }
+
+    const update: Record<string, unknown> = {};
+
+    if (dto.fullName !== undefined) {
+      update.name = dto.fullName.trim();
+    }
+
+    if (dto.phoneNumber !== undefined) {
+      update.phoneNumber = dto.phoneNumber?.trim() || null;
+    }
+
+    if (dto.whatsappNumber !== undefined) {
+      update.whatsappNumber = dto.whatsappNumber?.trim() || null;
+    }
+
+    if (dto.profileImage !== undefined) {
+      const previousImage = existing.profileImage ?? existing.image;
+      update.profileImage = dto.profileImage;
+      update.image = dto.profileImage;
+
+      if (
+        previousImage &&
+        previousImage !== dto.profileImage &&
+        this.storageService.isManagedUrl(previousImage)
+      ) {
+        await this.storageService.deleteByUrls([previousImage]);
+      }
+    }
+
+    if (Object.keys(update).length === 0) {
+      return sanitizeUser(existing);
+    }
+
+    update.updatedAt = new Date();
+
+    await mongoDb
+      .collection(USERS_COLLECTION)
+      .updateOne({ _id: toObjectId(userId) }, { $set: update });
+
+    const updated = await this.findById(userId);
+    if (!updated) {
+      throw new NotFoundException('User profile not found');
+    }
+
+    return sanitizeUser(updated);
   }
 
   async updatePermissionsForAdmin(
