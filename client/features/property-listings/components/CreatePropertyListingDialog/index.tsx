@@ -200,6 +200,15 @@ export function CreatePropertyListingDialog({
   const selectedPricePeriod = form.watch("pricePeriod");
   const resolvedGovernorate = form.watch("governorate");
   const resolvedCity = form.watch("city");
+  const totalBedsInput = form.watch("totalBeds");
+
+  const totalBedsNum =
+    totalBedsInput && /^\d+$/.test(totalBedsInput)
+      ? Number(totalBedsInput)
+      : undefined;
+
+  const availableBedsDisabledFrom =
+    totalBedsNum !== undefined ? totalBedsNum + 1 : undefined;
 
   const requiresPeriodicPricing = isRecurringListingType(listingType);
   const showPricingSection = shouldShowPricingSection(listingType);
@@ -663,6 +672,7 @@ export function CreatePropertyListingDialog({
                         name="totalBeds"
                         label="Total beds"
                         min={0}
+                        quickMax={4}
                         max={20}
                         helpText="Total physical beds in the property."
                       />
@@ -670,7 +680,9 @@ export function CreatePropertyListingDialog({
                         name="availableBeds"
                         label="Available beds"
                         min={0}
+                        quickMax={4}
                         max={20}
+                        disabledFrom={availableBedsDisabledFrom}
                         helpText="Beds currently free now. Should be less than or equal to total beds."
                       />
                     </div>

@@ -24,15 +24,22 @@ type RangeSelectGroupProps = {
   helpText?: string;
   /** Inline buttons for min..quickMax; higher values appear in a dropdown from "⋯". */
   quickMax?: number;
+  disabledFrom?: number; // disable all options from this value to max
 };
 
-function getOptionButtonClassName(active: boolean) {
+function getOptionButtonClassName(active: boolean, disabled = false) {
   return cn(
     "inline-flex h-8 min-w-8 shrink-0 items-center justify-center rounded-md border px-2 text-sm transition-colors",
-    active
-      ? "border-primary bg-primary/10 text-primary"
-      : "border-border bg-background hover:bg-muted",
+    disabled
+      ? "cursor-not-allowed border-border/60 bg-muted/40 text-muted-foreground opacity-50"
+      : active
+        ? "border-primary bg-primary/10 text-primary"
+        : "border-border bg-background hover:bg-muted",
   );
+}
+
+function isOptionDisabled(option: number, disabledFrom: number) {
+  return option >= disabledFrom;
 }
 
 export function RangeSelectGroup({
@@ -44,14 +51,34 @@ export function RangeSelectGroup({
   description,
   helpText,
   quickMax,
+  disabledFrom = max + 1,
 }: RangeSelectGroupProps) {
-  const form = useFormContext();
   const [moreOpen, setMoreOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{
     top: number;
     left: number;
   } | null>(null);
   const moreAnchorRef = useRef<HTMLButtonElement>(null);
+  const form = useFormContext();
+
+  useEffect(() => {
+    const current = form.getValues(name);
+    if (current === "" || current === undefined || current === null) return;
+
+    const num = Number(current);
+    if (Number.isNaN(num) || num < disabledFrom) return;
+
+    const maxAllowed = disabledFrom - 1;
+    if (maxAllowed >= min) {
+      form.setValue(name, String(maxAllowed), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      return;
+    }
+
+    form.setValue(name, "", { shouldValidate: true, shouldDirty: true });
+  }, [disabledFrom, form, min, name]);
 
   const effectiveQuickMax =
     quickMax !== undefined ? Math.min(quickMax, max) : undefined;
@@ -107,6 +134,8 @@ export function RangeSelectGroup({
           : [String(field.value ?? "")];
 
         const toggle = (value: number, fromDropdown = false) => {
+          if (isOptionDisabled(value, disabledFrom)) return;
+
           const str = String(value);
           if (multiple) {
             const next = selected.includes(str)
@@ -150,13 +179,16 @@ export function RangeSelectGroup({
                     {extendedOptions.map((option) => {
                       const str = String(option);
                       const active = selected.includes(str);
+                      const disabled = isOptionDisabled(option, disabledFrom);
                       return (
                         <button
                           key={option}
                           type="button"
                           role="menuitem"
+                          disabled={disabled}
+                          aria-disabled={disabled}
                           onClick={() => toggle(option, true)}
-                          className={getOptionButtonClassName(active)}
+                          className={getOptionButtonClassName(active, disabled)}
                         >
                           {option}
                         </button>
@@ -181,12 +213,15 @@ export function RangeSelectGroup({
                 {quickOptions.map((option) => {
                   const str = String(option);
                   const active = selected.includes(str);
+                  const disabled = isOptionDisabled(option, disabledFrom);
                   return (
                     <button
                       key={option}
                       type="button"
+                      disabled={disabled}
+                      aria-disabled={disabled}
                       onClick={() => toggle(option)}
-                      className={getOptionButtonClassName(active)}
+                      className={getOptionButtonClassName(active, disabled)}
                     >
                       {option}
                     </button>
