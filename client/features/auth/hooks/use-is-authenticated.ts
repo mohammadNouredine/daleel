@@ -1,7 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getAuthToken } from "@/lib/api/auth-token"
+import {
+  AUTH_SESSION_CHANGED_EVENT,
+  getAuthToken,
+} from "@/lib/api/auth-token"
 
 export type AuthState = {
   isAuthenticated: boolean
@@ -24,7 +27,11 @@ export function useAuthState(): AuthState {
   })
 
   useEffect(() => {
-    setState(readAuthState())
+    const sync = () => setState(readAuthState())
+    sync()
+
+    window.addEventListener(AUTH_SESSION_CHANGED_EVENT, sync)
+    return () => window.removeEventListener(AUTH_SESSION_CHANGED_EVENT, sync)
   }, [])
 
   return state

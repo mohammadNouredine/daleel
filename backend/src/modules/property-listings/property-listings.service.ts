@@ -385,15 +385,17 @@ export class PropertyListingsService {
     doc.contactWhatsapp = dto.contactWhatsapp?.trim();
 
     const user = await this.getUserOrThrow(userId);
-    const isOwner = doc.ownerId.toHexString() === userId;
     const editScope = getScope(user, 'property', 'properties.canEditProperty');
     const canEditPlatform = editScope === 'platform';
     const isArchived = doc.status === PropertyListingStatus.ARCHIVED;
+    const autoApprove =
+      !dto.saveAsDraft &&
+      (shouldAutoApproveCreatedContent(user) || canEditPlatform);
 
     if (!isArchived) {
       if (dto.saveAsDraft) {
         doc.status = PropertyListingStatus.DRAFT;
-      } else if (canEditPlatform && !isOwner) {
+      } else if (autoApprove) {
         doc.status = PropertyListingStatus.APPROVED;
         doc.rejectionReason = undefined;
         if (!wasApproved || !doc.publishedAt) {
