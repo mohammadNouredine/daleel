@@ -80,29 +80,38 @@ export function buildPropertyListingListParams(
 export function hasActivePropertyListingFilters(
   filters: PropertyListingUiFilters
 ): boolean {
-  return (
-    filters.listingType !== undefined ||
-    filters.propertyType !== undefined ||
-    (filters.governorate !== undefined && filters.governorate !== "all") ||
-    (filters.city !== undefined && filters.city !== "all") ||
-    filters.priceMin !== undefined ||
-    filters.priceMax !== undefined ||
-    filters.currency !== undefined ||
-    filters.areaMin !== undefined ||
-    filters.areaMax !== undefined ||
-    filters.bedrooms !== undefined ||
-    filters.bathrooms !== undefined ||
-    filters.furnishingStatus !== undefined ||
-    filters.isEmergencyShelter === true ||
-    filters.acceptFamilies === true ||
-    filters.acceptChildren === true ||
-    filters.acceptPets === true ||
-    filters.womenOnly === true ||
-    filters.menOnly === true ||
-    filters.isVerified === true ||
-    filters.isAvailable === false ||
-    (filters.amenityIds?.length ?? 0) > 0
-  )
+  return countActivePropertyListingFilters(filters) > 0
+}
+
+export function countActivePropertyListingFilters(
+  filters: PropertyListingUiFilters
+): number {
+  let count = 0
+
+  if (filters.listingType !== undefined) count++
+  if (filters.propertyType !== undefined) count++
+  if (filters.governorate !== undefined && filters.governorate !== "all")
+    count++
+  if (filters.city !== undefined && filters.city !== "all") count++
+  if (filters.priceMin !== undefined) count++
+  if (filters.priceMax !== undefined) count++
+  if (filters.currency !== undefined) count++
+  if (filters.areaMin !== undefined) count++
+  if (filters.areaMax !== undefined) count++
+  if (filters.bedrooms !== undefined) count++
+  if (filters.bathrooms !== undefined) count++
+  if (filters.furnishingStatus !== undefined) count++
+  if (filters.isEmergencyShelter === true) count++
+  if (filters.acceptFamilies === true) count++
+  if (filters.acceptChildren === true) count++
+  if (filters.acceptPets === true) count++
+  if (filters.womenOnly === true) count++
+  if (filters.menOnly === true) count++
+  if (filters.isVerified === true) count++
+  if (filters.isAvailable === false) count++
+  if ((filters.amenityIds?.length ?? 0) > 0) count++
+
+  return count
 }
 
 export function toListFilters(
