@@ -12,6 +12,7 @@ export function useSignUp() {
   return usePostData<SignUpBody, AuthResponse>({
     endpoint: AUTH_SIGN_UP,
     showSuccessToast: false,
+    showErrorToast: false,
     callBackOnSuccess: (data) => {
       if (data.token) setAuthToken(data.token)
       router.push("/")

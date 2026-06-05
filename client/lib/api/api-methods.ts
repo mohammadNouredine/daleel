@@ -1,4 +1,5 @@
 import axiosClient from "@/lib/axios-client"
+import { ApiError, extractApiErrorMessage } from "@/lib/api/client"
 
 export const getFromApi = async <TData = unknown>(
   endpoint: string,
@@ -17,11 +18,14 @@ export const getFromApi = async <TData = unknown>(
     return result.data
   } catch (error: unknown) {
     const axiosError = error as {
-      response?: { data?: { message?: string } }
+      response?: { status?: number; data?: unknown }
     }
-    throw new Error(
-      axiosError.response?.data?.message ?? "Cannot load data"
+    const status = axiosError.response?.status ?? 0
+    const message = extractApiErrorMessage(
+      axiosError.response?.data,
+      "Cannot load data"
     )
+    throw new ApiError(message, status, axiosError.response?.data)
   }
 }
 
@@ -46,13 +50,14 @@ export const sendToApi = async <TData = unknown>(
     return result.data
   } catch (error: unknown) {
     const axiosError = error as {
-      response?: { data?: { error?: string; message?: string } }
+      response?: { status?: number; data?: unknown }
     }
-    throw new Error(
-      axiosError.response?.data?.error ??
-        axiosError.response?.data?.message ??
-        "Cannot send request"
+    const status = axiosError.response?.status ?? 0
+    const message = extractApiErrorMessage(
+      axiosError.response?.data,
+      "Cannot send request"
     )
+    throw new ApiError(message, status, axiosError.response?.data)
   }
 }
 
@@ -76,12 +81,13 @@ export const sendFormDataToApi = async <TData = unknown>(
     return result.data
   } catch (error: unknown) {
     const axiosError = error as {
-      response?: { data?: { error?: string; message?: string } }
+      response?: { status?: number; data?: unknown }
     }
-    throw new Error(
-      axiosError.response?.data?.error ??
-        axiosError.response?.data?.message ??
-        "Cannot send request"
+    const status = axiosError.response?.status ?? 0
+    const message = extractApiErrorMessage(
+      axiosError.response?.data,
+      "Cannot send request"
     )
+    throw new ApiError(message, status, axiosError.response?.data)
   }
 }

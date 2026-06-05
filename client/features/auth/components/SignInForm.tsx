@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { FormRoot } from "@/components/forms/FormRoot"
 import { PasswordInput } from "@/components/forms/PasswordInput"
 import { TextInput } from "@/components/forms/TextInput"
-import { ApiError } from "@/lib/api/client"
 import { useSignIn } from "../hooks/use-sign-in"
 import {
   signInSchema,
@@ -28,9 +27,7 @@ export function SignInForm() {
     signIn.mutate(values, {
       onError: (error) => {
         const message =
-          error instanceof ApiError
-            ? error.message
-            : "Sign in failed. Please try again."
+          error.message.trim() || "Sign in failed. Please try again."
         form.setError("root", { message })
       },
     })

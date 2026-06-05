@@ -16,12 +16,14 @@ type ApiMutationResponse<TData> = {
 export function usePostData<BodyParams, ResponseData = unknown>({
   endpoint,
   showSuccessToast = true,
+  showErrorToast = true,
   callBackOnSuccess,
   queryKeysToInvalidate,
 }: {
   queryKeysToInvalidate?: QueryKey[]
   endpoint: string
   showSuccessToast?: boolean
+  showErrorToast?: boolean
   callBackOnSuccess?: (data: ResponseData) => void
 }) {
   const queryClient = useQueryClient()
@@ -41,7 +43,9 @@ export function usePostData<BodyParams, ResponseData = unknown>({
       callBackOnSuccess?.(data)
     },
     onError: (err: Error) => {
-      toast.error(err.message)
+      if (showErrorToast && err.message.trim()) {
+        toast.error(err.message)
+      }
     },
   })
 }

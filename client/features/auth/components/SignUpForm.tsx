@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { FormRoot } from "@/components/forms/FormRoot"
 import { PasswordInput } from "@/components/forms/PasswordInput"
 import { TextInput } from "@/components/forms/TextInput"
-import { ApiError } from "@/lib/api/client"
 import { useSignUp } from "../hooks/use-sign-up"
 import {
   signUpSchema,
@@ -32,9 +31,7 @@ export function SignUpForm() {
     signUp.mutate(toSignUpBody(values), {
       onError: (error) => {
         const message =
-          error instanceof ApiError
-            ? error.message
-            : "Sign up failed. Please try again."
+          error.message.trim() || "Sign up failed. Please try again."
         form.setError("root", { message })
       },
     })
