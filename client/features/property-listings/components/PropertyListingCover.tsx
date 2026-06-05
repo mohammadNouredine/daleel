@@ -1,11 +1,11 @@
 "use client"
 
-import Image from "next/image"
 import { MapPin } from "lucide-react"
+import { ImageCarousel } from "@/components/ImageCarousel"
 import { cn } from "@/lib/utils"
 import type { PropertyListing } from "../types"
+import { getPropertyListingImageUrls } from "../utils/property-listing-images"
 import {
-  getPropertyListingCoverUrl,
   getPropertyTypeIcon,
 } from "../utils/property-listing-display"
 
@@ -14,6 +14,10 @@ type PropertyListingCoverProps = {
   className?: string
   sizes?: string
   priority?: boolean
+  /** Carousel indicator style when multiple images exist. */
+  indicator?: "dots" | "counter" | "none"
+  /** Show nav arrows only on hover (recommended for cards). */
+  arrowsOnHover?: boolean
 }
 
 export function PropertyListingCover({
@@ -21,22 +25,30 @@ export function PropertyListingCover({
   className,
   sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
   priority = false,
+  indicator = "dots",
+  arrowsOnHover = true,
 }: PropertyListingCoverProps) {
-  const coverUrl = getPropertyListingCoverUrl(listing)
+  const imageUrls = getPropertyListingImageUrls(listing)
   const TypeIcon = getPropertyTypeIcon(listing.propertyType)
 
-  if (coverUrl) {
+  if (imageUrls.length > 0) {
+    const slides = imageUrls.map((src, index) => ({
+      src,
+      alt: `${listing.title} — photo ${index + 1}`,
+    }))
+
     return (
-      <div className={cn("relative overflow-hidden bg-muted", className)}>
-        <Image
-          src={coverUrl}
-          alt={listing.title}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          sizes={sizes}
-          priority={priority}
-        />
-      </div>
+      <ImageCarousel
+        images={slides}
+        className={className}
+        imageClassName="transition-transform duration-500 group-hover:scale-105"
+        sizes={sizes}
+        priority={priority}
+        indicator={indicator}
+        arrowsOnHover={arrowsOnHover}
+        stopPropagationOnControls
+        defaultAlt={listing.title}
+      />
     )
   }
 

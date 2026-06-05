@@ -72,6 +72,8 @@ export function PropertyListingDetailView() {
               className="aspect-[21/9] w-full"
               sizes="(max-width: 896px) 100vw, 896px"
               priority
+              indicator="counter"
+              arrowsOnHover={false}
             />
 
             <div className="p-6 sm:p-8">

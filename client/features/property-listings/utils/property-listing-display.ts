@@ -16,7 +16,7 @@ import {
   type PropertyListing,
   type PropertyTypeValue,
 } from "../types"
-import { resolvePropertyListingMediaUrl } from "./build-property-listing-form-data"
+import { getPropertyListingImageUrls } from "./property-listing-images"
 
 const PRICE_PERIOD_LABELS: Record<string, string> = {
   [PricePeriod.NIGHTLY]: "/night",
@@ -63,11 +63,8 @@ const PROPERTY_TYPE_ICONS: Record<PropertyTypeValue, LucideIcon> = {
 export function getPropertyListingCoverUrl(
   listing: PropertyListing
 ): string | null {
-  const raw =
-    listing.coverImage ??
-    (listing.images.length > 0 ? listing.images[0]?.url : undefined)
-  if (!raw) return null
-  return resolvePropertyListingMediaUrl(raw)
+  const urls = getPropertyListingImageUrls(listing)
+  return urls[0] ?? null
 }
 
 export function formatListingLocation(listing: PropertyListing): string {
