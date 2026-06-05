@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from '../users/users.module';
 import { HelpRequestsController } from './help-requests.controller';
 import { HelpRequestsService } from './help-requests.service';
+import { HelpRequestPolicy } from './policies/help-request.policy';
 import { HelpRequest, HelpRequestSchema } from './schemas/help-request.schema';
 
 @Module({
@@ -13,7 +14,7 @@ import { HelpRequest, HelpRequestSchema } from './schemas/help-request.schema';
     UsersModule,
   ],
   controllers: [HelpRequestsController],
-  providers: [HelpRequestsService],
+  providers: [HelpRequestsService, HelpRequestPolicy],
   exports: [MongooseModule, HelpRequestsService],
 })
 export class HelpRequestsModule {}

@@ -6,6 +6,7 @@ import { ListingTypeMigrationService } from './listing-type-migration.service';
 import { AmenitiesController } from './amenities.controller';
 import { PropertyListingsController } from './property-listings.controller';
 import { PropertyListingsService } from './property-listings.service';
+import { PropertyListingPolicy } from './policies/property-listing.policy';
 import { PropertyReportsController } from './property-reports.controller';
 import { Amenity, AmenitySchema } from './schemas/amenity.schema';
 import {
@@ -43,6 +44,7 @@ import {
   ],
   providers: [
     PropertyListingsService,
+    PropertyListingPolicy,
     AmenitySeedService,
     ListingTypeMigrationService,
   ],
