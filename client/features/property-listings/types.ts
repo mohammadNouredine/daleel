@@ -126,6 +126,13 @@ export type ListingImage = {
   order?: number
 }
 
+export type PropertyListingListedBy = {
+  displayLabel: string
+  role: "USER" | "VOLUNTEER" | "ORGANIZATION" | "ADMIN"
+  isTrustedLister: boolean
+  profileImage?: string | null
+}
+
 export type PropertyListing = {
   _id: string
   ownerId: string
@@ -179,6 +186,7 @@ export type PropertyListing = {
   archivedAt?: string
   createdAt: string
   updatedAt: string
+  listedBy?: PropertyListingListedBy
 }
 
 export type PropertyListingPaginatedResponse = {

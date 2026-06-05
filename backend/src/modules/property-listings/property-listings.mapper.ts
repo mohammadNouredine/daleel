@@ -1,9 +1,17 @@
-import { ListingContactMethod, LocationVisibility } from '../../common/enums';
+import { ListingContactMethod, LocationVisibility, UserRole } from '../../common/enums';
+import type { DaleelUser } from '../users/schemas/user.types';
 import type {
   ListingImage,
   ListingLocation,
   PropertyListingDocument,
 } from './schemas/property-listing.schema';
+
+export type PropertyListingListedByResponse = {
+  displayLabel: string;
+  role: string;
+  isTrustedLister: boolean;
+  profileImage?: string | null;
+};
 
 export type PropertyListingLocationResponse = {
   country: string;
@@ -70,6 +78,7 @@ export type PropertyListingResponse = {
   archivedAt?: string;
   createdAt: string;
   updatedAt: string;
+  listedBy?: PropertyListingListedByResponse;
 };
 
 export type MapPropertyListingOptions = {
@@ -139,6 +148,34 @@ function mapListingLocation(
   }
 
   return mapped;
+}
+
+export function mapListedByPublic(
+  owner: DaleelUser,
+): PropertyListingListedByResponse {
+  if (owner.role === UserRole.ADMIN) {
+    return {
+      displayLabel: 'Added by admin',
+      role: owner.role,
+      isTrustedLister: true,
+    };
+  }
+
+  if (owner.role === UserRole.ORGANIZATION) {
+    return {
+      displayLabel: owner.name,
+      role: owner.role,
+      isTrustedLister: true,
+      profileImage: owner.profileImage ?? owner.image ?? null,
+    };
+  }
+
+  return {
+    displayLabel: owner.name,
+    role: owner.role,
+    isTrustedLister: false,
+    profileImage: owner.profileImage ?? owner.image ?? null,
+  };
 }
 
 export function mapPropertyListingToResponse(

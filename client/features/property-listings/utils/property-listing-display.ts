@@ -122,3 +122,13 @@ export function getPropertyTypeIcon(
 ): LucideIcon {
   return PROPERTY_TYPE_ICONS[propertyType] ?? Building2
 }
+
+export function verifiedListingBadgeClass(): string {
+  return "gap-0.5 border-0 bg-emerald-600 text-white shadow-sm hover:bg-emerald-600"
+}
+
+export function shouldShowVerifiedListingBadge(
+  listing: PropertyListing
+): boolean {
+  return listing.isVerified || listing.listedBy?.isTrustedLister === true
+}

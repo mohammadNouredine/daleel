@@ -17,12 +17,15 @@ import { HomeFooter } from "@/features/home/components/HomeFooter"
 import { HomeHeader } from "@/features/home/components/HomeHeader"
 import { usePropertyListingDetail } from "../hooks/use-property-listing-detail"
 import { PropertyListingCover } from "./PropertyListingCover"
+import { PropertyListingListerSection } from "./PropertyListingListerSection"
 import { PropertyListingCardSkeleton } from "./PropertyListingCardSkeleton"
 import {
   formatListingLocation,
   formatListingPriceLabel,
   formatListingTypeLabel,
   formatPropertyTypeLabel,
+  shouldShowVerifiedListingBadge,
+  verifiedListingBadgeClass,
 } from "../utils/property-listing-display"
 
 export function PropertyListingDetailView() {
@@ -82,8 +85,8 @@ export function PropertyListingDetailView() {
                   {formatListingTypeLabel(listing)}
                 </Badge>
                 <Badge variant="outline">{formatPropertyTypeLabel(listing)}</Badge>
-                {listing.isVerified ? (
-                  <Badge className="gap-0.5 border-0 bg-primary text-primary-foreground">
+                {shouldShowVerifiedListingBadge(listing) ? (
+                  <Badge className={verifiedListingBadgeClass()}>
                     <ShieldCheck className="size-3" />
                     Verified
                   </Badge>
@@ -174,6 +177,8 @@ export function PropertyListingDetailView() {
                     </Badge>
                   ))}
               </div>
+
+              <PropertyListingListerSection listing={listing} />
             </div>
           </article>
         )}

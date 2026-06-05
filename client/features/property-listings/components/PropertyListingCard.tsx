@@ -12,6 +12,8 @@ import {
   formatListingPriceLabel,
   formatListingTypeLabel,
   formatPropertyTypeLabel,
+  shouldShowVerifiedListingBadge,
+  verifiedListingBadgeClass,
 } from "../utils/property-listing-display"
 
 type PropertyListingCardProps = {
@@ -60,8 +62,8 @@ export function PropertyListingCard({
           >
             {formatListingTypeLabel(listing)}
           </Badge>
-          {listing.isVerified ? (
-            <Badge className="absolute bottom-3 right-3 gap-0.5 border-0 bg-primary/90 text-primary-foreground shadow-sm">
+          {shouldShowVerifiedListingBadge(listing) ? (
+            <Badge className={cn("absolute bottom-3 right-3", verifiedListingBadgeClass())}>
               <ShieldCheck className="size-3" aria-hidden />
               Verified
             </Badge>

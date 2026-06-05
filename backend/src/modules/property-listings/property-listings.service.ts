@@ -37,6 +37,7 @@ import {
   SOFT_DELETE_RETENTION_DAYS,
 } from './property-listings.constants';
 import {
+  mapListedByPublic,
   mapPropertyListingToResponse,
   type PropertyListingResponse,
 } from './property-listings.mapper';
@@ -117,12 +118,13 @@ export class PropertyListingsService {
     query: ListPropertyListingsQueryDto,
   ): Promise<PropertyListingPaginatedResponse> {
     const filter = buildPropertyListingFilter(query, { publicFeed: true });
-    return paginatePropertyListings(
+    const page = await paginatePropertyListings(
       this.propertyListingModel,
       filter,
       query.limit,
       (doc) => mapPropertyListingToResponse(doc),
     );
+    return this.attachListedByToPage(page);
   }
 
   async listMine(
@@ -214,10 +216,13 @@ export class PropertyListingsService {
       if (doc.deletedAt || doc.status !== PropertyListingStatus.APPROVED) {
         throw new NotFoundException('Property listing not found');
       }
-      return mapPropertyListingToResponse(doc, {
-        isOwner: false,
-        isAdmin: false,
-      });
+      return this.attachListedBy(
+        mapPropertyListingToResponse(doc, {
+          isOwner: false,
+          isAdmin: false,
+        }),
+        doc.ownerId.toHexString(),
+      );
     }
 
     const user = await this.getUserOrThrow(viewerId);
@@ -227,10 +232,51 @@ export class PropertyListingsService {
     }
 
     const listScope = getPropertyListScope(user);
-    return mapPropertyListingToResponse(doc, {
-      isOwner,
-      isAdmin: listScope === 'platform',
-    });
+    return this.attachListedBy(
+      mapPropertyListingToResponse(doc, {
+        isOwner,
+        isAdmin: listScope === 'platform',
+      }),
+      doc.ownerId.toHexString(),
+    );
+  }
+
+  private async attachListedBy(
+    response: PropertyListingResponse,
+    ownerId: string,
+  ): Promise<PropertyListingResponse> {
+    const owner = await this.usersService.findById(ownerId);
+    if (!owner) {
+      return response;
+    }
+
+    return {
+      ...response,
+      listedBy: mapListedByPublic(owner),
+    };
+  }
+
+  private async attachListedByToPage(
+    page: PropertyListingPaginatedResponse,
+  ): Promise<PropertyListingPaginatedResponse> {
+    const ownerIds = [...new Set(page.items.map((item) => item.ownerId))];
+    const owners = await Promise.all(
+      ownerIds.map((ownerId) => this.usersService.findById(ownerId)),
+    );
+
+    const listedByByOwnerId = new Map(
+      owners
+        .filter((owner): owner is DaleelUser => owner != null)
+        .map((owner) => [owner._id, mapListedByPublic(owner)] as const),
+    );
+
+    return {
+      ...page,
+      items: page.items.map((item) => ({
+        ...item,
+        listedBy: listedByByOwnerId.get(item.ownerId),
+      })),
+    };
   }
 
   async create(
