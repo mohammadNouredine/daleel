@@ -6,7 +6,9 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/data/DataTable";
 import { SelectControl } from "@/components/select/SelectControl";
+import { SearchInput } from "@/components/search";
 import { CreatePropertyListingDialog } from "@/features/property-listings/components/CreatePropertyListingDialog";
+import { PropertyListingAdminSummary } from "@/features/property-listings/components/PropertyListingAdminSummary";
 import { PropertyListingRowActions } from "@/features/property-listings/components/PropertyListingRowActions";
 import { useAdminPropertyListings } from "@/features/property-listings/hooks/use-admin-property-listings";
 import {
@@ -45,25 +47,6 @@ const LISTING_TYPE_FILTER_OPTIONS = [
   { value: ListingType.ROOMMATE, label: "Roommate" },
   { value: ListingType.FREE_STAY, label: "Free stay" },
 ];
-
-function SummaryCard({
-  label,
-  value,
-  loading,
-}: {
-  label: string;
-  value: number | undefined;
-  loading?: boolean;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card/50 px-4 py-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums">
-        {loading ? "—" : (value ?? 0)}
-      </p>
-    </div>
-  );
-}
 
 export function PropertiesDirectoryPage() {
   const router = useRouter();
@@ -201,52 +184,20 @@ export function PropertiesDirectoryPage() {
         description="Browse and manage all property listings on the platform."
       />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <SummaryCard
-          label="Total properties"
-          value={summary?.total}
-          loading={isLoading}
-        />
-        <SummaryCard
-          label="For rent"
-          value={summary?.forRent}
-          loading={isLoading}
-        />
-        <SummaryCard
-          label="For sale"
-          value={summary?.forSale}
-          loading={isLoading}
-        />
-        <SummaryCard
-          label="Pending approval"
-          value={summary?.pendingApproval}
-          loading={isLoading}
-        />
-        <SummaryCard
-          label="Hidden"
-          value={summary?.hidden}
-          loading={isLoading}
-        />
-        <SummaryCard
-          label="Deleted"
-          value={summary?.deleted}
-          loading={isLoading}
-        />
-      </div>
+      <PropertyListingAdminSummary
+        summary={summary}
+        loading={isLoading}
+        className="mb-6"
+      />
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-        <div className="min-w-[10rem] flex-1 sm:max-w-xs">
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">
-            Search
-          </label>
-          <input
-            type="search"
-            className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-            placeholder="Title or city"
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-          />
-        </div>
+        <SearchInput
+          label="Search"
+          wrapperClassName="min-w-[10rem] flex-1 sm:max-w-xs"
+          placeholder="Title or city"
+          value={searchInput}
+          onChange={(event) => setSearchInput(event.target.value)}
+        />
         <SelectControl
           label="Status"
           value={statusFilter}

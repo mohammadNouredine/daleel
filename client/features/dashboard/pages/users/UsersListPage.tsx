@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { SearchInput } from "@/components/search"
 import { DataTable } from "@/components/data/DataTable"
 import { SelectControl } from "@/components/select/SelectControl"
 import { useConfirmDialog } from "@/components/dialogs/ConfirmDialog"
@@ -179,7 +179,7 @@ export function UsersListPage() {
       />
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <Input
+        <SearchInput
           placeholder="Search name or email…"
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
