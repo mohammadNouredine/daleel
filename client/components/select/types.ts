@@ -20,9 +20,11 @@ export type SelectControlProps = {
   className?: string
   /** Override trigger label when the portaled list cannot resolve the value. */
   displayValue?: string
+  /** When true, shows a small clear (×) when the value differs from `clearValue`. */
+  clearable?: boolean
   /**
-   * Value that means "no selection" / default. When current value differs,
-   * a clear (X) button is shown. Omit to disable per-field clear.
+   * Value to reset to when clearing. Defaults to `""` when `clearable` is true.
+   * `clearValue` alone (without `clearable`) still enables clear for backward compatibility.
    */
   clearValue?: string
 }
@@ -42,9 +44,20 @@ export function resolveSelectedLabel(
   return options.find((option) => option.value === value)?.label ?? value
 }
 
+export function resolveSelectClearValue(
+  clearable?: boolean,
+  clearValue?: string
+): string | undefined {
+  if (clearValue !== undefined) return clearValue
+  if (clearable) return ""
+  return undefined
+}
+
 export function canClearSelectValue(
   value: string | undefined,
-  clearValue: string | undefined
+  clearable?: boolean,
+  clearValue?: string
 ): boolean {
-  return clearValue !== undefined && (value ?? "") !== clearValue
+  const resetValue = resolveSelectClearValue(clearable, clearValue)
+  return resetValue !== undefined && (value ?? "") !== resetValue
 }

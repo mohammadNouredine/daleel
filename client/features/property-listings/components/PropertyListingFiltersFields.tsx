@@ -90,6 +90,7 @@ export function PropertyListingFiltersFields({
       label="Listing type"
       options={LISTING_TYPE_FILTER_OPTIONS}
       value={filters.listingType ?? "all"}
+      clearable
       clearValue="all"
       onValueChange={(value) =>
         onChange({
@@ -106,6 +107,7 @@ export function PropertyListingFiltersFields({
       label="Property type"
       options={PROPERTY_TYPE_FILTER_OPTIONS}
       value={filters.propertyType ?? "all"}
+      clearable
       clearValue="all"
       onValueChange={(value) =>
         onChange({
@@ -122,6 +124,7 @@ export function PropertyListingFiltersFields({
       label="Governorate"
       options={governorateOptions}
       value={filters.governorate ?? "all"}
+      clearable
       clearValue="all"
       onValueChange={(value) =>
         onChange({
@@ -138,6 +141,7 @@ export function PropertyListingFiltersFields({
       label="City"
       options={cityOptions}
       value={filters.city ?? "all"}
+      clearable
       clearValue="all"
       disabled={cityDisabled}
       onValueChange={(value) => onChange({ ...filters, city: value })}
@@ -149,6 +153,7 @@ export function PropertyListingFiltersFields({
       label="Bedrooms"
       options={BEDROOM_FILTER_OPTIONS}
       value={filters.bedrooms != null ? String(filters.bedrooms) : "all"}
+      clearable
       clearValue="all"
       onValueChange={(value) =>
         onChange({
@@ -164,6 +169,7 @@ export function PropertyListingFiltersFields({
       label="Furnishing"
       options={FURNISHING_FILTER_OPTIONS}
       value={filters.furnishingStatus ?? "all"}
+      clearable
       clearValue="all"
       onValueChange={(value) =>
         onChange({
@@ -180,6 +186,7 @@ export function PropertyListingFiltersFields({
       label="Currency"
       options={CURRENCY_FILTER_OPTIONS}
       value={filters.currency ?? "all"}
+      clearable
       clearValue="all"
       onValueChange={(value) =>
         onChange({

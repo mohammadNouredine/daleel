@@ -1,7 +1,6 @@
 "use client";
 
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -12,6 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   canClearSelectValue,
+  resolveSelectClearValue,
   resolveSelectedLabel,
   type SelectControlValueProps,
 } from "@/components/select/types";
@@ -27,13 +27,16 @@ export function SelectControl({
   hint,
   className,
   displayValue,
+  clearable = false,
   clearValue,
 }: SelectControlValueProps) {
   const selectedLabel = resolveSelectedLabel(value, options, displayValue);
-  const showClear = canClearSelectValue(value, clearValue) && !disabled;
+  const resolvedClearValue = resolveSelectClearValue(clearable, clearValue);
+  const showClear =
+    canClearSelectValue(value, clearable, clearValue) && !disabled;
 
   const control = (
-    <div className="flex min-w-0 items-center gap-1">
+    <div className="relative min-w-0 w-full">
       <Select
         value={value}
         onValueChange={(next) => {
@@ -42,7 +45,7 @@ export function SelectControl({
         disabled={disabled}
       >
         <SelectTrigger
-          className={cn("w-full min-w-0 flex-1", showClear && "pr-1")}
+          className={cn("w-full min-w-0", showClear && "pr-12")}
           disabled={disabled}
         >
           <SelectValue placeholder={placeholder}>
@@ -57,17 +60,19 @@ export function SelectControl({
           ))}
         </SelectContent>
       </Select>
-      {showClear ? (
-        <Button
+      {showClear && resolvedClearValue !== undefined ? (
+        <button
           type="button"
-          variant="ghost"
-          size="icon"
-          className="size-8 shrink-0 text-muted-foreground"
+          className="absolute top-1/2 right-2 z-10 inline-flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label={`Clear ${label ?? "selection"}`}
-          onClick={() => onValueChange(clearValue!)}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onValueChange(resolvedClearValue);
+          }}
         >
           <X className="size-3.5" />
-        </Button>
+        </button>
       ) : null}
     </div>
   );

@@ -1,32 +1,32 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
-import type { ColumnDef } from "@tanstack/react-table"
-import { Badge } from "@/components/ui/badge"
-import { DataTable } from "@/components/data/DataTable"
-import { SelectControl } from "@/components/select/SelectControl"
-import { CreatePropertyListingDialog } from "@/features/property-listings/components/CreatePropertyListingDialog"
-import { PropertyListingRowActions } from "@/features/property-listings/components/PropertyListingRowActions"
-import { useAdminPropertyListings } from "@/features/property-listings/hooks/use-admin-property-listings"
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/data/DataTable";
+import { SelectControl } from "@/components/select/SelectControl";
+import { CreatePropertyListingDialog } from "@/features/property-listings/components/CreatePropertyListingDialog";
+import { PropertyListingRowActions } from "@/features/property-listings/components/PropertyListingRowActions";
+import { useAdminPropertyListings } from "@/features/property-listings/hooks/use-admin-property-listings";
 import {
   ListingType,
   PropertyListingStatus,
   type PropertyListing,
   type PropertyListingStatusValue,
-} from "@/features/property-listings/types"
+} from "@/features/property-listings/types";
 import {
   formatListingLocation,
   formatListingPriceLabel,
-} from "@/features/property-listings/utils/property-listing-display"
+} from "@/features/property-listings/utils/property-listing-display";
 import {
   formatPropertyListingStatus,
   propertyListingStatusBadgeClass,
-} from "@/features/property-listings/utils/property-listing-status"
-import { canViewPropertiesFromProfile } from "@/features/property-listings/utils/property-permissions"
-import { cn } from "@/lib/utils"
-import { DashboardPageHeader } from "../../components/DashboardPageHeader"
-import { useDashboardAuth } from "../../providers/DashboardAuthProvider"
+} from "@/features/property-listings/utils/property-listing-status";
+import { canViewPropertiesFromProfile } from "@/features/property-listings/utils/property-permissions";
+import { cn } from "@/lib/utils";
+import { DashboardPageHeader } from "../../components/DashboardPageHeader";
+import { useDashboardAuth } from "../../providers/DashboardAuthProvider";
 
 const STATUS_FILTER_OPTIONS = [
   { value: "", label: "All statuses" },
@@ -34,7 +34,7 @@ const STATUS_FILTER_OPTIONS = [
     value: status,
     label: formatPropertyListingStatus(status),
   })),
-]
+];
 
 const LISTING_TYPE_FILTER_OPTIONS = [
   { value: "", label: "All types" },
@@ -44,16 +44,16 @@ const LISTING_TYPE_FILTER_OPTIONS = [
   { value: ListingType.SHORT_TERM, label: "Short term" },
   { value: ListingType.ROOMMATE, label: "Roommate" },
   { value: ListingType.FREE_STAY, label: "Free stay" },
-]
+];
 
 function SummaryCard({
   label,
   value,
   loading,
 }: {
-  label: string
-  value: number | undefined
-  loading?: boolean
+  label: string;
+  value: number | undefined;
+  loading?: boolean;
 }) {
   return (
     <div className="rounded-xl border border-border bg-card/50 px-4 py-3">
@@ -62,22 +62,24 @@ function SummaryCard({
         {loading ? "—" : (value ?? 0)}
       </p>
     </div>
-  )
+  );
 }
 
 export function PropertiesDirectoryPage() {
-  const router = useRouter()
-  const { profile } = useDashboardAuth()
-  const canView = canViewPropertiesFromProfile(profile)
+  const router = useRouter();
+  const { profile } = useDashboardAuth();
+  const canView = canViewPropertiesFromProfile(profile);
 
-  const [statusFilter, setStatusFilter] = useState<PropertyListingStatusValue | "">(
-    ""
-  )
-  const [listingTypeFilter, setListingTypeFilter] = useState("")
-  const [searchInput, setSearchInput] = useState("")
-  const [appliedSearch, setAppliedSearch] = useState("")
-  const [editingListing, setEditingListing] = useState<PropertyListing | null>(null)
-  const [editOpen, setEditOpen] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<
+    PropertyListingStatusValue | ""
+  >("");
+  const [listingTypeFilter, setListingTypeFilter] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [editingListing, setEditingListing] = useState<PropertyListing | null>(
+    null,
+  );
+  const [editOpen, setEditOpen] = useState(false);
 
   const {
     items,
@@ -94,8 +96,8 @@ export function PropertiesDirectoryPage() {
       listingType: listingTypeFilter as "" | PropertyListing["listingType"],
       q: appliedSearch,
     },
-    canView
-  )
+    canView,
+  );
 
   const columns = useMemo<ColumnDef<PropertyListing>[]>(
     () => [
@@ -129,7 +131,7 @@ export function PropertiesDirectoryPage() {
           <Badge
             className={cn(
               "border-0",
-              propertyListingStatusBadgeClass(row.original.status)
+              propertyListingStatusBadgeClass(row.original.status),
             )}
           >
             {formatPropertyListingStatus(row.original.status)}
@@ -157,26 +159,26 @@ export function PropertiesDirectoryPage() {
             listing={row.original}
             profile={profile}
             onEdit={(listing) => {
-              setEditingListing(listing)
-              setEditOpen(true)
+              setEditingListing(listing);
+              setEditOpen(true);
             }}
           />
         ),
       },
     ],
-    [profile]
-  )
+    [profile],
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setAppliedSearch(searchInput.trim())
-    }, 400)
-    return () => window.clearTimeout(timer)
-  }, [searchInput])
+      setAppliedSearch(searchInput.trim());
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [searchInput]);
 
   useEffect(() => {
-    resetPagination()
-  }, [appliedSearch, statusFilter, listingTypeFilter, resetPagination])
+    resetPagination();
+  }, [appliedSearch, statusFilter, listingTypeFilter, resetPagination]);
 
   if (!canView) {
     return (
@@ -189,7 +191,7 @@ export function PropertiesDirectoryPage() {
           You do not have permission to view properties.
         </div>
       </>
-    )
+    );
   }
 
   return (
@@ -205,14 +207,26 @@ export function PropertiesDirectoryPage() {
           value={summary?.total}
           loading={isLoading}
         />
-        <SummaryCard label="For rent" value={summary?.forRent} loading={isLoading} />
-        <SummaryCard label="For sale" value={summary?.forSale} loading={isLoading} />
+        <SummaryCard
+          label="For rent"
+          value={summary?.forRent}
+          loading={isLoading}
+        />
+        <SummaryCard
+          label="For sale"
+          value={summary?.forSale}
+          loading={isLoading}
+        />
         <SummaryCard
           label="Pending approval"
           value={summary?.pendingApproval}
           loading={isLoading}
         />
-        <SummaryCard label="Hidden" value={summary?.hidden} loading={isLoading} />
+        <SummaryCard
+          label="Hidden"
+          value={summary?.hidden}
+          loading={isLoading}
+        />
         <SummaryCard
           label="Deleted"
           value={summary?.deleted}
@@ -237,6 +251,8 @@ export function PropertiesDirectoryPage() {
           label="Status"
           value={statusFilter}
           options={STATUS_FILTER_OPTIONS}
+          clearable
+          clearValue=""
           onValueChange={(value) =>
             setStatusFilter(value as PropertyListingStatusValue | "")
           }
@@ -245,6 +261,8 @@ export function PropertiesDirectoryPage() {
           label="Listing type"
           value={listingTypeFilter}
           options={LISTING_TYPE_FILTER_OPTIONS}
+          clearable
+          clearValue=""
           onValueChange={(value) => setListingTypeFilter(value)}
         />
       </div>
@@ -256,9 +274,7 @@ export function PropertiesDirectoryPage() {
         error={isError ? (error as Error) : null}
         onRetry={() => void refetch()}
         getRowId={(row) => row._id}
-        onRowClick={(row) =>
-          router.push(`/dashboard/properties/${row._id}`)
-        }
+        onRowClick={(row) => router.push(`/dashboard/properties/${row._id}`)}
         pagination={pagination}
         emptyTitle="No properties found"
         emptyDescription="Try different filters or add listings from the public site."
@@ -267,11 +283,11 @@ export function PropertiesDirectoryPage() {
       <CreatePropertyListingDialog
         open={editOpen}
         onOpenChange={(open) => {
-          setEditOpen(open)
-          if (!open) setEditingListing(null)
+          setEditOpen(open);
+          if (!open) setEditingListing(null);
         }}
         editingListing={editingListing}
       />
     </>
-  )
+  );
 }

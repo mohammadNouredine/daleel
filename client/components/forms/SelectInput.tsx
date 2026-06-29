@@ -26,6 +26,7 @@ export function SelectInput({
   options,
   disabled = false,
   displayValue,
+  clearable,
   clearValue,
   hint,
   className,
@@ -52,6 +53,7 @@ export function SelectInput({
               options={options}
               disabled={disabled}
               displayValue={displayValue}
+              clearable={clearable}
               clearValue={clearValue}
               value={(field.value as string | undefined) ?? ""}
               onValueChange={field.onChange}

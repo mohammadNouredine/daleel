@@ -190,6 +190,8 @@ export function UsersListPage() {
           onValueChange={setRoleFilter}
           options={ROLE_FILTER_OPTIONS}
           placeholder="Filter by role"
+          clearable
+          clearValue=""
           className="w-full max-w-[200px]"
         />
       </div>

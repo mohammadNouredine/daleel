@@ -56,6 +56,7 @@ export function HelpRequestFiltersBar({
           label="Type"
           options={helpTypeOptions}
           value={filters.helpType}
+          clearable
           clearValue="all"
           disabled={isReferenceLoading}
           onValueChange={(value) =>
@@ -70,6 +71,7 @@ export function HelpRequestFiltersBar({
           label="Location"
           options={governorateOptions}
           value={filters.governorate}
+          clearable
           clearValue="all"
           onValueChange={(value) =>
             onChange({ ...filters, governorate: value })
@@ -80,6 +82,7 @@ export function HelpRequestFiltersBar({
           label="Priority"
           options={priorityOptions}
           value={filters.priority}
+          clearable
           clearValue="all"
           className="sm:col-span-2 lg:col-span-1"
           onValueChange={(value) =>
